@@ -12,6 +12,7 @@ permissions:
 jobs:
   release:
     runs-on: macos-latest
+    timeout-minutes: 60
 
     steps:
       - name: Check out repository

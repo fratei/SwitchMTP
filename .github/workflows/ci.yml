@@ -5,9 +5,15 @@ on:
   pull_request:
   workflow_dispatch:
 
+# A newer push makes an in-flight run obsolete; don't queue behind it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: macos-latest
+    timeout-minutes: 45
 
     steps:
       - name: Check out repository
