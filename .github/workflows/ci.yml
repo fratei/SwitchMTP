@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  build:
+    runs-on: macos-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21.x'
+          cache-dependency-path: backend/go.mod
+
+      - name: Cache libusb
+        uses: actions/cache@v4
+        with:
+          path: third_party/libusb
+          key: ${{ runner.os }}-libusb-${{ hashFiles('scripts/build-libusb.sh') }}
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build libusb
+        run: |
+          export DEVELOPER_DIR="$(xcode-select -p)"
+          ./scripts/build-libusb.sh
+
+      - name: Check gofmt
+        working-directory: backend
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [[ -n "${unformatted}" ]]; then
+            echo "Go files need gofmt:"
+            echo "${unformatted}"
+            exit 1
+          fi
+
+      - name: Go vet
+        working-directory: backend
+        run: |
+          export DEVELOPER_DIR="$(xcode-select -p)"
+          export SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
+          go vet ./...
+
+      - name: Go test
+        working-directory: backend
+        run: |
+          export DEVELOPER_DIR="$(xcode-select -p)"
+          export SDKROOT="$(xcrun --sdk macosx --show-sdk-path)"
+          go test ./...
+
+      - name: Build backend and app
+        run: |
+          export DEVELOPER_DIR="$(xcode-select -p)"
+          ./scripts/build-app.sh

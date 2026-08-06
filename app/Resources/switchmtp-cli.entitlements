@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<!--
+	  The CLI is deliberately NOT sandboxed: it takes arbitrary source and
+	  destination paths on the command line, which the App Sandbox's
+	  user-selected file access cannot grant without a file picker.
+
+	  Library validation must be disabled because nxmtp.dylib and
+	  libusb-1.0.0.dylib are ad-hoc signed. Ad-hoc signatures carry no Team ID,
+	  so each one is a distinct signing identity and the hardened runtime
+	  refuses to load them into a differently-signed process.
+	-->
+	<key>com.apple.security.cs.disable-library-validation</key>
+	<true/>
+</dict>
+</plist>

@@ -1,0 +1,24 @@
+# SwitchMTP build artifacts
+.build/
+backend/build/
+build/
+dist/
+
+# third_party/libusb is a build artifact of scripts/build-libusb.sh;
+# the script itself (scripts/build-libusb.sh) IS tracked.
+third_party/libusb/
+
+# Xcode
+*.xcuserstate
+xcuserdata/
+DerivedData/
+.derivedData*/
+
+# The .xcodeproj IS tracked so the repo can be opened without XcodeGen;
+# scripts/build-app.sh regenerates it from app/project.yml when xcodegen
+# is installed, so app/project.yml remains the source of truth.
+app/*.xcodeproj/project.xcworkspace/
+app/*.xcodeproj/xcuserdata/
+
+# macOS
+.DS_Store

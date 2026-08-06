@@ -1,0 +1,63 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: macos-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: '1.21.x'
+          cache-dependency-path: backend/go.mod
+
+      - name: Cache libusb
+        uses: actions/cache@v4
+        with:
+          path: third_party/libusb
+          key: ${{ runner.os }}-libusb-${{ hashFiles('scripts/build-libusb.sh') }}
+
+      - name: Install XcodeGen
+        run: brew install xcodegen
+
+      - name: Build universal app and DMG
+        run: |
+          export DEVELOPER_DIR="$(xcode-select -p)"
+          ./scripts/bootstrap.sh
+          ./scripts/build-app.sh
+          ./scripts/package-dmg.sh
+
+      - name: Prepare release notes
+        run: |
+          cat > release-notes.md <<'NOTES'
+          ## Gatekeeper note
+
+          SwitchMTP is ad-hoc signed and not notarized. After dragging `SwitchMTP.app` to `/Applications`, macOS may say the app is damaged or cannot be verified. Use either of these trust paths:
+
+          ```sh
+          xattr -dr com.apple.quarantine /Applications/SwitchMTP.app
+          ```
+
+          Or right-click `/Applications/SwitchMTP.app`, choose **Open**, then confirm **Open** when macOS asks.
+          NOTES
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            build/SwitchMTP-*-universal.dmg \
+            build/SwitchMTP-*-universal.dmg.sha256 \
+            --generate-notes \
+            --notes "$(cat release-notes.md)"

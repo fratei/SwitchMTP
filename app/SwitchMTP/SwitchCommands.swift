@@ -1,0 +1,185 @@
+// SwitchMTP — a macOS MTP client for Nintendo Switch running DBI.
+// Copyright (C) 2024 Neighbor_Z
+// Copyright (C) 2025 fratei
+//
+// This program is free software; you can redistribute it and/or modify it
+// under the terms of the GNU General Public License version 2 as published by
+// the Free Software Foundation.
+//
+// This program is distributed in the hope that it will be useful, but WITHOUT
+// ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+// FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for
+// more details.
+
+import AppKit
+import SwiftUI
+import UniformTypeIdentifiers
+
+/// The **Switch** menu: bulk workflows that are specific to a console.
+///
+/// These live at app level rather than in the file browser because none of them
+/// operate on the current selection — they each resolve the storage they need by
+/// kind and run against the whole thing.
+struct SwitchCommands: Commands {
+    @FocusedValue(\.mtpManager) private var manager
+    @FocusedValue(\.isTransferActive) private var isTransferActive
+
+    /// Workflows move whole storages, so running two at once would interleave
+    /// transfers on a single-session protocol.
+    private var isBusy: Bool { isTransferActive == true }
+    private var isReady: Bool { manager?.connectionState.isConnected == true && !isBusy }
+
+    var body: some Commands {
+        CommandMenu(String(localized: "Switch")) {
+            Button {
+                run { m, url in m.backupSaves(to: url) }
+            } label: {
+                Label("Back Up Saves…", systemImage: "square.and.arrow.down.on.square")
+            }
+            .disabled(!isReady || manager?.storage(ofKind: .saves) == nil)
+
+            Button {
+                confirmRestore()
+            } label: {
+                Label("Restore Saves…", systemImage: "square.and.arrow.up.on.square")
+            }
+            .disabled(!isReady || manager?.storage(ofKind: .saves)?.capabilities.write != true)
+
+            Divider()
+
+            Button {
+                run { m, url in m.exportAlbum(to: url) }
+            } label: {
+                Label("Export Album…", systemImage: "photo.on.rectangle.angled")
+            }
+            .disabled(!isReady || manager?.storage(ofKind: .album) == nil)
+
+            Button {
+                run { m, url in m.dumpGamecard(to: url) }
+            } label: {
+                Label("Dump Gamecard…", systemImage: "opticaldiscdrive")
+            }
+            .disabled(!isReady || manager?.storage(ofKind: .gamecard) == nil)
+
+            Divider()
+
+            installMenu
+
+            Divider()
+
+            Button {
+                copyDiagnostics()
+            } label: {
+                Label("Copy Diagnostics", systemImage: "stethoscope")
+            }
+            // Diagnostics are most valuable when nothing is connected, so this
+            // stays enabled at all times.
+        }
+    }
+
+    @ViewBuilder
+    private var installMenu: some View {
+        let targets = manager?.installTargets ?? []
+        if targets.isEmpty {
+            Button {} label: { Label("Install to Switch…", systemImage: "arrow.down.circle") }
+                .disabled(true)
+        } else {
+            ForEach(targets) { target in
+                Button {
+                    chooseAndInstall(to: target)
+                } label: {
+                    Label(installTitle(for: target), systemImage: "arrow.down.circle")
+                }
+                .disabled(!isReady)
+            }
+        }
+    }
+
+    private func installTitle(for storage: MTPStorage) -> String {
+        switch storage.kind {
+        case .sdInstall: return String(localized: "Install to SD Card…")
+        case .nandInstall: return String(localized: "Install to NAND…")
+        default: return String(localized: "Install to \(storage.name)…")
+        }
+    }
+
+    // MARK: - Actions
+
+    /// Prompts for a destination folder and runs a download-style workflow.
+    private func run(_ body: @escaping (MTPManager, URL) -> WorkflowOutcome) {
+        guard let manager else { return }
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.canCreateDirectories = true
+        panel.prompt = String(localized: "Choose")
+        panel.message = String(localized: "Choose where to save the files.")
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        present(body(manager, url))
+    }
+
+    private func chooseAndInstall(to storage: MTPStorage) {
+        guard let manager else { return }
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = true
+        panel.canChooseDirectories = false
+        panel.allowsMultipleSelection = true
+        // Map our extension allow-list to UTTypes. Installable Switch formats
+        // have no registered system type, so filenameExtension: is the only
+        // way to build them; anything unmappable is simply skipped.
+        panel.allowedContentTypes = MTPManager.installableExtensions.compactMap {
+            UTType(filenameExtension: $0)
+        }
+        panel.prompt = String(localized: "Install")
+        panel.message = String(localized: "Choose .nsp, .nsz, .xci or .xcz files to install.")
+        guard panel.runModal() == .OK, !panel.urls.isEmpty else { return }
+        present(manager.install(fileURLs: panel.urls, to: storage))
+    }
+
+    /// Restoring overwrites save data in place and cannot be undone, so it is
+    /// gated behind an explicit destructive confirmation.
+    private func confirmRestore() {
+        guard let manager else { return }
+        let panel = NSOpenPanel()
+        panel.canChooseFiles = false
+        panel.canChooseDirectories = true
+        panel.prompt = String(localized: "Choose")
+        panel.message = String(localized: "Choose a folder created by Back Up Saves.")
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+
+        let alert = NSAlert()
+        alert.alertStyle = .critical
+        alert.messageText = String(localized: "Overwrite save data on the Switch?")
+        alert.informativeText = String(localized: "Files in “\(url.lastPathComponent)” will replace save data on the console. This cannot be undone. Back up your current saves first if you have not already.")
+        alert.addButton(withTitle: String(localized: "Restore"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
+        guard alert.runModal() == .alertFirstButtonReturn else { return }
+
+        present(manager.restoreSaves(from: url))
+    }
+
+    private func copyDiagnostics() {
+        guard let manager else { return }
+        manager.copyDiagnosticsToPasteboard { ok in
+            let alert = NSAlert()
+            alert.alertStyle = ok ? .informational : .warning
+            alert.messageText = ok
+                ? String(localized: "Diagnostics copied")
+                : String(localized: "Could not collect diagnostics")
+            alert.informativeText = ok
+                ? String(localized: "Paste the report into a bug report. It lists USB devices, any process holding the USB interface, and the connected device's capabilities.")
+                : String(localized: "Try again in a moment.")
+            alert.runModal()
+        }
+    }
+
+    private func present(_ outcome: WorkflowOutcome) {
+        let alert = NSAlert()
+        alert.alertStyle = outcome.isError ? .warning : .informational
+        alert.messageText = outcome.isError
+            ? String(localized: "Cannot continue")
+            : String(localized: "Started")
+        alert.informativeText = outcome.message
+        alert.runModal()
+    }
+}
