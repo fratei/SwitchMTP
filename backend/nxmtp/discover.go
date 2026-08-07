@@ -187,19 +187,21 @@ func FindDevices() ([]DeviceRef, error) {
 	return refs, nil
 }
 
-// describeCandidate opens a candidate briefly to read its identity.
+// describeCandidate reads a candidate's identity without disturbing it.
 func describeCandidate(dev *mtp.Device) (DeviceRef, bool) {
-	if err := dev.Open(); err != nil {
-		// Most commonly this is another macOS process holding the interface
-		// (Image Capture Extension, PTPCamera, Android File Transfer Agent).
-		// We cannot read the identity, so the device cannot be listed; the
-		// diagnostics path reports the occupying process instead.
+	accept, needsStringCheck := looksLikeMTPInterface(dev)
+	if !accept {
+		// A look-alike: the right endpoint layout but the wrong class. Not
+		// opened, so it is never claimed and never reset.
 		return DeviceRef{}, false
 	}
-	defer dev.Close()
 
-	usbInfo, err := dev.GetUsbInfo()
+	usbInfo, err := readIdentity(dev, needsStringCheck)
 	if err != nil {
+		// Most commonly this is another macOS process holding the interface
+		// (Image Capture Extension, ptpcamerad, Android File Transfer Agent).
+		// We cannot read the identity, so the device cannot be listed; the
+		// diagnostics path reports the occupying process instead.
 		return DeviceRef{}, false
 	}
 
@@ -212,25 +214,117 @@ func describeCandidate(dev *mtp.Device) (DeviceRef, bool) {
 	}
 	ref.Profile, ref.Usable, ref.Advice = profileFor(ref.VendorID, ref.ProductID, ref.Manufacturer, ref.Model)
 
-	// Refine using the MTP DeviceInfo, which distinguishes DBI from stock HOS.
-	// A session is required for GetDeviceInfo on some responders, but DBI
-	// answers it without one, so we try the cheap path and tolerate failure.
-	var di mtp.DeviceInfo
-	if err := dev.GetDeviceInfo(&di); err == nil {
-		ref.Profile = refineProfile(ref.Profile, &di)
-		if ref.Manufacturer == "" {
-			ref.Manufacturer = strings.TrimSpace(di.Manufacturer)
-		}
-		if ref.Model == "" {
-			ref.Model = strings.TrimSpace(di.Model)
-		}
-		if ref.SerialNumber == "" {
-			ref.SerialNumber = strings.TrimSpace(di.SerialNumber)
-		}
-	}
+	// The MTP DeviceInfo is deliberately NOT consulted here. Reading it needs
+	// a claimed interface, and claiming during a scan is what caused the
+	// reset storm described on mtp.OpenIdentity. It buys nothing either:
+	// DBI reports the same Manufacturer/Model as stock horizon ("Nintendo" /
+	// "Switch"), so the USB product string is the only discriminator, and it
+	// has already been applied above. Sessions refine the profile properly --
+	// see refineProfile in client.go.
 
 	ref.DisplayName = displayNameFor(ref.Profile, ref.Manufacturer, ref.Model)
 	return ref, true
+}
+
+// USB interface classes relevant to MTP identification.
+const (
+	usbClassStillImage     = 6   // PIMA 15740 -- the class PTP and MTP live in
+	usbClassVendorSpecific = 255 // used by MTP-only devices that omit PTP
+	usbSubClassStillImage  = 1
+	usbProtocolPTP         = 1
+)
+
+// looksLikeMTPInterface decides whether a candidate is worth opening.
+//
+// mtp.FindDevices matches any interface carrying exactly one bulk-in, one
+// bulk-out and one interrupt-in endpoint. That is the PTP endpoint layout, but
+// it is not unique to PTP: USB Ethernet adapters use the same shape, so a
+// Realtek RTL8156 dock happily appears in the device list next to the Switch.
+//
+// Two forms are accepted, mirroring how libmtp identifies devices:
+//
+//   - class 6 / subclass 1 / protocol 1 -- canonical still-image PTP. DBI's
+//     responder reports exactly this.
+//   - class 255 (vendor specific) whose interface string contains "MTP" --
+//     how MTP-only devices, chiefly Android handsets, advertise themselves.
+//
+// The second form needs a string descriptor, so a vendor-specific interface
+// that declares no string is rejected outright. That is decided from cached
+// descriptor data alone: the offending Ethernet adapter reports string index 0
+// and is dropped without ever being opened.
+//
+// needsStringCheck reports that acceptance is provisional and must be
+// confirmed by confirmMTPInterface once a handle is available.
+func looksLikeMTPInterface(dev *mtp.Device) (accept, needsStringCheck bool) {
+	class, subClass, protocol, stringIndex := dev.InterfaceInfo()
+	return classifyInterface(class, subClass, protocol, stringIndex)
+}
+
+// classifyInterface holds the decision logic for looksLikeMTPInterface, split
+// out so it can be tested without a USB device.
+func classifyInterface(class, subClass, protocol, stringIndex byte) (accept, needsStringCheck bool) {
+	switch class {
+	case usbClassStillImage:
+		// Subclass/protocol are checked loosely: every real device uses
+		// 1/1, but rejecting on them would be a needless failure mode for
+		// a device that got them slightly wrong yet still speaks MTP.
+		_ = subClass
+		_ = protocol
+		return true, false
+	case usbClassVendorSpecific:
+		if stringIndex == 0 {
+			return false, false
+		}
+		return true, true
+	default:
+		return false, false
+	}
+}
+
+// confirmMTPInterface completes the check begun by looksLikeMTPInterface for
+// vendor-specific interfaces. The device must already be open.
+func confirmMTPInterface(dev *mtp.Device) bool {
+	s, err := dev.InterfaceString()
+	if err != nil {
+		// The descriptor promised a string and the device would not give it
+		// up. Treat that as "not MTP" rather than guessing.
+		return false
+	}
+	return strings.Contains(strings.ToUpper(s), "MTP")
+}
+
+// readIdentity reads a candidate's USB string descriptors.
+//
+// The fast path opens the handle without claiming the MTP interface, so
+// discovery never resets the port. Should that fail -- an old libusb, or a
+// macOS release that refuses to hand out a device user client -- it falls back
+// to the full claiming open, which is what the code did unconditionally
+// before.
+//
+// confirmInterface asks for the vendor-specific interface-string check to be
+// run while the handle is open; it is only set for candidates whose class did
+// not already prove they are still-image devices.
+func readIdentity(dev *mtp.Device, confirmInterface bool) (*mtp.UsbDeviceInfo, error) {
+	if err := dev.OpenIdentity(); err == nil {
+		if confirmInterface && !confirmMTPInterface(dev) {
+			dev.Close()
+			return nil, errf(KindNotFound, "readIdentity", "not an MTP interface")
+		}
+		info, infoErr := dev.GetUsbInfo()
+		dev.Close()
+		if infoErr == nil {
+			return info, nil
+		}
+	}
+
+	if err := dev.Open(); err != nil {
+		return nil, err
+	}
+	defer dev.Close()
+	if confirmInterface && !confirmMTPInterface(dev) {
+		return nil, errf(KindNotFound, "readIdentity", "not an MTP interface")
+	}
+	return dev.GetUsbInfo()
 }
 
 // findNonMTPNintendo looks for Nintendo devices that expose no MTP interface,
@@ -298,6 +392,20 @@ func openByID(id string) (*mtp.Device, *usb.Context, DeviceRef, error) {
 
 	for _, dev := range cands {
 		if match != nil {
+			dev.Done()
+			continue
+		}
+		// Filter on the cached descriptor first. Opening a candidate claims
+		// its interface and may reset the port, so a device that cannot
+		// possibly be the one we were asked for must never be opened.
+		if v, p := dev.UsbIDs(); v != wantVendor || p != wantProduct {
+			dev.Done()
+			continue
+		}
+		// Same look-alike guard as discovery: an interface with the PTP
+		// endpoint layout but the wrong class is not an MTP device, and
+		// opening one would claim and reset it for nothing.
+		if accept, _ := looksLikeMTPInterface(dev); !accept {
 			dev.Done()
 			continue
 		}

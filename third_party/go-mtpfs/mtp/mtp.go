@@ -185,6 +185,79 @@ const (
 	claimRetries = 4
 )
 
+// UsbIDs returns the vendor and product IDs from the device descriptor that
+// was cached when the candidate was built. It performs no I/O and does not
+// require the device to be open.
+//
+// ADDED (SwitchMTP): lets callers filter candidates before opening them, so a
+// device we have no interest in is never claimed and never reset.
+func (d *Device) UsbIDs() (vendorID, productID uint16) {
+	return d.devDescr.IdVendor, d.devDescr.IdProduct
+}
+
+// InterfaceInfo returns the class triple and string-descriptor index of the
+// interface this candidate was built from. Like UsbIDs it reads only cached
+// descriptor data, so it performs no I/O.
+//
+// ADDED (SwitchMTP): candidateFromDeviceDescriptor matches any interface with
+// one bulk-in, one bulk-out and one interrupt-in endpoint. That is the PTP
+// layout, but it is also the layout of several vendor-specific interfaces --
+// USB Ethernet adapters in particular -- which then show up in the device
+// list. Callers need the class to tell real still-image devices apart from
+// look-alikes.
+func (d *Device) InterfaceInfo() (class, subClass, protocol, stringIndex byte) {
+	return d.ifaceDescr.InterfaceClass,
+		d.ifaceDescr.InterfaceSubClass,
+		d.ifaceDescr.InterfaceProtocol,
+		d.ifaceDescr.InterfaceStringIndex
+}
+
+// InterfaceString reads the interface's string descriptor. The device must be
+// open (OpenIdentity is enough); it returns "" when the interface declares no
+// string.
+//
+// ADDED (SwitchMTP): used to confirm that a vendor-specific interface really
+// is MTP, which is how such devices advertise themselves.
+func (d *Device) InterfaceString() (string, error) {
+	if d.ifaceDescr.InterfaceStringIndex == 0 {
+		return "", nil
+	}
+	if d.h == nil {
+		return "", fmt.Errorf("device not open")
+	}
+	return d.h.GetStringDescriptorASCII(d.ifaceDescr.InterfaceStringIndex)
+}
+
+// OpenIdentity opens the underlying USB handle *without* claiming the MTP
+// interface, which is enough to read the string descriptors over endpoint 0.
+//
+// ADDED (SwitchMTP): device enumeration only needs the identity, but the
+// claim performed by Open triggers the port-reset dance used to wrestle the
+// interface away from macOS's ptpcamerad. Each reset re-enumerates the port,
+// which the app observes as a hotplug event, which schedules another scan --
+// a self-sustaining storm that knocks the device (and its hub siblings) off
+// the bus repeatedly. Enumerating through this function keeps discovery
+// entirely passive.
+//
+// Close works on a handle opened this way: it skips ReleaseInterface when
+// nothing was claimed.
+func (d *Device) OpenIdentity() error {
+	if d.h != nil {
+		return fmt.Errorf("already open")
+	}
+
+	var err error
+	d.h, err = d.dev.Open()
+	if d.USBDebug {
+		log.Printf("USB: OpenIdentity, err: %v", err)
+	}
+	if err != nil {
+		d.h = nil
+		return err
+	}
+	return nil
+}
+
 // Open opens an MTP device.
 func (d *Device) Open() error {
 	if d.Timeout == 0 {
@@ -494,6 +567,21 @@ func (d *Device) runTransaction(req *Container, rep *Container,
 
 		dest.Write(rest)
 
+		// MODIFIED (SwitchMTP): account for the bytes just written.
+		//
+		// bulkRead below starts its byte counter at zero, but this first
+		// packet's payload has already reached dest. Upstream therefore
+		// under-reported every download by one packet's worth of data --
+		// invisible on a multi-gigabyte NSP, but a 4 KB file would finish at
+		// 92% and the progress bar would never reach the end.
+		alreadyRead := int64(len(rest))
+		readProgressCb := progressCb
+		if progressCb != nil && alreadyRead > 0 {
+			readProgressCb = func(n int64) error {
+				return progressCb(n + alreadyRead)
+			}
+		}
+
 		if len(rest)+usbHdrLen == fetchPacketSize || uint32(n) < h.Length {
 			// Special case: From appendix H in the MTP 1.1 spec, the
 			// device can send a 12-byte packet followed by the rest of the
@@ -512,8 +600,15 @@ func (d *Device) runTransaction(req *Container, rep *Container,
 			// If this was a full packet, or if the packet wasn't full but
 			// the device said it was sending more data than we received,
 			// continue reading until we have a read less than a full packet.
-			_, finalPacket, err = d.bulkRead(dest, progressCb)
+			_, finalPacket, err = d.bulkRead(dest, readProgressCb)
 			if err != nil {
+				return err
+			}
+		} else if progressCb != nil && alreadyRead > 0 {
+			// The whole data phase fitted in this one packet, so bulkRead
+			// never ran and never reported anything. Report it here, or a
+			// small file would sit at 0% and then jump straight to done.
+			if err := progressCb(alreadyRead); err != nil {
 				return err
 			}
 		}

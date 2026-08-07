@@ -92,13 +92,14 @@ lipo -info "${BUILD}/nxmtp.dylib"
 otool -L "${BUILD}/nxmtp.dylib" | sed -n '2,$p'
 
 missing=()
-for sym in FetchAvailableDevices Initialize FetchDeviceInfo FetchStorages Walk \
-           MakeDirectory RenameFile DeleteFile FileExists DownloadFiles \
-           UploadFiles CancelTransfer Dispose FetchDiagnostics; do
+expected=(FetchAvailableDevices Initialize FetchDeviceInfo FetchStorages Walk
+          MakeDirectory RenameFile DeleteFile FileExists DownloadFiles
+          UploadFiles CancelTransfer Dispose FetchDiagnostics)
+for sym in "${expected[@]}"; do
   nm -gU "${BUILD}/nxmtp.dylib" | grep -q "_${sym}\$" || missing+=("${sym}")
 done
 if (( ${#missing[@]} )); then
   die "missing exports: ${missing[*]}"
 fi
-info "All ${#missing[@]} expected exports present ($(nm -gU "${BUILD}/nxmtp.dylib" | wc -l | tr -d ' ') symbols total)"
+info "All ${#expected[@]} expected exports present ($(nm -gU "${BUILD}/nxmtp.dylib" | wc -l | tr -d ' ') symbols total)"
 info "Done: ${BUILD}/nxmtp.dylib"
