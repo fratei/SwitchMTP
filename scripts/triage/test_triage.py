@@ -145,6 +145,49 @@ def test_templates_are_valid():
     assert validate_forms(TEMPLATES) == []
 
 
+def _validate_snippet(tmp_path, element: dict) -> list[str]:
+    """Run the template validator over a single hand-built element."""
+    directory = tmp_path / "ISSUE_TEMPLATE"
+    directory.mkdir()
+    (directory / "x.yml").write_text(
+        yaml.safe_dump({"name": "x", "description": "x", "body": [element]}),
+        encoding="utf-8",
+    )
+    return validate_forms(directory)
+
+
+def test_upload_accept_must_list_types_github_takes(tmp_path):
+    """A typo in `accept` is invisible until a reporter is turned away."""
+    problems = _validate_snippet(tmp_path, {
+        "type": "upload",
+        "id": "logs",
+        "attributes": {"label": "Log"},
+        "validations": {"required": False, "accept": ".log,.tgz"},
+    })
+    assert any(".tgz" in p for p in problems)
+    assert not any(".log" in p for p in problems)
+
+
+def test_upload_field_accepts_a_valid_accept_list(tmp_path):
+    assert _validate_snippet(tmp_path, {
+        "type": "upload",
+        "id": "logs",
+        "attributes": {"label": "Log"},
+        "validations": {"required": False, "accept": ".log,.txt,.zip"},
+    }) == []
+
+
+def test_textarea_still_rejects_accept(tmp_path):
+    """`accept` is meaningless outside an upload and would be ignored."""
+    problems = _validate_snippet(tmp_path, {
+        "type": "textarea",
+        "id": "logs",
+        "attributes": {"label": "Log"},
+        "validations": {"required": False, "accept": ".log"},
+    })
+    assert any("validations" in p for p in problems)
+
+
 def test_every_form_has_the_ids_triage_depends_on():
     required = {
         BUG: {"what-happened", "steps", "reproducible", "area", "version",
@@ -224,9 +267,22 @@ def test_no_response_becomes_empty():
 
 
 def test_rendered_code_fences_are_stripped():
-    body = render_body(BUG, complete_bug(logs="```shell\nopen failed\n```"))
+    body = render_body(BUG, complete_bug(diagnostics="```json\n{\"usb\": []}\n```"))
     parsed = parse_issue(body, FORMS)
-    assert parsed.get("logs") == "open failed"
+    assert parsed.get("diagnostics") == '{"usb": []}'
+
+
+def test_upload_fields_keep_their_attachment_links():
+    """Uploads render as markdown links, not fenced blocks.
+
+    `strip_fence` is a textarea affordance; running it over an upload value
+    would be harmless today but would quietly mangle a log link if GitHub ever
+    wrapped one.
+    """
+    link = "[switchmtp-debug.log](https://github.com/user-attachments/files/1/x.log)"
+    parsed = parse_issue(render_body(BUG, complete_bug(logs=link)), FORMS)
+    assert parsed.get("logs") == link
+    assert parsed.has("logs")
 
 
 def test_checkboxes_record_only_the_ticked_ones():

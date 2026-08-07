@@ -178,22 +178,22 @@ body:
     validations:
       required: false
 
-  - type: textarea
+  - type: upload
     id: logs
     attributes:
       label: Transfer log
       description: >
         Only needed for transfer problems. Turn on **SwitchMTP ▸ Settings ▸
-        General ▸ Write a diagnostic log**, quit and reopen the app, reproduce
-        the problem, then use **Show Log in Finder** on that same screen and
-        paste the contents here.
-        **This records file and folder names from your console, so read it
-        before pasting.**
-      render: shell
+        General ▸ Write a diagnostic log**, quit and reopen the app, then
+        reproduce the problem. Use **Show Log in Finder** on that same screen
+        and drag `switchmtp-debug.log` into this box — no need to open or paste
+        it. **It records file and folder names from your console, so have a
+        look before you attach it.**
     validations:
       required: false
+      accept: ".log,.txt,.zip"
 
-  - type: textarea
+  - type: upload
     id: screenshots
     attributes:
       label: Screenshots or a screen recording
@@ -203,6 +203,7 @@ body:
         identify the problem immediately.
     validations:
       required: false
+      accept: ".png,.jpg,.jpeg,.gif,.webp,.mp4,.mov,.webm"
 
   - type: checkboxes
     id: checks

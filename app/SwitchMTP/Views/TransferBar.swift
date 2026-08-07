@@ -192,6 +192,9 @@ struct TransferBar: View {
                     .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
+                .help(isQueueExpanded
+                      ? String(localized: "Hide the list of queued installs", comment: "Tooltip for the button that collapses the install queue")
+                      : String(localized: "Show the list of queued installs", comment: "Tooltip for the button that expands the install queue"))
 
                 Spacer(minLength: 0)
 
@@ -201,6 +204,7 @@ struct TransferBar: View {
                     }
                     .font(.system(size: 11))
                     .buttonStyle(.link)
+                    .help(String(localized: "Remove every title that has not been sent yet. The install in progress is not affected.", comment: "Tooltip for the Clear Queue button"))
                 }
                 if !finished.isEmpty {
                     Button(String(localized: "Clear Finished")) {
@@ -208,6 +212,7 @@ struct TransferBar: View {
                     }
                     .font(.system(size: 11))
                     .buttonStyle(.link)
+                    .help(String(localized: "Remove the titles that have already been sent, failed or were cancelled.", comment: "Tooltip for the Clear Finished button"))
                 }
             }
 
@@ -273,6 +278,21 @@ private struct InstallQueueRow: View {
         }
     }
 
+    /// The row shows a middle-truncated filename, an icon whose colour is the
+    /// only indication of state, and a failure reason clipped to two lines. The
+    /// tooltip is where the whole of each is actually readable.
+    private var tooltip: String {
+        let status: String
+        switch item.state {
+        case .waiting: status = String(localized: "Waiting to be sent", comment: "Install queue item status")
+        case .active: status = String(localized: "Sending now", comment: "Install queue item status")
+        case .sent: status = String(localized: "Sent — DBI reports the result on the console.")
+        case .failed(let message): status = message
+        case .cancelled: status = String(localized: "Cancelled", comment: "Install queue item status")
+        }
+        return "\(item.name) — \(status)"
+    }
+
     var body: some View {
         HStack(alignment: .top, spacing: 6) {
             Image(systemName: symbol)
@@ -305,5 +325,6 @@ private struct InstallQueueRow: View {
                 .help(String(localized: "Remove from queue"))
             }
         }
+        .help(tooltip)
     }
 }

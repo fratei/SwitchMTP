@@ -262,7 +262,12 @@ save data are included.
 
 ### Verbose transfer log
 
-For problems that only reproduce in the GUI, enable the app's file log:
+For problems that only reproduce in the GUI, turn on **SwitchMTP ▸ Settings ▸ General ▸
+Write a diagnostic log**, then quit and reopen the app — the setting is read once at
+launch. Reproduce the problem and use **Show Log in Finder** on the same screen to get
+at the file.
+
+The equivalent from a shell, if you prefer:
 
 ```sh
 defaults write me.fratei.switchmtp debugLogEnabled -bool YES
@@ -274,8 +279,9 @@ Relaunch the app, reproduce the problem, then read:
 cat ~/Library/Containers/me.fratei.switchmtp/Data/tmp/switchmtp-debug.log
 ```
 
-Turn it off again with `defaults delete me.fratei.switchmtp debugLogEnabled`. The log
-records transfer requests, resolved destination paths and backend result envelopes. It
-contains file and folder names from your device, so review it before attaching it to a
-public issue.
+Turn it off again in Settings, or with `defaults delete me.fratei.switchmtp
+debugLogEnabled`. The log records transfer requests, resolved destination paths and
+backend result envelopes. It contains file and folder names from your device, so review
+it before attaching it to a public issue — the bug form takes the file itself as an
+upload, so you do not need to paste it.
 

@@ -27,7 +27,18 @@ import yaml
 NO_RESPONSE = "_No response_"
 
 #: Element types GitHub accepts in an issue form.
-VALID_TYPES = {"markdown", "textarea", "input", "dropdown", "checkboxes"}
+VALID_TYPES = {"markdown", "textarea", "input", "dropdown", "checkboxes", "upload"}
+
+#: Extensions GitHub's `upload` field accepts. A typo here is invisible in
+#: review and only shows up as a reporter being told their file is not
+#: supported, so `accept` lists are checked against it.
+UPLOAD_EXTENSIONS = {
+    ".zip", ".gz", ".tar.gz",
+    ".pdf", ".docx", ".xlsx", ".pptx",
+    ".png", ".jpg", ".jpeg", ".gif", ".svg", ".webp",
+    ".mp4", ".mov", ".webm",
+    ".json", ".py", ".js", ".ts", ".log", ".txt", ".csv",
+}
 
 #: Keys GitHub accepts at the top level of an issue form.
 VALID_TOP_LEVEL = {
@@ -221,8 +232,14 @@ def validate_forms(template_dir: str | Path) -> list[str]:
             if stray:
                 problems.append(f"{where}: unsupported keys {sorted(stray)}")
             validations = element.get("validations") or {}
-            if not isinstance(validations, dict) or (set(validations) - {"required"}):
-                problems.append(f"{where}: 'validations' supports only 'required'")
+            allowed_validations = {"required"}
+            if etype == "upload":
+                allowed_validations.add("accept")
+            if not isinstance(validations, dict) or (set(validations) - allowed_validations):
+                problems.append(
+                    f"{where}: 'validations' supports only "
+                    f"{sorted(allowed_validations)}"
+                )
 
             if etype == "markdown":
                 if "id" in element:
@@ -262,6 +279,21 @@ def validate_forms(template_dir: str | Path) -> list[str]:
                 for j, option in enumerate(options):
                     if not isinstance(option, dict) or not str(option.get("label", "")).strip():
                         problems.append(f"{where}: options[{j}] needs a 'label'")
+            if etype == "upload":
+                if "render" in attrs:
+                    problems.append(f"{where}: upload fields cannot be rendered")
+                accept = validations.get("accept")
+                if accept is not None:
+                    if not isinstance(accept, str):
+                        problems.append(f"{where}: 'accept' must be a comma-separated string")
+                    else:
+                        for ext in (e.strip() for e in accept.split(",")):
+                            if not ext:
+                                continue
+                            if ext not in UPLOAD_EXTENSIONS:
+                                problems.append(
+                                    f"{where}: GitHub does not accept uploads of {ext!r}"
+                                )
 
         for wanted in data.get("labels") or []:
             referenced_labels.add(str(wanted))

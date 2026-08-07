@@ -38,6 +38,9 @@ struct PathBarView: View {
                             .foregroundStyle(index == navigationStack.count - 1 ? .primary : .secondary)
                     }
                     .buttonStyle(.plain)
+                    .help(index == 0
+                          ? String(localized: "Go to the list of storages", comment: "Tooltip for the first breadcrumb in the path bar")
+                          : String(localized: "Go to \(path)", comment: "Tooltip for a breadcrumb in the path bar; the placeholder is a folder path"))
                     .onHover { isHovering in
                         if isHovering {
                             NSCursor.pointingHand.push()

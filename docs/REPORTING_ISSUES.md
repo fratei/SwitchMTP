@@ -84,19 +84,32 @@ without it.
 
 ## The verbose transfer log
 
-Only worth collecting for transfer problems, and only when asked, because it is
-noisy:
+Only worth collecting for transfer problems, because it is noisy. There is a
+switch for it in the app:
+
+1. **SwitchMTP ▸ Settings ▸ General ▸ Write a diagnostic log**.
+2. Quit and reopen the app — the setting is read once at launch.
+3. Reproduce the problem.
+4. **Show Log in Finder**, on that same Settings screen.
+
+Then drag `switchmtp-debug.log` straight into the **Transfer log** box on the
+bug form. It is an upload field, so there is no need to open the file or paste
+its contents.
+
+Turn the setting off again afterwards; the log keeps growing while it is on.
+
+If you would rather not use the UI, the same switch is a user default:
 
 ```shell
 defaults write me.fratei.switchmtp debugLogEnabled -bool YES
 # relaunch the app, reproduce the problem, then:
-cat ~/Library/Containers/me.fratei.switchmtp/Data/tmp/switchmtp-debug.log
+open ~/Library/Containers/me.fratei.switchmtp/Data/tmp/
 # turn it off again:
-defaults write me.fratei.switchmtp debugLogEnabled -bool NO
+defaults delete me.fratei.switchmtp debugLogEnabled
 ```
 
-**The log records file and folder names from your console.** Read it before you
-paste it.
+**The log records file and folder names from your console.** Have a look at it
+before you attach it.
 
 ---
 

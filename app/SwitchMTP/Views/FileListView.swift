@@ -397,6 +397,9 @@ private struct FileListTableRepresentable: NSViewRepresentable {
             column.maxWidth = spec.maxWidth
             column.resizingMask = .userResizingMask
             column.sortDescriptorPrototype = NSSortDescriptor(key: spec.id.rawValue, ascending: true)
+            // Column headers sort on click, which is not discoverable from a
+            // bare title until the arrow appears after the first click.
+            column.headerToolTip = String(localized: "Sort by \(spec.title)", comment: "Tooltip on a file list column header; the placeholder is the column name")
             tableView.addTableColumn(column)
         }
 
@@ -548,11 +551,15 @@ private struct FileListTableRepresentable: NSViewRepresentable {
             case .name:
                 return makeNameCell(for: file, tableView: tableView)
             case .dateModified:
+                let formatted = file.dateModified.map { dateFormatter.string(from: $0) } ?? "—"
                 return makeTextCell(
                     identifier: "DateCell",
-                    text: file.dateModified.map { dateFormatter.string(from: $0) } ?? "—",
+                    text: formatted,
                     alignment: .left,
                     font: .systemFont(ofSize: CGFloat(parent.fontSize - 1)),
+                    toolTip: file.dateModified == nil
+                        ? String(localized: "Date not reported by the device", comment: "Tooltip in the file list when the device reports no modification date")
+                        : formatted,
                     tableView: tableView
                 )
             case .size:
@@ -571,6 +578,7 @@ private struct FileListTableRepresentable: NSViewRepresentable {
                     text: file.kind,
                     alignment: .left,
                     font: .systemFont(ofSize: CGFloat(parent.fontSize - 1)),
+                    toolTip: file.kind,
                     tableView: tableView
                 )
             }
@@ -942,6 +950,10 @@ private struct FileListTableRepresentable: NSViewRepresentable {
             cell.imageView?.image = getThumbnailIcon(for: file)
             cell.textField?.stringValue = file.name
             cell.textField?.textColor = .labelColor
+            // The name truncates in the middle, which on a Switch is exactly
+            // where the title ID and version sit. Cells are recycled, so this
+            // has to be assigned on every pass, not just at construction.
+            cell.textField?.toolTip = file.name
             return cell
         }
 
@@ -1372,6 +1384,12 @@ private struct ImportDialogContent: View {
                             .padding(.vertical, 6)
                             .padding(.horizontal, 4)
                             .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
+                            // Title filenames are long and truncate in the
+                            // middle, which is exactly where the version and
+                            // title ID sit -- confirming the right file needs
+                            // the whole path.
+                            .help(url.path)
                         }
                     }
                     .frame(maxWidth: .infinity, alignment: .leading)

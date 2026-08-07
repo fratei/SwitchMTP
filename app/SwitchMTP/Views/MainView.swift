@@ -572,7 +572,9 @@ struct MainView: View {
                 } label: {
                     Label("Connect Device", systemImage: "cable.connector")
                 }
-                .help(String(localized: "Connect Device"))
+                .help(toolbarHelp(String(localized: "Connect Device"), [
+                    (!manager.isStarted, String(localized: "Review the USB access notice first.", comment: "Reason the Connect button is unavailable on first run")),
+                ]))
                 // The toolbar sits in the titlebar, which the first-run
                 // disclosure overlay cannot cover, so it must disable itself.
                 .disabled(!manager.isStarted)
@@ -596,9 +598,12 @@ struct MainView: View {
                     Label(String(localized: "Import"), systemImage: "arrow.down.to.line")
                 }
             }
-            .help(String(localized: "Import files from Mac to device"))
+            .help(toolbarHelp(String(localized: "Import files from Mac to device"), [
+                (!manager.connectionState.isConnected, notConnectedReason),
+                (manager.isTransferActive, transferBusyReason),
+                (!canUploadToSelectedStorage, String(localized: "This storage does not allow uploads.")),
+            ]))
             .disabled(!manager.connectionState.isConnected || manager.isTransferActive || !canUploadToSelectedStorage)
-            .help(canUploadToSelectedStorage ? String(localized: "Import files from Mac to device") : String(localized: "This storage does not allow uploads."))
 
             Button {
                 let panel = NSOpenPanel()
@@ -615,7 +620,11 @@ struct MainView: View {
                     Label(String(localized: "Export"), systemImage: "arrow.up.to.line")
                 }
             }
-            .help(String(localized: "Export selected files to Mac"))
+            .help(toolbarHelp(String(localized: "Export selected files to Mac"), [
+                (!manager.connectionState.isConnected, notConnectedReason),
+                (manager.isTransferActive, transferBusyReason),
+                (selectedFiles.isEmpty, selectSomethingReason),
+            ]))
             .disabled(selectedFiles.isEmpty || !manager.connectionState.isConnected || manager.isTransferActive)
 
             Spacer(minLength: 12)
@@ -627,9 +636,12 @@ struct MainView: View {
             } label: {
                 Label("New Folder", systemImage: "folder.badge.plus")
             }
-            .help(String(localized: "Create new folder"))
+            .help(toolbarHelp(String(localized: "Create new folder"), [
+                (!manager.connectionState.isConnected, notConnectedReason),
+                (manager.isTransferActive, transferBusyReason),
+                (!canCreateFolderInSelectedStorage, String(localized: "This storage does not allow creating folders.")),
+            ]))
             .disabled(!manager.connectionState.isConnected || manager.isTransferActive || !canCreateFolderInSelectedStorage)
-            .help(canCreateFolderInSelectedStorage ? String(localized: "Create new folder") : String(localized: "This storage does not allow creating folders."))
 
             Button {
                 if canRenameInSelectedStorage, let first = selectedFiles.first {
@@ -639,9 +651,13 @@ struct MainView: View {
             } label: {
                 Label("Rename", systemImage: "character.cursor.ibeam")
             }
-            .help(String(localized: "Rename"))
+            .help(toolbarHelp(String(localized: "Rename"), [
+                (!manager.connectionState.isConnected, notConnectedReason),
+                (manager.isTransferActive, transferBusyReason),
+                (selectedFiles.count != 1, String(localized: "Select exactly one item first.", comment: "Reason a toolbar button is unavailable")),
+                (!canRenameInSelectedStorage, String(localized: "This storage does not allow renaming items.")),
+            ]))
             .disabled(!manager.connectionState.isConnected || manager.isTransferActive || selectedFiles.count != 1 || !canRenameInSelectedStorage)
-            .help(canRenameInSelectedStorage ? String(localized: "Rename") : String(localized: "This storage does not allow renaming items."))
 
             Button {
                 if canDeleteInSelectedStorage {
@@ -650,9 +666,13 @@ struct MainView: View {
             } label: {
                 Label("Delete", systemImage: "trash")
             }
-            .help(String(localized: "Delete selected items"))
+            .help(toolbarHelp(String(localized: "Delete selected items"), [
+                (!manager.connectionState.isConnected, notConnectedReason),
+                (manager.isTransferActive, transferBusyReason),
+                (selectedFiles.isEmpty, selectSomethingReason),
+                (!canDeleteInSelectedStorage, String(localized: "This storage does not allow deleting items.")),
+            ]))
             .disabled(selectedFiles.isEmpty || !manager.connectionState.isConnected || manager.isTransferActive || !canDeleteInSelectedStorage)
-            .help(canDeleteInSelectedStorage ? String(localized: "Delete selected items") : String(localized: "This storage does not allow deleting items."))
 
             Spacer(minLength: 12)
 
@@ -661,9 +681,43 @@ struct MainView: View {
             } label: {
                 Label(String(localized: "Device Info"), systemImage: "info.circle")
             }
-            .help(String(localized: "Show device information"))
+            .help(toolbarHelp(String(localized: "Show device information"), [
+                (!manager.connectionState.isConnected, notConnectedReason),
+                (manager.isTransferActive, transferBusyReason),
+            ]))
             .disabled(!manager.connectionState.isConnected || manager.isTransferActive)
         }
+    }
+
+    // MARK: – Toolbar tooltips
+
+    /// A greyed-out button tells the user *that* something is unavailable but
+    /// never *why*, and the reasons here are not interchangeable: wrong
+    /// storage, nothing selected, no device and "busy" each need a different
+    /// response. Toolbar items keep their tooltip while disabled, so this is
+    /// the one place that explanation fits.
+    ///
+    /// The reason replaces the description rather than being appended to it.
+    /// The button's icon and its menu-bar twin already say what it does, the
+    /// blocked case is the only one carrying new information, and a tooltip
+    /// containing a newline does not render at all here.
+    ///
+    /// Blockers are listed in the order they should be reported; the first one
+    /// that applies wins.
+    private func toolbarHelp(_ action: String, _ blockers: [(Bool, String)]) -> String {
+        blockers.first(where: { $0.0 })?.1 ?? action
+    }
+
+    private var notConnectedReason: String {
+        String(localized: "Connect a device first.", comment: "Reason a toolbar button is unavailable")
+    }
+
+    private var transferBusyReason: String {
+        String(localized: "Wait for the current transfer to finish.", comment: "Reason a toolbar button is unavailable")
+    }
+
+    private var selectSomethingReason: String {
+        String(localized: "Select one or more items first.", comment: "Reason a toolbar button is unavailable")
     }
 
     private func handleImport(_ urls: [URL]) {

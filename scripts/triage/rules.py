@@ -205,14 +205,17 @@ def searchable_text(title: str, parsed: ParsedIssue, body: str) -> str:
     `AREA_BY_OPTION` and the `fields:` constraints in the knowledge base, so
     they have no business here. Short inputs are version numbers.
 
-    The pasted diagnostics and logs are excluded for the same reason at greater
-    volume: they are full of device names and paths, and matching on them
-    produces confident nonsense.
+    The pasted diagnostics are excluded for the same reason at greater volume:
+    they are full of device names and paths, and matching on them produces
+    confident nonsense. Logs and screenshots arrive as `upload` fields, so they
+    are already excluded by the textarea test below; they stay named here so
+    that converting one back to a textarea does not silently start feeding
+    attachment URLs into keyword routing.
     """
     if parsed.form is None:
         return f"{title}\n{body}"
 
-    # Dumps the reporter pasted rather than wrote.
+    # Dumps the reporter attached or pasted rather than wrote.
     skip = {"diagnostics", "logs", "screenshots", "checks"}
     prose = {
         f.id

@@ -8,11 +8,30 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- **Hover explanations across the app.** Most controls had no tooltip, and the ones that
+  did mostly repeated their own label. Toolbar buttons, breadcrumbs, sidebar storages, the
+  install drop zone and the install queue now explain what they do — and, where a control
+  is greyed out, *why*. A disabled button previously told the user only that something was
+  unavailable, never that the fix was to select a file, connect a console, or wait for the
+  current transfer; those three cases need different responses and now say so.
+- **Tooltips in the file list.** The list is an `NSTableView`, so SwiftUI's `.help()` could
+  never reach it: long filenames truncated mid-string with no way to read the rest. Name,
+  date and kind cells now carry tooltips, column headers explain that clicking sorts, and a
+  file whose date the device didn't report says so instead of showing a blank cell.
 - **Settings ▸ General ▸ Write a diagnostic log**, with a button to reveal the log in
   Finder. Transfer failures were previously only diagnosable by knowing to run a
   `defaults write` command from Terminal, so in practice the log was never on when it was
   needed — including for the transfer failure that prompted adding it. The bug report form
   now points at the setting instead of the command.
+
+### Changed
+
+- **The bug report form takes the log and screenshots as file uploads** rather than asking
+  for pasted text. Reporters had to open the log, select ~7 KB of it and paste it into a
+  textarea, which meant most reports arrived without one. Both fields now use GitHub's
+  upload widget with the file types each accepts, and the triage tooling validates the new
+  field type. `docs/REPORTING_ISSUES.md` and `docs/TROUBLESHOOTING.md` were still teaching
+  the old `defaults write` route and now describe the Settings toggle.
 
 ### Fixed
 
