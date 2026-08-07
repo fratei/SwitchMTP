@@ -491,18 +491,132 @@ private func handleCp(args: [String], config: Config) throws -> ExitCode {
     let deviceId = try selectedDevice(config: config)
     return withOpenDevice(deviceId: deviceId, config: config) { _ in
         let env: Envelope
+        var pendingRename: (from: String, to: String)? = nil
+        var pendingUploadRename: (path: String, newName: String)? = nil
         if let remote = srcRemote {
-            env = NxmtpClient.download(deviceId: deviceId, storageId: remote.storageId, sources: [remote.path], destination: args[1])
+            // The backend takes a destination *directory*. Honour the usual
+            // cp convention on top of it: when the destination is not an
+            // existing directory and does not end in "/", its last component
+            // names the copied file rather than a folder to copy into.
+            let target = downloadTarget(for: args[1], sourcePath: remote.path)
+            pendingRename = target.rename
+            env = NxmtpClient.download(deviceId: deviceId, storageId: remote.storageId, sources: [remote.path], destination: target.directory)
         } else if let remote = dstRemote {
-            env = NxmtpClient.upload(deviceId: deviceId, storageId: remote.storageId, sources: [args[0]], destination: remote.path)
+            // Mirror of the download case: the backend takes a destination
+            // *directory*, so honour the cp convention that a destination
+            // which is not an existing directory names the copied file.
+            let target = uploadTarget(for: remote.path, storageId: remote.storageId, deviceId: deviceId, sourcePath: args[0])
+            pendingUploadRename = target.rename
+            env = NxmtpClient.upload(deviceId: deviceId, storageId: remote.storageId, sources: [args[0]], destination: target.directory)
         } else {
             return .usage
         }
         if config.json { print(env.raw) }
         if !env.isSuccess { printError(env); return exitCode(for: env) }
+        if let rename = pendingRename {
+            do {
+                try applyDownloadRename(rename)
+            } catch {
+                fputs("Error: \(error.localizedDescription)\n", stderr)
+                return .failure
+            }
+        }
+        if let rename = pendingUploadRename, let remote = dstRemote {
+            let renameEnv = NxmtpClient.rename(deviceId: deviceId, storageId: remote.storageId, path: rename.path, newFileName: rename.newName)
+            if !renameEnv.isSuccess { printError(renameEnv); return exitCode(for: renameEnv) }
+        }
         if !config.json { printTransferSummary(env, verb: "Copy") }
         return .success
     }
+}
+
+/// Splits a user-supplied download destination into the directory the backend
+/// should write into and, when the destination names a file, the rename that
+/// has to happen afterwards.
+private func downloadTarget(for destination: String, sourcePath: String) -> (directory: String, rename: (from: String, to: String)?) {
+    if destination.hasSuffix("/") { return (destination, nil) }
+
+    var isDirectory: ObjCBool = false
+    if FileManager.default.fileExists(atPath: destination, isDirectory: &isDirectory), isDirectory.boolValue {
+        return (destination, nil)
+    }
+
+    let url = URL(fileURLWithPath: destination)
+    let newName = url.lastPathComponent
+    let sourceName = URL(fileURLWithPath: normalizedRemotePath(sourcePath)).lastPathComponent
+    guard !newName.isEmpty, newName != ".", newName != "..", !sourceName.isEmpty else {
+        return (destination, nil)
+    }
+
+    var parent = url.deletingLastPathComponent().path
+    if parent.isEmpty { parent = "." }
+    if newName == sourceName { return (parent, nil) }
+    return (parent, (from: (parent as NSString).appendingPathComponent(sourceName), to: destination))
+}
+
+private func applyDownloadRename(_ rename: (from: String, to: String)) throws {
+    let fm = FileManager.default
+    guard fm.fileExists(atPath: rename.from) else { return }
+    if fm.fileExists(atPath: rename.to) {
+        try fm.removeItem(atPath: rename.to)
+    }
+    try fm.moveItem(atPath: rename.from, toPath: rename.to)
+}
+
+/// Splits a user-supplied upload destination into the device directory the
+/// backend should write into and, when the destination names a file, the
+/// on-device rename that has to happen afterwards.
+///
+/// This is the upload counterpart of `downloadTarget`. Without it,
+/// `cp local.bin 65537:/new-name.bin` created a *folder* called `new-name.bin`
+/// on the device and put `local.bin` inside it.
+private func uploadTarget(for destination: String, storageId: UInt32, deviceId: String, sourcePath: String)
+    -> (directory: String, rename: (path: String, newName: String)?)
+{
+    let normalized = normalizedRemotePath(destination)
+    if destination.hasSuffix("/") || normalized == "/" { return (destination, nil) }
+
+    let newName = (normalized as NSString).lastPathComponent
+    let sourceName = URL(fileURLWithPath: sourcePath).lastPathComponent
+    guard !newName.isEmpty, newName != ".", newName != "..", !sourceName.isEmpty else {
+        return (destination, nil)
+    }
+
+    // A directory that already exists on the device is a copy-into target, so
+    // there is nothing to rename.
+    if remoteIsDirectory(path: normalized, storageId: storageId, deviceId: deviceId) {
+        return (destination, nil)
+    }
+
+    // Uploading a local directory always produces a directory; treating the
+    // destination as a new name for it would be wrong.
+    var isSourceDirectory: ObjCBool = false
+    if FileManager.default.fileExists(atPath: sourcePath, isDirectory: &isSourceDirectory), isSourceDirectory.boolValue {
+        return (destination, nil)
+    }
+
+    var parent = (normalized as NSString).deletingLastPathComponent
+    if parent.isEmpty { parent = "/" }
+    if newName == sourceName { return (parent, nil) }
+    return (parent, (path: (parent as NSString).appendingPathComponent(sourceName), newName: newName))
+}
+
+/// Reports whether `path` exists on the device as a directory, by listing its
+/// parent and looking for a folder entry of the same name. A non-recursive
+/// walk of the parent is one round trip and, unlike `FileExists`, distinguishes
+/// files from folders.
+private func remoteIsDirectory(path: String, storageId: UInt32, deviceId: String) -> Bool {
+    let name = (path as NSString).lastPathComponent
+    var parent = (path as NSString).deletingLastPathComponent
+    if parent.isEmpty { parent = "/" }
+
+    let env = NxmtpClient.walk(deviceId: deviceId, storageId: storageId, path: parent, skipHidden: false)
+    guard env.isSuccess, let entries = env.data as? [[String: Any]] else { return false }
+    for entry in entries {
+        guard let entryName = string(entry["name"]), entryName == name else { continue }
+        return bool(entry["isFolder"]) ?? false
+    }
+    return false
 }
 
 private func handleRm(args: [String], config: Config) throws -> ExitCode {
