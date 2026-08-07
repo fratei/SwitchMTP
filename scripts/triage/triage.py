@@ -146,6 +146,31 @@ def to_ref(issue: dict[str, Any]) -> IssueRef:
     )
 
 
+def closed_by_a_human(
+    issue: dict[str, Any], comments: Sequence[dict[str, Any]]
+) -> bool:
+    """Was this issue closed by someone other than whoever runs triage?
+
+    A maintainer closing an issue is the end of the conversation, and a bot
+    that reopens it the next morning is worse than no bot at all. The bot's
+    own identity is read off its marker comment rather than hard-coded, so
+    this holds whether triage runs as `github-actions[bot]` in CI or as a
+    person from a laptop.
+    """
+    if issue.get("state") != "closed":
+        return False
+    closer = ((issue.get("closed_by") or {}).get("login")) or ""
+    if not closer:
+        # Nothing to go on: assume a human, because the cost of wrongly
+        # reopening a settled issue is higher than of leaving one closed.
+        return True
+    for comment in comments:
+        if MARKER in (comment.get("body") or ""):
+            bot = ((comment.get("user") or {}).get("login")) or ""
+            return closer != bot
+    return True
+
+
 def disputed_answer(
     issue: dict[str, Any], comments: Sequence[dict[str, Any]]
 ) -> bool:
@@ -195,12 +220,27 @@ def triage_one(
 
     comments = api.comments(number)
 
+    # List endpoints omit `closed_by`, and without it a genuine dispute could
+    # never reopen anything. Only closed issues need the extra request.
+    if issue.get("state") == "closed" and not issue.get("closed_by"):
+        try:
+            issue = api.issue(number)
+            labels = [l["name"] for l in issue.get("labels") or []]
+        except Exception:
+            pass
+
     # A human replying to the bot's conclusion is disputing it. Honour that
     # before anything else: reopen if it was closed, hand it to a person, and
     # stop — re-running the rules would only reach the same wrong conclusion.
     if disputed_answer(issue, comments):
+        # A maintainer's close outranks the bot's own. If a person closed this,
+        # the objection still deserves a human's attention, but reopening it
+        # would be the bot overruling the maintainer — so it stays closed and
+        # is merely flagged.
+        human_close = closed_by_a_human(issue, comments)
         was_closed = issue.get("state") == "closed"
-        if was_closed:
+        reopen = was_closed and not human_close
+        if reopen:
             api.reopen_issue(number)
         api.add_labels(number, ["triage:disputed", "triage:needs-human"])
         for stale in ("triage:answered", "duplicate", "needs-info"):
@@ -212,10 +252,23 @@ def triage_one(
                 int(previous["id"]),
                 DISPUTED_NOTE.format(
                     marker=MARKER,
-                    reopened=" It has been reopened." if was_closed else "",
+                    reopened=(
+                        " It has been reopened."
+                        if reopen
+                        else (
+                            " It stays closed, because a maintainer closed it "
+                            "deliberately rather than the bot — reopen it if you "
+                            "think that was wrong."
+                            if was_closed
+                            else ""
+                        )
+                    ),
                 ),
             )
-        print(f"#{number}: disputed, handed to a maintainer")
+        print(
+            f"#{number}: disputed, handed to a maintainer"
+            + ("" if not was_closed else " (left closed)" if not reopen else " (reopened)")
+        )
         return None
 
     parsed = parse_issue(issue.get("body") or "", forms)

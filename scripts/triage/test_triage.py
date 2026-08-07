@@ -989,6 +989,46 @@ def test_a_reply_to_a_needs_info_comment_is_not_a_dispute():
     assert triage.disputed_answer(issue, comments) is False
 
 
+# ------------------------------------------------- who gets the last word
+
+def test_an_issue_the_bot_closed_is_the_bots_to_reopen():
+    issue, comments = _answered_and_closed([
+        _comment(f"{MARKER}\n\nThanks for the report.", bot=True),
+        _comment("That is not it."),
+    ])
+    issue["closed_by"] = {"login": "github-actions[bot]"}
+    assert triage.closed_by_a_human(issue, comments) is False
+
+
+def test_a_maintainers_close_is_never_undone_by_the_bot():
+    """Reopening a maintainer's close every morning is worse than no bot."""
+    issue, comments = _answered_and_closed([
+        _comment(f"{MARKER}\n\nThanks for the report.", bot=True),
+        _comment("Closing — this is working as intended.", login="maintainer"),
+    ])
+    issue["closed_by"] = {"login": "maintainer"}
+    assert triage.disputed_answer(issue, comments) is True
+    assert triage.closed_by_a_human(issue, comments) is True
+
+
+def test_an_unknown_closer_is_treated_as_a_human():
+    """Leaving a settled issue closed beats resurrecting it on a guess."""
+    issue, comments = _answered_and_closed([
+        _comment(f"{MARKER}\n\nThanks for the report.", bot=True),
+        _comment("That is not it."),
+    ])
+    assert "closed_by" not in issue
+    assert triage.closed_by_a_human(issue, comments) is True
+
+
+def test_an_open_issue_was_not_closed_by_anybody():
+    issue, comments = _answered_and_closed([
+        _comment(f"{MARKER}\n\nIt reads as a duplicate.", bot=True),
+    ])
+    issue["state"] = "open"
+    assert triage.closed_by_a_human(issue, comments) is False
+
+
 def test_the_bot_never_applies_a_maintainer_status_label():
     """`status:*` is a human's decision, and every one of them is hands-off.
 
