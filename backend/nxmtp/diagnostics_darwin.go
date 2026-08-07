@@ -85,24 +85,23 @@ static int switchmtp_find_usb_clients(SwitchMTPUSBClient* results, int maxResult
 import "C"
 
 import (
-	"os"
-	"runtime"
 	"sort"
 	"strings"
 
 	"github.com/ganeshrvel/go-mtpfs/mtp"
-	"github.com/ganeshrvel/usb"
 )
 
-// USBClient is a process holding a USB device or interface.
-type USBClient struct {
-	PID     int    `json:"pid"`
-	Name    string `json:"name"`
-	Known   bool   `json:"known"`
-	Advice  string `json:"advice,omitempty"`
-	IsSelf  bool   `json:"isSelf"`
-	Blocker bool   `json:"blocker"`
-}
+// platformHostNoun names the host in user-facing advice.
+const platformHostNoun = "this Mac"
+
+// platformNoInterfaceAdvice and platformNoUSBAdvice add macOS-specific steps to
+// the shared advice in summarise.
+var (
+	platformNoInterfaceAdvice = []string{}
+	platformNoUSBAdvice       = []string{
+		"Check that the app has USB access, then restart it.",
+	}
+)
 
 // knownBlockers are the macOS processes that routinely claim the PTP/MTP
 // interface before we can, which makes libusb_claim_interface fail. This is by
@@ -124,67 +123,6 @@ var knownBlockers = map[string]string{
 	"gphoto2":                     "gphoto2 is holding the device.",
 	"mtp-server":                  "Another MTP client is holding the device.",
 	"simple-mtpfs":                "Another MTP client is holding the device.",
-}
-
-// USBDeviceSummary is one raw USB device, used to show what the Mac can see
-// even when we cannot claim it.
-type USBDeviceSummary struct {
-	VendorID    uint16 `json:"vendorId"`
-	ProductID   uint16 `json:"productId"`
-	Class       uint8  `json:"deviceClass"`
-	IsNintendo  bool   `json:"isNintendo"`
-	Description string `json:"description"`
-	MTPCapable  bool   `json:"mtpCapable"`
-}
-
-// Diagnostics is the report shown in the troubleshooting UI and attached to
-// bug reports.
-type Diagnostics struct {
-	Platform     string             `json:"platform"`
-	Arch         string             `json:"arch"`
-	SelfPID      int                `json:"selfPid"`
-	Devices      []USBDeviceSummary `json:"devices"`
-	MTPDevices   []DeviceRef        `json:"mtpDevices"`
-	USBClients   []USBClient        `json:"usbClients"`
-	Blockers     []USBClient        `json:"blockers"`
-	NintendoSeen bool               `json:"nintendoSeen"`
-	Summary      string             `json:"summary"`
-	Advice       []string           `json:"advice"`
-}
-
-// CollectDiagnostics gathers everything useful for working out why a device is
-// not usable.
-//
-// It deliberately does not require a connected client: the whole point is to
-// answer "why can I not connect".
-func CollectDiagnostics() *Diagnostics {
-	d := &Diagnostics{
-		Platform: runtime.GOOS,
-		Arch:     runtime.GOARCH,
-		SelfPID:  os.Getpid(),
-	}
-
-	d.USBClients = usbClients(d.SelfPID)
-	for _, c := range d.USBClients {
-		if c.Blocker {
-			d.Blockers = append(d.Blockers, c)
-		}
-	}
-
-	d.Devices, d.NintendoSeen = enumerateUSB()
-
-	// A machine-wide scan cannot tell whether a process is holding *our*
-	// device, so anything it flags is a guess. Now that we know which Nintendo
-	// devices are attached, ask IOKit precisely who holds each one's interface
-	// and let that override the guesswork.
-	d.Blockers = append(d.Blockers, interfaceHolders(d)...)
-
-	if refs, err := FindDevices(); err == nil {
-		d.MTPDevices = refs
-	}
-
-	d.Summary, d.Advice = summarise(d)
-	return d
 }
 
 // usbClients lists processes currently holding USB user clients.
@@ -220,151 +158,6 @@ func usbClients(selfPID int) []USBClient {
 		return out[i].PID < out[j].PID
 	})
 	return out
-}
-
-// enumerateUSB lists raw USB devices, flagging Nintendo hardware and anything
-// that looks MTP-capable.
-func enumerateUSB() ([]USBDeviceSummary, bool) {
-	ctx := usb.NewContext()
-	defer ctx.Exit()
-
-	list, err := ctx.GetDeviceList()
-	if err != nil {
-		return nil, false
-	}
-	defer list.Done()
-
-	var out []USBDeviceSummary
-	nintendo := false
-
-	for _, dev := range list {
-		desc, err := dev.GetDeviceDescriptor()
-		if err != nil {
-			continue
-		}
-		s := USBDeviceSummary{
-			VendorID:   desc.IdVendor,
-			ProductID:  desc.IdProduct,
-			Class:      desc.DeviceClass,
-			IsNintendo: desc.IdVendor == VendorNintendo,
-		}
-		if s.IsNintendo {
-			nintendo = true
-			s.Description = describeNintendo(desc.IdProduct)
-		}
-		s.MTPCapable = looksMTPCapable(dev)
-		out = append(out, s)
-	}
-	return out, nintendo
-}
-
-func describeNintendo(pid uint16) string {
-	switch pid {
-	case ProductSwitchMTP:
-		return "Nintendo Switch, MTP mode (DBI or Horizon OS)"
-	case ProductSwitch2MTP:
-		return "Nintendo Switch 2, MTP mode"
-	case ProductHomebrewUSB:
-		return "Nintendo Switch in a homebrew USB mode (DBIbackend, Awoo-Installer or GoldLeaf) -- this is NOT MTP"
-	default:
-		return "Nintendo device in a non-MTP USB mode"
-	}
-}
-
-// looksMTPCapable reports whether a device exposes the three-endpoint
-// bulk-in/bulk-out/interrupt-in layout that MTP requires.
-func looksMTPCapable(dev *usb.Device) bool {
-	desc, err := dev.GetDeviceDescriptor()
-	if err != nil {
-		return false
-	}
-	for i := byte(0); i < desc.NumConfigurations; i++ {
-		cfg, err := dev.GetConfigDescriptor(i)
-		if err != nil {
-			continue
-		}
-		for _, iface := range cfg.Interfaces {
-			for _, alt := range iface.AltSetting {
-				if len(alt.EndPoints) != 3 {
-					continue
-				}
-				var bulkIn, bulkOut, intrIn bool
-				for _, ep := range alt.EndPoints {
-					switch {
-					case ep.Direction() == usb.ENDPOINT_IN && ep.TransferType() == usb.TRANSFER_TYPE_BULK:
-						bulkIn = true
-					case ep.Direction() == usb.ENDPOINT_OUT && ep.TransferType() == usb.TRANSFER_TYPE_BULK:
-						bulkOut = true
-					case ep.Direction() == usb.ENDPOINT_IN && ep.TransferType() == usb.TRANSFER_TYPE_INTERRUPT:
-						intrIn = true
-					}
-				}
-				if bulkIn && bulkOut && intrIn {
-					return true
-				}
-			}
-		}
-	}
-	return false
-}
-
-// summarise turns the raw findings into a one-line verdict plus ordered
-// remediation steps.
-func summarise(d *Diagnostics) (string, []string) {
-	var advice []string
-
-	// The most specific diagnosis first: a Switch in a non-MTP homebrew USB mode.
-	for _, dev := range d.Devices {
-		if dev.IsNintendo && dev.ProductID == ProductHomebrewUSB {
-			return "A Nintendo Switch is connected, but it is in a homebrew USB mode (DBIbackend, Awoo-Installer or GoldLeaf), not MTP.",
-				[]string{
-					"If DBI is running: press B to return to its main menu, press X, then choose \"Run MTP responder\".",
-					"If Awoo-Installer or GoldLeaf is running: exit it and launch DBI instead -- SwitchMTP speaks MTP, not their USB protocols.",
-					"Reconnect the cable after switching modes.",
-				}
-		}
-	}
-
-	if len(d.MTPDevices) > 0 {
-		usable := 0
-		for _, r := range d.MTPDevices {
-			if r.Usable {
-				usable++
-			}
-		}
-		if usable > 0 {
-			return "Found " + itoa(int64(usable)) + " usable MTP device(s).", nil
-		}
-	}
-
-	if len(d.Blockers) > 0 {
-		for _, b := range d.Blockers {
-			advice = append(advice, b.Advice+" (PID "+itoa(int64(b.PID))+")")
-		}
-		advice = append(advice, "Then unplug the Switch and plug it back in.")
-		return "Another process on this Mac has claimed the USB device.", advice
-	}
-
-	if d.NintendoSeen {
-		return "A Nintendo device is connected but no MTP interface was found.",
-			[]string{
-				"On the Switch, make sure DBI's MTP responder is running (main menu, press X, \"Run MTP responder\").",
-				"Try a different USB-C cable -- many cables carry power only.",
-				"Unplug and reconnect the Switch.",
-			}
-	}
-
-	if len(d.Devices) == 0 {
-		return "No USB devices are visible at all.",
-			[]string{"SwitchMTP could not enumerate USB. Check that the app has USB access, then restart it."}
-	}
-
-	return "No Nintendo Switch was detected.",
-		[]string{
-			"Connect the Switch with a USB-C data cable (charge-only cables will not work).",
-			"Launch DBI on the Switch, press X, and choose \"Run MTP responder\".",
-			"If the Switch is docked, try connecting it directly to the Mac instead.",
-		}
 }
 
 // interfaceHolders reports the processes holding a USB *interface* on an

@@ -35,6 +35,51 @@ jobs:
       - name: Test triage engine
         run: pytest scripts/triage/test_triage.py -q
 
+  backend-linux:
+    # Proves the Go backend is genuinely portable rather than portable in
+    # principle. backend/fake means the whole suite runs with no hardware, so a
+    # macOS-only assumption creeping back into nxmtp fails here in under a
+    # minute instead of surfacing during a port.
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.21.x'
+          cache-dependency-path: backend/go.mod
+
+      - name: Install libusb
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends libusb-1.0-0-dev pkg-config
+
+      - name: Check gofmt
+        working-directory: backend
+        run: |
+          unformatted="$(gofmt -l .)"
+          if [[ -n "${unformatted}" ]]; then
+            echo "Go files need gofmt:"
+            echo "${unformatted}"
+            exit 1
+          fi
+
+      - name: Go vet
+        working-directory: backend
+        run: go vet ./...
+
+      - name: Go build
+        working-directory: backend
+        run: go build ./...
+
+      - name: Go test
+        working-directory: backend
+        run: go test ./...
+
   build:
     runs-on: macos-latest
     timeout-minutes: 45

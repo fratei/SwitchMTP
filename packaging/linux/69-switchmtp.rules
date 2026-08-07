@@ -1,0 +1,35 @@
+# SwitchMTP — USB access for a Nintendo Switch running DBI's MTP responder.
+#
+# Install with:
+#   sudo cp packaging/linux/69-switchmtp.rules /etc/udev/rules.d/
+#   sudo udevadm control --reload-rules && sudo udevadm trigger
+#
+# This file does two separate jobs. Both are needed.
+#
+# 1. Grant access. /dev/bus/usb nodes are root-only by default, so without this
+#    the Switch enumerates but cannot be opened. TAG+="uaccess" is the modern
+#    logind mechanism and grants the locally logged-in user access on Fedora,
+#    Arch and SteamOS, which have no plugdev group. GROUP="plugdev" is the
+#    fallback for Debian and Ubuntu, and for SSH sessions, where uaccess does
+#    not apply. Having both is harmless: whichever is meaningful takes effect.
+#
+# 2. Stop the desktop claiming the device first. gvfs-mtp, gvfs-gphoto2 and
+#    kio-mtp auto-mount any device tagged as MTP the moment a file manager sees
+#    it, which makes libusb fail with LIBUSB_ERROR_BUSY. Clearing
+#    ID_MTP_DEVICE and ID_GPHOTO2 means they never recognise the Switch, so
+#    they never take it. Note that libusb_detach_kernel_driver() does NOT solve
+#    this -- those are userspace processes, not kernel drivers.
+#
+# Removing this file restores normal desktop MTP behaviour.
+
+# Nintendo Switch, MTP mode (DBI or Horizon OS).
+SUBSYSTEM=="usb", ATTR{idVendor}=="057e", ATTR{idProduct}=="201d", TAG+="uaccess", GROUP="plugdev", MODE="0660", ENV{ID_MTP_DEVICE}="", ENV{ID_GPHOTO2}=""
+
+# Nintendo Switch 2, MTP mode.
+SUBSYSTEM=="usb", ATTR{idVendor}=="057e", ATTR{idProduct}=="2061", TAG+="uaccess", GROUP="plugdev", MODE="0660", ENV{ID_MTP_DEVICE}="", ENV{ID_GPHOTO2}=""
+
+# Nintendo Switch in a homebrew USB mode (DBIbackend, Awoo-Installer, GoldLeaf).
+# SwitchMTP does not speak those protocols, but granting access lets it detect
+# the device and tell the user to switch DBI to its MTP responder instead of
+# reporting nothing at all.
+SUBSYSTEM=="usb", ATTR{idVendor}=="057e", ATTR{idProduct}=="3000", TAG+="uaccess", GROUP="plugdev", MODE="0660"

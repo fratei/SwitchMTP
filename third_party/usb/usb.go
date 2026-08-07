@@ -2,15 +2,18 @@
 // API. It only supports the synchronous API, since Goroutines can be
 // used for asynchronous use-cases.
 
-// SwitchMTP modification 1: upstream used `#cgo pkg-config: libusb-1.0`. We link against
-// the libusb built by scripts/build-libusb.sh instead, so the build needs neither
-// pkg-config nor Homebrew and can be universal. See THIRD_PARTY.md.
+// SwitchMTP modification 1: upstream used `#cgo pkg-config: libusb-1.0` unconditionally.
+// On macOS we link against the libusb built by scripts/build-libusb.sh instead, so the
+// build needs neither pkg-config nor Homebrew and can be universal. Other platforms keep
+// upstream's pkg-config behaviour, because their distributions ship libusb as a system
+// package and vendoring it would gain nothing. See THIRD_PARTY.md.
 
 package usb
 
 // #cgo darwin CFLAGS: -I${SRCDIR}/../libusb/include/libusb-1.0
 // #cgo darwin LDFLAGS: -L${SRCDIR}/../libusb/lib -lusb-1.0
 // #cgo darwin LDFLAGS: -Wl,-rpath,${SRCDIR}/../libusb/lib
+// #cgo !darwin pkg-config: libusb-1.0
 // #include <libusb.h>
 import "C"
 import (

@@ -8,6 +8,32 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- **The Go backend now builds and is tested on Linux.** Nothing user-visible changes on
+  macOS, but the MTP engine was only *theoretically* portable: it would not compile
+  anywhere else, because `CollectDiagnostics()` existed solely in a cgo/IOKit file yet was
+  called unconditionally, and the libusb cgo directives were macOS-only. Both are fixed,
+  and CI now builds and runs the full Go test suite on `ubuntu-latest`. Since the device
+  emulator in `backend/fake` needs no hardware, that suite is meaningful from the first
+  run — so a macOS-only assumption creeping back into the backend now fails CI in under a
+  minute instead of being discovered during a port.
+- **Diagnostics understand Linux's version of the `ptpcamerad` problem.** macOS has
+  `ptpcamerad` grabbing the Switch; Linux has `gvfs-mtp`, `gvfs-gphoto2` and `kio-mtp`
+  doing exactly the same thing. On Linux the app now finds them by scanning `/proc` for
+  processes holding a `/dev/bus/usb` descriptor, and names them with specific advice. The
+  intuitive fix — `libusb_detach_kernel_driver()` — does not work on these, because they
+  are userspace processes rather than kernel drivers; the rule below is the durable fix.
+- **A udev rule for Linux**, at `packaging/linux/69-switchmtp.rules`, with an explanation
+  of why it is unavoidable. It grants USB access (via both `uaccess` and `plugdev`, so it
+  works on Fedora/Arch/SteamOS *and* Debian/Ubuntu *and* over SSH) and clears
+  `ID_MTP_DEVICE` for Nintendo's vendor ID so the desktop's MTP handlers never claim the
+  Switch. Scoped to Nintendo hardware, so every other MTP device on the system is
+  unaffected.
+- **Tests for the diagnostics advice.** Previously untested. The priority order is the
+  part that matters — a Switch in DBIbackend/Awoo/GoldLeaf mode must be diagnosed as
+  "wrong USB mode" and never as "no Switch detected", and "we cannot see USB at all" must
+  stay distinct from "USB works, the Switch is not there". Those two pairs send users down
+  opposite paths. Now pinned, and they run on both platforms.
+
 - **Hover explanations across the app.** Most controls had no tooltip, and the ones that
   did mostly repeated their own label. Toolbar buttons, breadcrumbs, sidebar storages, the
   install drop zone and the install queue now explain what they do — and, where a control

@@ -142,22 +142,25 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 | File | Change notice |
 |------|---------------|
-| `third_party/usb/usb.go` | Replaces upstream `pkg-config` libusb discovery with explicit cgo include/library paths and a development-only rpath for the repo-local universal libusb build. |
+| `third_party/usb/usb.go` | Restricts upstream's `pkg-config` libusb discovery to non-macOS platforms, and adds explicit cgo include/library paths plus a development-only rpath for the repo-local universal libusb build on macOS. |
 
 Upstream declared:
 ```go
 // #cgo pkg-config: libusb-1.0
 ```
-We replaced this with explicit cgo directives:
+We replaced this with per-platform cgo directives:
 ```go
 // #cgo darwin CFLAGS:  -I${SRCDIR}/../libusb/include/libusb-1.0
 // #cgo darwin LDFLAGS: -L${SRCDIR}/../libusb/lib -lusb-1.0
 // #cgo darwin LDFLAGS: -Wl,-rpath,${SRCDIR}/../libusb/lib
+// #cgo !darwin pkg-config: libusb-1.0
 ```
-This causes the Go backend to link against the universal `libusb.dylib` built by
+On macOS this causes the Go backend to link against the universal `libusb.dylib` built by
 `scripts/build-libusb.sh` rather than a Homebrew-provided library, making the build
 hermetic (no pkg-config, no Homebrew required). The development-only cgo rpath is removed
-from shipped binaries by `scripts/build-backend.sh`.
+from shipped binaries by `scripts/build-backend.sh`. Other platforms keep upstream's
+`pkg-config` behaviour unchanged, because their distributions ship libusb as a system
+package.
 
 ---
 
