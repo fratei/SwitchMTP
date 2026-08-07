@@ -1,0 +1,14 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: Troubleshooting guide
+    url: https://github.com/fratei/SwitchMTP/blob/main/docs/TROUBLESHOOTING.md
+    about: Most reported problems already have an answer here. Please read this first.
+
+  - name: Setting up DBI on your Switch
+    url: https://github.com/fratei/SwitchMTP/blob/main/docs/DBI_SETUP.md
+    about: SwitchMTP talks to DBI's MTP responder. Start here if the console is not detected at all.
+
+  - name: Questions and ideas
+    url: https://github.com/fratei/SwitchMTP/discussions
+    about: For usage questions, setup help and half-formed ideas, use Discussions rather than an issue.

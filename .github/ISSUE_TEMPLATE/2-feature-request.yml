@@ -1,0 +1,73 @@
+name: Feature request
+description: Suggest a new capability, or an improvement to an existing one.
+title: "[Feature]: "
+labels: ["type:feature"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        If you are not sure yet whether something is a good idea, open a
+        [Discussion](https://github.com/fratei/SwitchMTP/discussions) instead —
+        it is a better place to think out loud.
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What are you trying to do?
+      description: >
+        Describe the situation you are in, not the solution you have in mind.
+        Understanding the underlying task usually produces a better answer than
+        implementing the first idea.
+      placeholder: >
+        I keep several consoles in sync and I have to re-select the same folder
+        every time I switch between them.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What would you like SwitchMTP to do?
+      description: >
+        Be concrete. "A button in the toolbar that exports the selected save to
+        a dated folder" is actionable; "better save handling" is not.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: What do you do today instead?
+      description: Any workaround you currently use, or other tools that solve this.
+    validations:
+      required: false
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the app would this touch?
+      multiple: true
+      options:
+        - Finding or connecting to the console
+        - Browsing files and folders
+        - Downloading from the console to the Mac
+        - Uploading from the Mac to the console
+        - Installing NSP/NSZ/XCI/XCZ
+        - Backing up or restoring saves
+        - Album / screenshots
+        - The command line tool
+        - The window, menus or general interface
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I searched existing issues and discussions for this idea.
+          required: true
+        - label: >
+            This is about SwitchMTP itself, not about DBI or the console. Changes
+            to DBI belong in DBI's own issue tracker.
+          required: true

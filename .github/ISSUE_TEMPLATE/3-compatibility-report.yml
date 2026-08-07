@@ -1,0 +1,94 @@
+name: Compatibility report
+description: Tell us how SwitchMTP behaved with a console, responder, cable or dock we may not have tried.
+title: "[Compat]: "
+labels: ["type:compatibility"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        SwitchMTP has been developed against DBI's MTP responder on a single
+        console. Reports from other combinations are genuinely useful — both the
+        ones that work and the ones that do not.
+
+        A "it works fine" report is worth filing. It is how the compatibility
+        list in the README gets to be trustworthy.
+
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: How did it go?
+      options:
+        - Everything worked
+        - Mostly worked, with the problems described below
+        - The console was detected but transfers failed
+        - The console was never detected
+    validations:
+      required: true
+
+  - type: input
+    id: responder
+    attributes:
+      label: Which MTP responder?
+      description: DBI, or something else. Include the version.
+      placeholder: "DBI v658"
+    validations:
+      required: true
+
+  - type: input
+    id: console
+    attributes:
+      label: Which console?
+      placeholder: "Switch OLED, HOS 22.5.0, Atmosphère 1.9.4"
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: SwitchMTP version
+      placeholder: "1.0.0 (1)"
+    validations:
+      required: true
+
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version and Mac hardware
+      placeholder: "26.6, Apple Silicon"
+    validations:
+      required: true
+
+  - type: input
+    id: connection
+    attributes:
+      label: Cable, dock or hub used
+      description: >
+        Worth being specific. A surprising share of transfer problems come down
+        to the cable or the hub rather than to either device.
+      placeholder: "Official Nintendo dock, then a CalDigit TS4 to the Mac"
+    validations:
+      required: true
+
+  - type: textarea
+    id: details
+    attributes:
+      label: What happened?
+      description: >
+        If something failed, say what you were doing and where it stopped. If
+        everything worked, a note on which operations you exercised — browsing,
+        download, upload, install, saves — is the most useful thing you can add.
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics report
+      description: >
+        **Switch ▸ Copy Diagnostics** in the app, or
+        `/Applications/SwitchMTP.app/Contents/MacOS/switchmtp-cli --json doctor`.
+        For a console that is never detected this is the single most valuable
+        thing in the report, because it shows what was on the USB bus.
+      render: json
+    validations:
+      required: false

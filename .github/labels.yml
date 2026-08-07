@@ -1,0 +1,150 @@
+# Canonical label set for SwitchMTP.
+#
+# This file is the source of truth. .github/workflows/sync-labels.yml applies it
+# to the repository on every push that touches this file, so a label referenced
+# by an issue form or by the triage script always exists.
+#
+# Issue forms fail to apply a label that does not exist yet, so add the label
+# here and let the sync run before referencing it anywhere else.
+
+# ---------------------------------------------------------------- type
+- name: "type:bug"
+  color: "d73a4a"
+  description: "Something does not work as intended"
+
+- name: "type:feature"
+  color: "a2eeef"
+  description: "A new capability or an enhancement to an existing one"
+
+- name: "type:compatibility"
+  color: "5319e7"
+  description: "A hardware, firmware or responder combination that needs support"
+
+- name: "type:question"
+  color: "d876e3"
+  description: "A usage question rather than a defect"
+
+- name: "type:docs"
+  color: "0075ca"
+  description: "Documentation only"
+
+# ---------------------------------------------------------------- area
+- name: "area:usb"
+  color: "1d76db"
+  description: "Device discovery, claiming the interface, hotplug, port resets"
+
+- name: "area:transfer"
+  color: "1d76db"
+  description: "Upload, download, install, progress reporting, cancellation"
+
+- name: "area:backend"
+  color: "1d76db"
+  description: "Go backend: nxmtp, the FFI layer, or the vendored MTP engine"
+
+- name: "area:app"
+  color: "1d76db"
+  description: "SwiftUI app: windows, menus, sidebar, file list"
+
+- name: "area:cli"
+  color: "1d76db"
+  description: "switchmtp-cli"
+
+- name: "area:saves"
+  color: "1d76db"
+  description: "Save data backup and restore"
+
+- name: "area:build"
+  color: "1d76db"
+  description: "Build scripts, packaging, signing, CI"
+
+- name: "area:docs"
+  color: "1d76db"
+  description: "Documentation content"
+
+# ---------------------------------------------------------------- severity
+- name: "severity:data-loss"
+  color: "b60205"
+  description: "Destroys or corrupts data on the Mac or the console"
+
+- name: "severity:crash"
+  color: "d93f0b"
+  description: "The app crashes, hangs, or has to be force quit"
+
+- name: "severity:high"
+  color: "e99695"
+  description: "A core workflow is unusable and has no workaround"
+
+- name: "severity:medium"
+  color: "fbca04"
+  description: "A workflow is impaired but has a workaround"
+
+- name: "severity:low"
+  color: "c2e0c6"
+  description: "Cosmetic, or a minor inconvenience"
+
+# ---------------------------------------------------------------- triage
+- name: "needs-info"
+  color: "ededed"
+  description: "Waiting on details from the reporter before this can be acted on"
+
+- name: "needs-repro"
+  color: "ededed"
+  description: "Cannot be reproduced yet from the information given"
+
+- name: "triage:pr-recommended"
+  color: "0e8a16"
+  description: "Triage judged this actionable enough to open a pull request for"
+
+- name: "triage:needs-human"
+  color: "fef2c0"
+  description: "Triage could not classify this; a maintainer should look"
+
+- name: "triage:answered"
+  color: "0e8a16"
+  description: "Matched a known issue and answered automatically"
+
+- name: "triage:delegated"
+  color: "6f42c1"
+  description: "Handed to the Copilot cloud agent to attempt a fix"
+
+- name: "duplicate"
+  color: "cfd3d7"
+  description: "Already reported elsewhere"
+
+# ---------------------------------------------------------------- status
+- name: "status:confirmed"
+  color: "0e8a16"
+  description: "Reproduced by a maintainer"
+
+- name: "status:in-progress"
+  color: "0e8a16"
+  description: "Someone is actively working on this"
+
+- name: "status:blocked-upstream"
+  color: "d4c5f9"
+  description: "Blocked on DBI, macOS, libusb or another upstream project"
+
+- name: "status:wontfix"
+  color: "ffffff"
+  description: "A deliberate decision not to act on this"
+
+- name: "status:by-design"
+  color: "ffffff"
+  description: "The reported behaviour is intentional"
+
+# ---------------------------------------------------------------- meta
+- name: "good first issue"
+  color: "7057ff"
+  description: "A good place to start contributing"
+
+- name: "help wanted"
+  color: "008672"
+  description: "Maintainers would welcome a pull request for this"
+
+- name: "stale"
+  color: "ededed"
+  description: "No activity for a long time; will be closed if it stays quiet"
+
+- name: "dependencies"
+  color: "0366d6"
+  description: "Updates to third-party code or actions"

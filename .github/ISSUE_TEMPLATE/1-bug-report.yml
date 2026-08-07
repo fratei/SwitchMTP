@@ -1,0 +1,219 @@
+name: Bug report
+description: Something in SwitchMTP does not work as intended.
+title: "[Bug]: "
+labels: ["type:bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this.
+
+        **Before you file:** the [Troubleshooting guide](https://github.com/fratei/SwitchMTP/blob/main/docs/TROUBLESHOOTING.md)
+        already covers the most common problems, including the console not being
+        detected, `Extra buffers exceeded`, exported files apparently going
+        missing, and dates showing as `—`.
+
+        **The fastest way to file a good report** is from inside the app:
+        **Help ▸ Report an Issue…**. It fills in your version and environment
+        for you and copies a diagnostics report to the clipboard, ready to
+        paste below.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What went wrong, and what did you expect instead?
+      placeholder: |
+        Exporting a folder from the SD card stops at about 40% and the app
+        shows "transfer failed" with no further detail. I expected the whole
+        folder to be written to my Mac.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      description: >
+        Numbered steps someone else can follow on their own console. This is the
+        single most useful thing in the report — an issue that cannot be
+        reproduced usually cannot be fixed.
+      placeholder: |
+        1. Launch DBI in title mode and choose "MTP responder"
+        2. Open SwitchMTP and wait for the console to appear
+        3. Select SD Card, navigate to /switch
+        4. Select the whole folder and press the export button
+        5. Choose ~/Desktop and press "Export Here"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: reproducible
+    attributes:
+      label: How often does it happen?
+      options:
+        - Every time
+        - Often, but not every time
+        - Rarely
+        - Happened once and I have not been able to repeat it
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the app is affected?
+      description: Pick everything that applies. Choose nothing if you are not sure.
+      multiple: true
+      options:
+        - Finding or connecting to the console
+        - Browsing files and folders
+        - Downloading from the console to the Mac
+        - Uploading from the Mac to the console
+        - Installing NSP/NSZ/XCI/XCZ
+        - Backing up or restoring saves
+        - Album / screenshots
+        - Renaming, deleting or creating folders
+        - The command line tool
+        - The window, menus or general interface
+        - Building from source
+    validations:
+      required: false
+
+  - type: input
+    id: version
+    attributes:
+      label: SwitchMTP version
+      description: >
+        From **SwitchMTP ▸ About SwitchMTP**, or run
+        `/Applications/SwitchMTP.app/Contents/MacOS/switchmtp-cli --version`.
+      placeholder: "1.0.0 (1)"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: install-source
+    attributes:
+      label: Where did you get this build?
+      options:
+        - A release download from GitHub
+        - I built it from source
+    validations:
+      required: true
+
+  - type: input
+    id: macos
+    attributes:
+      label: macOS version
+      description: From  ▸ About This Mac.
+      placeholder: "26.6"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: hardware
+    attributes:
+      label: Mac hardware
+      options:
+        - Apple Silicon
+        - Intel
+    validations:
+      required: true
+
+  - type: input
+    id: hos
+    attributes:
+      label: Switch firmware version
+      description: From the console's System Settings, or the DBI title bar.
+      placeholder: "22.5.0"
+    validations:
+      required: false
+
+  - type: input
+    id: dbi
+    attributes:
+      label: DBI version
+      description: Shown at the top of the DBI screen.
+      placeholder: "v658"
+    validations:
+      required: false
+
+  - type: dropdown
+    id: dbi-mode
+    attributes:
+      label: How was DBI launched?
+      description: >
+        Applet mode is the album shortcut. Title mode means holding R while
+        starting a game. Large transfers fail in applet mode, so this matters.
+      options:
+        - Title mode (held R while starting a game)
+        - Applet mode (opened from the album)
+        - Not sure
+    validations:
+      required: true
+
+  - type: dropdown
+    id: connection
+    attributes:
+      label: How is the console connected?
+      options:
+        - Cable straight from the console to the Mac
+        - Through the official dock
+        - Through a hub, dongle or monitor
+        - Through a third-party dock
+    validations:
+      required: true
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics report
+      description: >
+        In the app choose **Switch ▸ Copy Diagnostics** and paste here, or run
+        `/Applications/SwitchMTP.app/Contents/MacOS/switchmtp-cli --json doctor`.
+        This lists USB devices, anything holding the USB interface, and the
+        connected console's capabilities. It contains no personal files or save
+        data.
+      render: json
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Transfer log
+      description: >
+        Only needed for transfer problems. Run
+        `defaults write me.fratei.switchmtp debugLogEnabled -bool YES`, relaunch
+        the app, reproduce the problem, then paste
+        `~/Library/Containers/me.fratei.switchmtp/Data/tmp/switchmtp-debug.log`.
+        **This records file and folder names from your console, so read it
+        before pasting.**
+      render: shell
+    validations:
+      required: false
+
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: Screenshots or a screen recording
+      description: >
+        Drag images or a short recording into this box. A picture of the error,
+        and of the sidebar showing what the app detected, is often enough to
+        identify the problem immediately.
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before submitting
+      options:
+        - label: I read the Troubleshooting guide and my problem is not covered there.
+          required: true
+        - label: I searched existing issues and this has not already been reported.
+          required: true
+        - label: I am using DBI's MTP responder, not another homebrew tool.
+          required: false
+        - label: I am on the latest SwitchMTP release.
+          required: false
