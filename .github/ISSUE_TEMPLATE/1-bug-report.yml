@@ -183,10 +183,10 @@ body:
     attributes:
       label: Transfer log
       description: >
-        Only needed for transfer problems. Run
-        `defaults write me.fratei.switchmtp debugLogEnabled -bool YES`, relaunch
-        the app, reproduce the problem, then paste
-        `~/Library/Containers/me.fratei.switchmtp/Data/tmp/switchmtp-debug.log`.
+        Only needed for transfer problems. Turn on **SwitchMTP ▸ Settings ▸
+        General ▸ Write a diagnostic log**, quit and reopen the app, reproduce
+        the problem, then use **Show Log in Finder** on that same screen and
+        paste the contents here.
         **This records file and folder names from your console, so read it
         before pasting.**
       render: shell

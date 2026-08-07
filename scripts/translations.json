@@ -1,7 +1,6 @@
 {
   "_comment": "Translations for SwitchMTP-specific strings, applied by scripts/apply-translations.py. Keys listed under \"doNotTranslate\" are format-only or proper nouns and are marked shouldTranslate:false in the catalog.",
   "doNotTranslate": [
-    "%@ %@ %@",
     "%@ - %@",
     "%lld",
     "v%@",
@@ -754,6 +753,34 @@
       "ru": "Используйте кабель USB-C для передачи данных.\nЗапустите DBI.\nНажмите X → «Run MTP responder».",
       "zh-Hans": "请使用 USB-C 数据线。\n启动 DBI。\n按 X → 选择“Run MTP responder”。",
       "zh-Hant": "請使用 USB-C 資料線。\n啟動 DBI。\n按 X → 選擇「Run MTP responder」。"
+    },
+    "Write a diagnostic log": {
+      "es": "Escribir un registro de diagnóstico",
+      "ja": "診断ログを記録",
+      "ru": "Вести журнал диагностики",
+      "zh-Hans": "记录诊断日志",
+      "zh-Hant": "記錄診斷紀錄"
+    },
+    "Records transfer activity to a file. Attach it when reporting a failed transfer.": {
+      "es": "Registra la actividad de transferencia en un archivo. Adjúntalo al informar de una transferencia fallida.",
+      "ja": "転送の動作をファイルに記録します。転送の失敗を報告する際に添付してください。",
+      "ru": "Записывает действия при передаче в файл. Приложите его к сообщению о неудачной передаче.",
+      "zh-Hans": "将传输活动记录到文件。报告传输失败时请附上该文件。",
+      "zh-Hant": "將傳輸活動記錄到檔案。回報傳輸失敗時請附上該檔案。"
+    },
+    "Records connections, transfers and errors to a file so a failed transfer can be diagnosed. Takes effect after you quit and reopen SwitchMTP.": {
+      "es": "Registra conexiones, transferencias y errores en un archivo para poder diagnosticar una transferencia fallida. Surte efecto después de cerrar y volver a abrir SwitchMTP.",
+      "ja": "接続、転送、エラーをファイルに記録し、転送の失敗を診断できるようにします。SwitchMTP を終了して再度開くと有効になります。",
+      "ru": "Записывает подключения, передачи и ошибки в файл, чтобы можно было выявить причину сбоя передачи. Вступает в силу после выхода и повторного открытия SwitchMTP.",
+      "zh-Hans": "将连接、传输和错误记录到文件，以便诊断失败的传输。退出并重新打开 SwitchMTP 后生效。",
+      "zh-Hant": "將連線、傳輸和錯誤記錄到檔案，以便診斷失敗的傳輸。結束並重新開啟 SwitchMTP 後生效。"
+    },
+    "Show Log in Finder": {
+      "es": "Mostrar registro en el Finder",
+      "ja": "ログを Finder に表示",
+      "ru": "Показать журнал в Finder",
+      "zh-Hans": "在访达中显示日志",
+      "zh-Hant": "在 Finder 中顯示紀錄"
     }
   }
 }

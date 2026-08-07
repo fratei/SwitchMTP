@@ -6,6 +6,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Added
+
+- **Settings ▸ General ▸ Write a diagnostic log**, with a button to reveal the log in
+  Finder. Transfer failures were previously only diagnosable by knowing to run a
+  `defaults write` command from Terminal, so in practice the log was never on when it was
+  needed — including for the transfer failure that prompted adding it. The bug report form
+  now points at the setting instead of the command.
+
 ### Fixed
 
 - **The file browser hung on "Loading files…" after connecting.** Clearing the operation
@@ -33,6 +41,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
   diagnostics from bug reports.
 
 ### Changed
+
+- Uploads and the install queue now record their activity to the diagnostic log. The upload
+  path had no logging at all — only downloads did — so a failed install left nothing behind
+  to look at. Progress, the phase reported by the console, queue hand-offs and both classes
+  of dropped callback are now traceable.
 
 - **The interface is fully localised again.** 116 SwitchMTP-specific strings — the entire
   Switch menu, the install queue, storage capability errors, DBI setup guidance and the

@@ -44,6 +44,10 @@ final class MTPManager: ObservableObject {
     /// Timestamp of the most recent progress payload, used to notice stalls.
     @Published private(set) var lastProgressAt: Date? = nil
 
+    /// Throttles progress logging: the callback fires far too often to log every
+    /// one, but a transfer that stalls needs a timeline showing where it stopped.
+    private var lastProgressLogAt: Date? = nil
+
     /// The queue entry currently being uploaded, if the running transfer is one.
     var activeInstallItemID: UUID? = nil
 
@@ -281,17 +285,26 @@ final class MTPManager: ObservableObject {
     
     // MARK: – Callback handlers
     private func handlePreprocess(jsonPtr: UnsafeMutablePointer<CChar>?) {
-        // Currently unused by the Swift UI.
-        _ = jsonPtr
+        // Not surfaced in the UI, but it is the phase the transfer sits in
+        // while it reads "Preparing transfer…", so log it.
+        if let jsonPtr {
+            DebugLog.write("preprocess: \(String(cString: jsonPtr).prefix(300))")
+        }
     }
     
     private func handleProgress(jsonPtr: UnsafeMutablePointer<CChar>?) {
         guard let jsonPtr else { return }
-        guard operation == .downloading || operation == .uploading || operation == .silentDownloading else { return }
+        guard operation == .downloading || operation == .uploading || operation == .silentDownloading else {
+            // Progress for a transfer nobody is tracking. The UI will sit on
+            // "Preparing transfer…" for the whole run, so record it.
+            DebugLog.write("WARNING: progress dropped, op=\(operation)")
+            return
+        }
         
         let jsonString = String(cString: jsonPtr)
         let (errorString, dataAny) = parseEnvelope(jsonString)
         if let errorString {
+            DebugLog.write("progress error under op=\(operation): \(errorString)")
             // Cancel errors are handled by the done callback; ignore in progress.
             if ErrorStringLocalizer.isTransferCancelledError(errorString) {
                 // Don't set operation = .none here. The done callback will
@@ -320,11 +333,21 @@ final class MTPManager: ObservableObject {
             operation = .none
             return
         }
-        guard let dataAny else { return }
+        guard let dataAny else {
+            DebugLog.write("progress had no data payload")
+            return
+        }
         guard let progressData = decodeFullTransferProgress(from: dataAny) else { return }
         let stats = TransferStatistics(progressData: progressData)
-        
-        DispatchQueue.main.async { [weak self] in
+
+        let now = Date()
+        if lastProgressLogAt.map({ now.timeIntervalSince($0) >= 2 }) ?? true {
+            lastProgressLogAt = now
+            let sent = progressData.bulkFileSize?.sent ?? -1
+            let total = progressData.bulkFileSize?.total ?? -1
+            DebugLog.write("progress phase=\(stats.phase) \(Int(stats.progressPercentage * 100))% \(sent)/\(total) file=\(stats.currentFileName)")
+        }
+                DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.lastProgressAt = Date()
             if self.operation == .silentDownloading {
@@ -407,6 +430,7 @@ final class MTPManager: ObservableObject {
         guard let jsonPtr else { return }
         
         let jsonString = String(cString: jsonPtr)
+        DebugLog.write("done callback under op=\(operation) payload=\(jsonString.prefix(400))")
         
         switch operation {
         case .initializing:
@@ -728,6 +752,10 @@ final class MTPManager: ObservableObject {
             }
             
         case .none:
+            // A callback with no operation claimed means whatever armed it
+            // cleared the state machine too early, so the result is being
+            // thrown away. This has been a real bug twice; make it visible.
+            DebugLog.write("WARNING: done callback swallowed under .none")
             break
         }
     }
@@ -982,8 +1010,14 @@ final class MTPManager: ObservableObject {
     /// the object lands in the storage root, and those storages cannot be
     /// browsed, so there is no current path to fall back on.
     func upload(sourceURLs: [URL], to storage: MTPStorage?, destination: String?) {
-        guard !sourceURLs.isEmpty else { return }
-        guard let storage = storage ?? selectedStorage else { return }
+        guard !sourceURLs.isEmpty else {
+            DebugLog.write("upload aborted: no sources")
+            return
+        }
+        guard let storage = storage ?? selectedStorage else {
+            DebugLog.write("upload aborted: no storage")
+            return
+        }
         
         DispatchQueue.main.async { [weak self] in
             self?.isTransferActive = true
@@ -1005,6 +1039,7 @@ final class MTPManager: ObservableObject {
         ]
         
         guard let jsonString = toJsonString(input) else {
+            DebugLog.write("upload aborted: could not encode request")
             DispatchQueue.main.async { [weak self] in
                 self?.isTransferActive = false
                 self?.transferProgress = nil
@@ -1012,11 +1047,18 @@ final class MTPManager: ObservableObject {
             endSecurityScopedAccess()
             return
         }
+        let sizes = sourceURLs.map { url -> String in
+            let bytes = (try? FileManager.default.attributesOfItem(atPath: url.path)[.size] as? Int64) ?? nil
+            return "\(url.lastPathComponent)=\(bytes.map(String.init) ?? "?")"
+        }
+        DebugLog.write("upload storage=\(storage.id) dest=\(destination) op=\(operation) files=[\(sizes.joined(separator: ", "))]")
         operation = .uploading
         DispatchQueue.global(qos: .userInitiated).async {
+            DebugLog.write("upload -> NxmtpUploadFiles \(jsonString)")
             jsonString.withCString { ptr in
                 NxmtpUploadFiles(ptr, CallbackRouter.preprocess, CallbackRouter.progress, CallbackRouter.done)
             }
+            DebugLog.write("upload <- NxmtpUploadFiles returned")
         }
     }
     

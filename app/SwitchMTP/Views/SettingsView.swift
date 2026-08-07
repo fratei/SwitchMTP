@@ -19,12 +19,13 @@ import SwiftUI
 struct SettingsView: View {
     @AppStorage("fileListFontSize") private var fileListFontSize: Int = 12
     @AppStorage("doubleClickToOpenFile") private var doubleClickToOpenFile: Bool = true
+    @AppStorage("debugLogEnabled") private var debugLogEnabled: Bool = false
     @Environment(\.colorScheme) var colorScheme
     @State private var selectedTab: Int = 0
 
     private var currentHeight: CGFloat {
         switch selectedTab {
-        case 0: return 220
+        case 0: return 330
         case 1: return 300
         default: return 220
         }
@@ -46,6 +47,21 @@ struct SettingsView: View {
                         Text(String(localized: "List Action"))
                         Toggle(String(localized: "Double-click to open files", comment: "Setting to open files on double click"), isOn: $doubleClickToOpenFile)
                             .help(String(localized: "When enabled, double-clicking a file exports it to a local cache (if not already cached) and opens it with the default application.", comment: "Tooltip for double-click to open file setting"))
+                    }
+
+                    Divider()
+
+                    VStack(alignment: .leading, spacing: 6) {
+                        Toggle(String(localized: "Write a diagnostic log", comment: "Setting that enables verbose logging to a file"), isOn: $debugLogEnabled)
+                            .help(String(localized: "Records transfer activity to a file. Attach it when reporting a failed transfer.", comment: "Tooltip for the diagnostic log setting"))
+                        Text(String(localized: "Records connections, transfers and errors to a file so a failed transfer can be diagnosed. Takes effect after you quit and reopen SwitchMTP.", comment: "Explanation of the diagnostic log setting"))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Button(String(localized: "Show Log in Finder", comment: "Button that reveals the diagnostic log file")) {
+                            revealDebugLog()
+                        }
+                        .disabled(!debugLogEnabled)
                     }
                 }
             }
@@ -102,6 +118,18 @@ struct SettingsView: View {
         .frame(width: 400, height: currentHeight)
         .animation(.spring(duration: 0.3), value: selectedTab)
         .navigationTitle(String(localized: "Settings"))
+    }
+
+    /// Reveals the log, or its folder when the toggle was only just enabled and
+    /// nothing has been written yet -- selecting a file that does not exist
+    /// silently does nothing, which reads as a broken button.
+    private func revealDebugLog() {
+        let url = DebugLog.fileURL
+        if FileManager.default.fileExists(atPath: url.path) {
+            NSWorkspace.shared.activateFileViewerSelecting([url])
+        } else {
+            NSWorkspace.shared.open(url.deletingLastPathComponent())
+        }
     }
 }
 

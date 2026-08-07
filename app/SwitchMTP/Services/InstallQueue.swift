@@ -141,6 +141,14 @@ extension MTPManager {
     /// upload while that walk is in flight would route the walk's callbacks
     /// into the upload handler. So this retries until the state machine is
     /// genuinely idle rather than assuming it already is.
+    ///
+    /// The retry runs for the whole of an active install, which across a 25 GB
+    /// queue measured ~2,200 wake-ups. That was tempting to back off, but the
+    /// `installQueueDrainScheduled` guard means a pending slow retry *swallows*
+    /// the fast re-arm `finishActiveInstall` posts when a transfer ends -- so
+    /// backing off to, say, five seconds buys nothing and inserts up to five
+    /// seconds of dead air between every title. The wake-ups are a trivial
+    /// main-queue block each and measured no CPU; the polling stays.
     func scheduleInstallQueueDrain(after delay: TimeInterval = 0.35) {
         guard !installQueueDrainScheduled else { return }
         guard installQueue.contains(where: { $0.state == .waiting }) else { return }
@@ -164,8 +172,18 @@ extension MTPManager {
     /// Returns true when an upload was dispatched.
     @discardableResult
     func startNextQueuedInstallIfIdle() -> Bool {
-        guard isDeviceIdle, activeInstallItemID == nil else { return false }
-        guard connectionState.isConnected else { return false }
+        guard isDeviceIdle, activeInstallItemID == nil else {
+            // Deferring because an install is in flight is the normal case and
+            // says nothing; only the unexplained kind is worth a line.
+            if activeInstallItemID == nil {
+                DebugLog.write("queue drain deferred: device busy (op not idle)")
+            }
+            return false
+        }
+        guard connectionState.isConnected else {
+            DebugLog.write("queue drain deferred: not connected")
+            return false
+        }
         guard let index = installQueue.firstIndex(where: { $0.state == .waiting }) else { return false }
 
         let item = installQueue[index]
@@ -212,6 +230,7 @@ extension MTPManager {
         guard let index = installQueue.firstIndex(where: { $0.id == id }) else { return }
 
         if let errorString {
+            DebugLog.write("install queue <- \(installQueue[index].name) FAILED: \(errorString)")
             if ErrorStringLocalizer.isTransferCancelledError(errorString) {
                 installQueue[index].state = .cancelled
                 // A cancel is a deliberate stop. Draining the rest immediately
@@ -224,6 +243,7 @@ extension MTPManager {
                 installQueue[index].state = .failed(ErrorStringLocalizer.localize(errorString))
             }
         } else {
+            DebugLog.write("install queue <- \(installQueue[index].name) sent OK")
             installQueue[index].state = .sent
         }
     }

@@ -1,9 +1,6 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "%@ %@ %@": {
-      "shouldTranslate": false
-    },
     "%@ - %@": {
       "shouldTranslate": false
     },
@@ -10656,6 +10653,88 @@
         }
       }
     },
+    "Records connections, transfers and errors to a file so a failed transfer can be diagnosed. Takes effect after you quit and reopen SwitchMTP.": {
+      "comment": "Explanation of the diagnostic log setting",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Records connections, transfers and errors to a file so a failed transfer can be diagnosed. Takes effect after you quit and reopen SwitchMTP."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registra conexiones, transferencias y errores en un archivo para poder diagnosticar una transferencia fallida. Surte efecto después de cerrar y volver a abrir SwitchMTP."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "接続、転送、エラーをファイルに記録し、転送の失敗を診断できるようにします。SwitchMTP を終了して再度開くと有効になります。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Записывает подключения, передачи и ошибки в файл, чтобы можно было выявить причину сбоя передачи. Вступает в силу после выхода и повторного открытия SwitchMTP."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将连接、传输和错误记录到文件，以便诊断失败的传输。退出并重新打开 SwitchMTP 后生效。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "將連線、傳輸和錯誤記錄到檔案，以便診斷失敗的傳輸。結束並重新開啟 SwitchMTP 後生效。"
+          }
+        }
+      }
+    },
+    "Records transfer activity to a file. Attach it when reporting a failed transfer.": {
+      "comment": "Tooltip for the diagnostic log setting",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Records transfer activity to a file. Attach it when reporting a failed transfer."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Registra la actividad de transferencia en un archivo. Adjúntalo al informar de una transferencia fallida."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "転送の動作をファイルに記録します。転送の失敗を報告する際に添付してください。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Записывает действия при передаче в файл. Приложите его к сообщению о неудачной передаче."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将传输活动记录到文件。报告传输失败时请附上该文件。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "將傳輸活動記錄到檔案。回報傳輸失敗時請附上該檔案。"
+          }
+        }
+      }
+    },
     "Remaining:": {
       "extractionState": "manual",
       "localizations": {
@@ -11547,6 +11626,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "設定"
+          }
+        }
+      }
+    },
+    "Show Log in Finder": {
+      "comment": "Button that reveals the diagnostic log file",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Show Log in Finder"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar registro en el Finder"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ログを Finder に表示"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать журнал в Finder"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在访达中显示日志"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Finder 中顯示紀錄"
           }
         }
       }
@@ -13787,6 +13907,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "開啟後，雙擊檔案將導出到本地快取（如果尚未快取）並使用預設應用程式開啟。"
+          }
+        }
+      }
+    },
+    "Write a diagnostic log": {
+      "comment": "Setting that enables verbose logging to a file",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Write a diagnostic log"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Escribir un registro de diagnóstico"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "診断ログを記録"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вести журнал диагностики"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "记录诊断日志"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "記錄診斷紀錄"
           }
         }
       }

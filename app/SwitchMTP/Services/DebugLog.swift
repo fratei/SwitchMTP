@@ -31,10 +31,18 @@ enum DebugLog {
         return UserDefaults.standard.bool(forKey: "debugLogEnabled")
     }()
 
+    /// `<container>/tmp/switchmtp-debug.log`, whether or not logging is on.
+    ///
+    /// Settings needs the path even when the toggle is off, so it can reveal the
+    /// folder; `url` stays optional so writers cannot log by accident.
+    static var fileURL: URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent("switchmtp-debug.log")
+    }
+
     /// `<container>/tmp/switchmtp-debug.log`, or nil when logging is off.
     static var url: URL? {
         guard isEnabled else { return nil }
-        return FileManager.default.temporaryDirectory.appendingPathComponent("switchmtp-debug.log")
+        return fileURL
     }
 
     static func write(_ message: @autoclosure () -> String) {
