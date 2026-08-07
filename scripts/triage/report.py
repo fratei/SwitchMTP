@@ -25,6 +25,10 @@ _INTRO = {
         "Thanks — this is a complete report. It has been queued for a fix "
         "attempt."
     ),
+    "pr-recommended-undelegated": (
+        "Thanks — this is a complete report, with everything needed to work on "
+        "it. It is now waiting for a maintainer to pick up."
+    ),
     "needs-human": (
         "Thanks for the report. Automated triage could not resolve this one, so "
         "it has been flagged for a maintainer."
@@ -36,9 +40,22 @@ def doc_link(path: str) -> str:
     return f"{REPO_URL}/blob/main/{path}" if path else ""
 
 
-def render(verdict: Verdict, parsed: ParsedIssue, *, dry_run: bool = False) -> str:
+def render(
+    verdict: Verdict,
+    parsed: ParsedIssue,
+    *,
+    dry_run: bool = False,
+    can_delegate: bool = True,
+) -> str:
     lines: list[str] = [MARKER, ""]
-    lines.append(_INTRO[verdict.kind])
+    # An actionable report is only "queued" if there is something to queue it
+    # with. Automatic fix attempts need a token the repository may not have,
+    # and promising work that nobody has started is how a reporter ends up
+    # waiting on a fix that was never coming.
+    intro = verdict.kind
+    if verdict.kind == "pr-recommended" and not can_delegate:
+        intro = "pr-recommended-undelegated"
+    lines.append(_INTRO[intro])
     lines.append("")
 
     if verdict.kind == "needs-info":
@@ -91,11 +108,18 @@ def render(verdict: Verdict, parsed: ParsedIssue, *, dry_run: bool = False) -> s
         )
 
     elif verdict.kind == "pr-recommended":
-        lines.append(
-            "Nothing further is needed from you for now. If a fix attempt produces "
-            "a pull request it will be linked here, and you may be asked to try a "
-            "build from it."
-        )
+        if can_delegate:
+            lines.append(
+                "Nothing further is needed from you for now. If a fix attempt "
+                "produces a pull request it will be linked here, and you may be "
+                "asked to try a build from it."
+            )
+        else:
+            lines.append(
+                "Nothing further is needed from you for now. This is a small "
+                "project, so there is no promise of a timeline — but the report "
+                "is complete, which is the part that usually holds a fix up."
+            )
 
     else:  # needs-human
         lines.append(

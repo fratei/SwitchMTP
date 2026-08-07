@@ -210,6 +210,7 @@ def triage_one(
     others: Sequence[IssueRef],
     current_version: str,
     force: bool = False,
+    can_delegate: bool = True,
 ) -> Verdict | None:
     number = int(issue["number"])
     labels = [l["name"] for l in issue.get("labels") or []]
@@ -285,7 +286,9 @@ def triage_one(
         current_version=current_version,
     )
 
-    body = report.render(verdict, parsed, dry_run=api.dry_run)
+    body = report.render(
+        verdict, parsed, dry_run=api.dry_run, can_delegate=can_delegate
+    )
     previous = existing_triage_comment(comments)
 
     if previous is None:
@@ -389,6 +392,20 @@ def main(argv: Sequence[str] | None = None) -> int:
     results: list[dict[str, Any]] = []
     delegate_to_copilot: list[int] = []
 
+    # Settle up front whether a fix attempt can actually be handed to anything,
+    # because the comment written for an actionable report says so either way.
+    # A run that cannot delegate must not tell reporters their issue is queued.
+    can_delegate = bool(args.delegate)
+    if can_delegate:
+        try:
+            can_delegate = api.copilot_can_be_assigned()
+        except Exception as exc:
+            print(f"::warning::could not check for the Copilot agent: {exc}")
+            can_delegate = False
+        if not can_delegate:
+            print("::notice::Copilot cannot be assigned here; issues will be "
+                  "labelled for a maintainer instead of delegated")
+
     for issue in targets:
         try:
             verdict = triage_one(
@@ -399,6 +416,7 @@ def main(argv: Sequence[str] | None = None) -> int:
                 others=refs,
                 current_version=current_version,
                 force=args.force or bool(args.issue),
+                can_delegate=can_delegate,
             )
         except Exception as exc:  # keep going; one bad issue must not stop the run
             print(f"::warning::#{issue.get('number')} failed: {exc}")
@@ -418,16 +436,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         if verdict.kind == "pr-recommended":
             delegate_to_copilot.append(int(issue["number"]))
 
-    if args.delegate and delegate_to_copilot:
-        if api.copilot_can_be_assigned():
-            for number in delegate_to_copilot:
-                if api.assign_copilot(number, DELEGATION_INSTRUCTIONS):
-                    api.add_labels(number, ["triage:delegated"])
-        else:
-            print(
-                "::notice::the Copilot coding agent is not available to this token, "
-                "so issues were labelled but not delegated"
-            )
+    delegated: list[int] = []
+    if can_delegate:
+        for number in delegate_to_copilot:
+            if api.assign_copilot(number, DELEGATION_INSTRUCTIONS):
+                api.add_labels(number, ["triage:delegated"])
+                delegated.append(number)
 
     summary = {
         "repo": args.repo,
@@ -435,7 +449,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         "considered": len(targets),
         "acted_on": len(results),
         "results": results,
-        "delegated": delegate_to_copilot if args.delegate else [],
+        "delegated": delegated,
     }
     if args.output:
         Path(args.output).write_text(json.dumps(summary, indent=2), encoding="utf-8")

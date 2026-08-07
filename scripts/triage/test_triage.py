@@ -856,6 +856,27 @@ def test_labels_already_present_are_not_re_added():
 
 # ------------------------------------------------------------------- report
 
+def test_a_fix_is_only_promised_when_something_can_deliver_it():
+    """Automatic fix attempts need a token the repository may not have.
+
+    Telling a reporter their issue is "queued for a fix attempt" when nothing
+    was queued leaves them waiting on work that was never going to start.
+    """
+    parsed, verdict = judge(
+        render_body(BUG, complete_bug()), title="Export writes only the first file"
+    )
+    assert verdict.kind == "pr-recommended"
+
+    queued = report.render(verdict, parsed, can_delegate=True)
+    assert "queued for a fix attempt" in queued
+    assert "produces a pull request it will be linked here" in queued
+
+    unqueued = report.render(verdict, parsed, can_delegate=False)
+    assert "queued" not in unqueued
+    assert "pull request" not in unqueued
+    assert "waiting for a maintainer to pick up" in unqueued
+
+
 def test_every_verdict_renders_with_the_marker():
     from rules import MARKER
 

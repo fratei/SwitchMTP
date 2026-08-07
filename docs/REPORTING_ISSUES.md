@@ -123,7 +123,7 @@ rather than piling up new ones. It will do one of five things:
 | **More information needed** | Something required is missing. It says precisely what. Add it in a comment — no need to open a new issue — and the next pass picks it up. |
 | **Answered** | The report matches something already documented. The answer is quoted in full with a link. Some of these close the issue; where the same symptom could also be a real defect, it stays open. |
 | **Looks like a duplicate** | It reads as the same problem as an existing issue, which is linked. |
-| **Actionable** | The report is complete and reproducible, and a fix attempt has been queued. |
+| **Actionable** | The report is complete and reproducible. If the repository is set up to delegate fixes, one has been queued; otherwise it is waiting for a maintainer. |
 | **Needs a maintainer** | Triage could not classify it. A human will read it. |
 
 It also applies `area:*` and `severity:*` labels so issues can be found later.
