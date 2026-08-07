@@ -4,6 +4,24 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Added
+
+- **Help ▸ Report an Issue…** opens a GitHub bug report with the app version and macOS
+  version already filled in, and offers to copy a diagnostics report to the clipboard
+  first.
+- Structured issue forms for bug reports, feature requests and compatibility reports, so
+  the details that actually determine whether a bug can be fixed — DBI's mode, the
+  diagnostics report, reproduction steps — are asked for rather than hoped for.
+- Automated issue triage (`scripts/triage`): a rule-based engine, with no model calls and
+  no required secrets, that runs daily and on every issue event. It routes and labels
+  reports, says precisely what is missing from an incomplete one, answers reports that
+  match a documented behaviour, flags likely duplicates, and hands complete, reproducible
+  reports to the Copilot coding agent when a token is configured.
+- `CONTRIBUTING.md`, `SECURITY.md`, `docs/REPORTING_ISSUES.md` and a pull request
+  template.
+
 ## [1.0.1] - 2026-08-07
 
 First release validated against real hardware: a Nintendo Switch on HOS 22.5.0 running

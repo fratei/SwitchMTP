@@ -187,6 +187,7 @@ struct SwitchMTPApp: App {
 
 struct GoMenuCommands: Commands {
     @FocusedValue(\.isConnected) var isConnected
+    @FocusedValue(\.mtpManager) var mtpManager
     @FocusedValue(\.showUSBDisclosureAction) var showUSBDisclosureAction
     @FocusedValue(\.canGoBack) var canGoBack
     @FocusedValue(\.navigateToPathAction) var navigateToPathAction
@@ -231,9 +232,51 @@ struct GoMenuCommands: Commands {
 
             Divider()
 
+            Button(String(localized: "Report an Issue…")) {
+                Self.reportIssue(manager: mtpManager)
+            }
             Button(String(localized: "SwitchMTP on GitHub")) {
                 Self.openDocs("")
             }
+        }
+    }
+
+    /// Offers to put the diagnostics report on the clipboard before opening the
+    /// prefilled form, so the reporter can paste it straight into the box the
+    /// form asks for.
+    ///
+    /// Collecting diagnostics touches USB, so it is only offered once the app
+    /// has started scanning; before that the report would be empty and the
+    /// offer would be a lie.
+    private static func reportIssue(manager: MTPManager?) {
+        let canCollect = manager?.isStarted == true
+
+        let alert = NSAlert()
+        alert.alertStyle = .informational
+        alert.messageText = String(localized: "Report an issue")
+        alert.informativeText = canCollect
+            ? String(localized: "GitHub opens with your version (\(IssueReporter.appVersion())) and macOS version already filled in. This Mac is \(IssueReporter.architecture()).\n\nSwitchMTP can also copy a diagnostics report to the clipboard for you to paste into the report. It lists connected USB devices, any process holding the USB interface, and what the console said it can do. It contains no file contents.")
+            : String(localized: "GitHub opens with your version (\(IssueReporter.appVersion())) and macOS version already filled in. This Mac is \(IssueReporter.architecture()).\n\nDiagnostics are not available until the app has started scanning for a console.")
+
+        if canCollect {
+            alert.addButton(withTitle: String(localized: "Copy Diagnostics and Continue"))
+        }
+        alert.addButton(withTitle: String(localized: "Continue"))
+        alert.addButton(withTitle: String(localized: "Cancel"))
+
+        let response = alert.runModal()
+        if response == .alertThirdButtonReturn { return }
+        if !canCollect && response == .alertSecondButtonReturn { return }
+
+        guard canCollect, response == .alertFirstButtonReturn, let manager else {
+            IssueReporter.open()
+            return
+        }
+
+        // Open the form regardless of whether diagnostics succeed — a report
+        // without them still beats no report.
+        manager.copyDiagnosticsToPasteboard { _ in
+            IssueReporter.open()
         }
     }
 

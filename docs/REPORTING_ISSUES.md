@@ -1,0 +1,142 @@
+# Reporting an issue
+
+The short version: use **Help ▸ Report an Issue…** in the app. It opens the
+right form with your version and environment already filled in, and offers to
+put a diagnostics report on the clipboard for you to paste.
+
+The rest of this page explains what the forms ask for, why, and what happens
+to a report after you file it.
+
+---
+
+## Before you file
+
+Two links resolve most reports on their own:
+
+- **[Troubleshooting](TROUBLESHOOTING.md)** — the console not being detected,
+  `Extra buffers exceeded`, exported files apparently vanishing, dates showing
+  as `—`, Gatekeeper refusing to open the app.
+- **[DBI setup](DBI_SETUP.md)** — if the console never appears at all, start
+  here. The most common cause is DBI running in a USB mode that is not MTP.
+
+If neither helps, file the report. A duplicate is a minor nuisance; a bug that
+nobody mentions is a bug that never gets fixed.
+
+---
+
+## Which form to use
+
+| Form | Use it when |
+| --- | --- |
+| **Bug report** | Something behaves differently from how it is documented or how it obviously should. |
+| **Feature request** | You want SwitchMTP to do something it does not do. |
+| **Compatibility report** | You tried a console, firmware, responder, cable or dock that may not have been tested. **Including when it all worked** — that is how the compatibility notes become trustworthy. |
+
+Questions and half-formed ideas belong in
+[Discussions](https://github.com/fratei/SwitchMTP/discussions) rather than in an
+issue.
+
+---
+
+## The three things that decide whether a bug gets fixed
+
+### 1. Steps somebody else can follow
+
+Not "exporting is broken" but:
+
+```
+1. Launch DBI in title mode and choose "MTP responder"
+2. Open SwitchMTP and wait for the console to appear
+3. Select SD Card, open /switch
+4. Select three .nro files and press Export
+5. Choose ~/Desktop, press "Export Here"
+6. Only the first file is written; no error appears
+```
+
+The second version can be reproduced on a different console. The first cannot.
+
+### 2. The diagnostics report
+
+**Switch ▸ Copy Diagnostics** in the app, or from a terminal:
+
+```shell
+/Applications/SwitchMTP.app/Contents/MacOS/switchmtp-cli --json doctor
+```
+
+It lists the USB devices present, which process is holding the interface, the
+connected console's storages, and which optional MTP operations it advertises.
+For anything to do with connecting or transferring, this turns guesswork into
+fact.
+
+It contains **no file contents and no save data**. It does include your macOS
+version, the console's serial number, and the names of USB devices attached to
+your Mac.
+
+### 3. Which mode DBI was in
+
+Applet mode — DBI launched from the album — gives homebrew a small memory
+allocation, and large transfers fail because of it. Title mode means holding
+**R** while starting an installed game. This one field explains a large share of
+transfer reports, so the bug form asks for it and will not accept a report
+without it.
+
+---
+
+## The verbose transfer log
+
+Only worth collecting for transfer problems, and only when asked, because it is
+noisy:
+
+```shell
+defaults write me.fratei.switchmtp debugLogEnabled -bool YES
+# relaunch the app, reproduce the problem, then:
+cat ~/Library/Containers/me.fratei.switchmtp/Data/tmp/switchmtp-debug.log
+# turn it off again:
+defaults write me.fratei.switchmtp debugLogEnabled -bool NO
+```
+
+**The log records file and folder names from your console.** Read it before you
+paste it.
+
+---
+
+## Screenshots
+
+Drag images straight into the screenshots box. A picture of the error, plus the
+sidebar showing what the app detected, is often enough on its own. Short screen
+recordings are accepted too — GitHub takes `.mp4` and `.mov` up to 10 MB.
+
+---
+
+## What happens next
+
+Every issue is looked at by an automated triage pass — daily, and again whenever
+an issue is opened, edited or commented on. It is a rule-based script
+([`scripts/triage`](../scripts/triage)), not a language model, so it behaves the
+same way every time and you can read exactly what it will do.
+
+It posts **one** comment and keeps editing that same comment as things change,
+rather than piling up new ones. It will do one of five things:
+
+| Verdict | What it means |
+| --- | --- |
+| **More information needed** | Something required is missing. It says precisely what. Add it in a comment — no need to open a new issue — and the next pass picks it up. |
+| **Answered** | The report matches something already documented. The answer is quoted in full with a link. Some of these close the issue; where the same symptom could also be a real defect, it stays open. |
+| **Looks like a duplicate** | It reads as the same problem as an existing issue, which is linked. |
+| **Actionable** | The report is complete and reproducible, and a fix attempt has been queued. |
+| **Needs a maintainer** | Triage could not classify it. A human will read it. |
+
+It also applies `area:*` and `severity:*` labels so issues can be found later.
+
+**Triage gets things wrong.** If it closes your issue with an answer that does
+not fit, say so in a comment — that is a useful signal, and the rules live in
+the repository where they can be corrected. Anything a maintainer has marked
+`status:confirmed`, `status:in-progress`, `status:by-design`,
+`status:wontfix` or `status:blocked-upstream` is left alone by the bot entirely.
+
+---
+
+## Security
+
+Do not report a security problem in a public issue. See
+[SECURITY.md](../SECURITY.md).

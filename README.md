@@ -120,6 +120,27 @@ API. See [`docs/FFI_PROTOCOL.md`](docs/FFI_PROTOCOL.md) for the full contract.
 
 ---
 
+## Reporting a problem
+
+Use **Help ▸ Report an Issue…** in the app. It opens the right form with your version and
+macOS version already filled in and offers to put a diagnostics report on the clipboard.
+
+- [**Troubleshooting**](docs/TROUBLESHOOTING.md) — check here first; it covers the
+  common failures.
+- [**How to write a useful report**](docs/REPORTING_ISSUES.md) — what the forms ask for,
+  why, and what the automated triage will do with your report.
+- [**Contributing**](CONTRIBUTING.md) — building from source, running the tests, and the
+  handful of behaviours that look like bugs but are deliberate.
+- [**Security**](SECURITY.md) — report vulnerabilities privately, not in an issue.
+
+Every issue is read by a rule-based triage pass ([`scripts/triage`](scripts/triage)) that
+runs daily and on every issue event. It labels the report, tells you if something required
+is missing, links the documented answer when there is one, and queues a fix attempt when
+the report is complete and reproducible. There is no language model involved and no
+telemetry — you can read exactly what it will do before you file.
+
+---
+
 ## Credits
 
 SwitchMTP exists because of other people's work. Everything below was used in some form —
