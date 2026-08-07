@@ -78,7 +78,8 @@ protocol; SwitchMTP talks MTP to DBI directly and has no Java dependency.
   **Dump Gamecard…**, **Install to SD Card…**, **Install to NAND…**, and
   **Copy Diagnostics**
 - JSON diagnostics copied to the clipboard for bug reports
-- Command-line interface (`switchmtp-cli`) bundled inside the app
+- Command-line interface (`switchmtp-cli`) bundled inside the app, plus a separate
+  cross-platform Go tool (`switchmtp`) that runs on Linux too — see [Command line](#command-line)
 
 ---
 
@@ -117,6 +118,60 @@ SwitchMTP.app (SwiftUI, GPL-2.0)
 
 The Swift app communicates with the Go backend entirely through a JSON-over-C-function
 API. See [`docs/FFI_PROTOCOL.md`](docs/FFI_PROTOCOL.md) for the full contract.
+
+There is a second, independent front-end: the `switchmtp` command-line tool links
+`backend/nxmtp` directly as a Go package, bypassing the FFI entirely.
+
+```
+switchmtp (Go)
+  └── backend/nxmtp/   ← the same engine, no C boundary
+```
+
+Because it shares the engine but not the platform layer, it builds and runs anywhere Go
+and libusb do — which is what keeps the backend honestly portable rather than portable in
+principle.
+
+---
+
+## Command line
+
+Two command-line tools exist, and they are not the same thing:
+
+| | Language | Where it runs | Notes |
+| --- | --- | --- | --- |
+| `switchmtp-cli` | Swift | macOS only | Bundled inside the app; goes through the FFI |
+| `switchmtp` | Go | macOS, Linux | Links `nxmtp` directly; no app required |
+
+Build the Go one from a checkout:
+
+```bash
+cd backend && go build -o ../build/switchmtp ./cmd/switchmtp
+```
+
+Device paths are written `<storage>:<path>`. The storage part accepts a numeric storage
+id, a friendly name, or a unique prefix of the storage's display name:
+
+```bash
+switchmtp devices                              # what is connected
+switchmtp storages                             # what the console exposes
+switchmtp ls sdcard:/switch                    # browse
+switchmtp ls -R 65537:/atmosphere              # recursively
+switchmtp get sdcard:/switch/config.ini ./     # copy off the console
+switchmtp put homebrew.nro sdcard:/switch      # copy onto it
+switchmtp install ~/Downloads/*.nsp            # queue installs, one at a time
+switchmtp doctor                               # explain why it will not connect
+```
+
+`--json` makes every command emit machine-readable output. Exit codes distinguish the
+cases a script cares about: `3` no device, `4` cancelled, `5` device busy, `2` bad usage.
+
+Only one program can hold the USB device at a time, so close the app before using the
+tool and vice versa.
+
+**On Linux**, `/dev/bus/usb` is root-only by default and the desktop's own MTP handlers
+(gvfs, kio-mtp) will claim the console before SwitchMTP can. Both are fixed by one udev
+rule — see [`packaging/linux/README.md`](packaging/linux/README.md), or run
+`switchmtp doctor`, which checks for the rule and prints it if it is missing.
 
 ---
 

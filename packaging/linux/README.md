@@ -1,9 +1,20 @@
 # Linux packaging
 
-This directory holds the Linux-side assets for SwitchMTP. There is no Linux
-application yet — the [cross-platform port](../../docs/) is in progress and the
-Go backend is the part that exists so far. What is here is the piece that has to
-be right before anything else can work: USB access.
+This directory holds the Linux-side assets for SwitchMTP. There is no Linux GUI
+yet — the [cross-platform port](../../docs/) is in progress — but the Go backend
+and the `switchmtp` command line tool both run on Linux today. What is here is
+the piece that has to be right before either of them can work: USB access.
+
+The quickest way to find out whether a machine is set up correctly is to build
+the tool and ask it:
+
+```sh
+cd ../../backend && go build -o /tmp/switchmtp ./cmd/switchmtp && /tmp/switchmtp doctor
+```
+
+`doctor` checks for the rule below, notices when an equivalent one has already
+been installed by another Switch tool, lists any process holding the USB device,
+and prints what to do about whatever it finds.
 
 ## `69-switchmtp.rules`
 

@@ -8,6 +8,23 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- **A cross-platform `switchmtp` command line tool.** The existing `switchmtp-cli` is
+  Swift and macOS-only; this one is Go, links `backend/nxmtp` directly with no FFI, and
+  runs on Linux as well as macOS. It covers `devices`, `info`, `storages`, `ls`, `get`,
+  `put`, `install`, `mkdir`, `rm`, `mv` and `doctor`, with `--json` output and exit codes
+  that distinguish "no device", "cancelled", "device busy" and "bad usage" so scripts can
+  react. Device paths are written `<storage>:<path>`, where the storage part accepts a
+  numeric id, a friendly name such as `sdcard`, or a unique prefix of the display name;
+  an ambiguous name is refused with the candidate ids rather than guessed, because
+  guessing wrong could mean writing to NAND instead of the SD card. `Ctrl-C` cancels the
+  in-flight MTP operation and closes the session cleanly instead of killing the process
+  mid-transaction. CI builds it on Linux, smoke-tests it and publishes the binary as an
+  artifact.
+- **`switchmtp doctor` reports the Linux udev rule.** It looks for the rule, recognises an
+  equivalent one installed by another Switch tool rather than demanding a redundant
+  second copy, and prints the exact rule to install when there is none. A test pins that
+  printed rule against the packaged `packaging/linux/69-switchmtp.rules` line by line, so
+  the two cannot drift apart.
 - **The Go backend now builds and is tested on Linux.** Nothing user-visible changes on
   macOS, but the MTP engine was only *theoretically* portable: it would not compile
   anywhere else, because `CollectDiagnostics()` existed solely in a cgo/IOKit file yet was
@@ -31,8 +48,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - **Tests for the diagnostics advice.** Previously untested. The priority order is the
   part that matters — a Switch in DBIbackend/Awoo/GoldLeaf mode must be diagnosed as
   "wrong USB mode" and never as "no Switch detected", and "we cannot see USB at all" must
-  stay distinct from "USB works, the Switch is not there". Those two pairs send users down
-  opposite paths. Now pinned, and they run on both platforms.
+  stay distinct from "USB works, the Switch is not there". Those two pairs send users
+  down opposite paths. Now pinned, and they run on both platforms.
+- **Tests for the new CLI, run against the emulated device.** Every command is exercised
+  end to end — argument parsing, storage resolution, the `nxmtp` call and the output
+  formatting — with only the USB layer replaced by `backend/fake`. That includes a full
+  `put` → `ls` → `get` round trip verifying the bytes survive. The whole suite therefore
+  runs on a Linux CI runner that has never seen a Switch, which is the point: it is what
+  turns "the backend should be portable" into evidence.
 
 - **Hover explanations across the app.** Most controls had no tooltip, and the ones that
   did mostly repeated their own label. Toolbar buttons, breadcrumbs, sidebar storages, the
