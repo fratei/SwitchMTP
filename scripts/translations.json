@@ -1,0 +1,759 @@
+{
+  "_comment": "Translations for SwitchMTP-specific strings, applied by scripts/apply-translations.py. Keys listed under \"doNotTranslate\" are format-only or proper nouns and are marked shouldTranslate:false in the catalog.",
+  "doNotTranslate": [
+    "%@ %@ %@",
+    "%@ - %@",
+    "%lld",
+    "v%@",
+    "—",
+    "GitHub",
+    "SwitchMTP",
+    "Intel",
+    "Apple Silicon",
+    "Switch"
+  ],
+  "translations": {
+    "%@ is no longer readable. It may have been moved, renamed or ejected.": {
+      "es": "Ya no se puede leer %@. Puede que se haya movido, renombrado o expulsado.",
+      "ja": "%@ を読み取れなくなりました。移動、名前変更、または取り出しが行われた可能性があります。",
+      "ru": "Файл %@ больше не читается. Возможно, он был перемещён, переименован или извлечён.",
+      "zh-Hans": "无法再读取 %@。它可能已被移动、重命名或弹出。",
+      "zh-Hant": "無法再讀取 %@。它可能已被移動、重新命名或退出。"
+    },
+    "%lld already queued.": {
+      "es": "%lld ya están en la cola.",
+      "ja": "%lld 件はすでにキューに入っています。",
+      "ru": "%lld уже в очереди.",
+      "zh-Hans": "%lld 个已在队列中。",
+      "zh-Hant": "%lld 個已在佇列中。"
+    },
+    "%lld failed": {
+      "es": "%lld con errores",
+      "ja": "%lld 件失敗",
+      "ru": "%lld с ошибкой",
+      "zh-Hans": "%lld 个失败",
+      "zh-Hant": "%lld 個失敗"
+    },
+    "%lld queued for install": {
+      "es": "%lld en cola para instalar",
+      "ja": "%lld 件がインストール待ち",
+      "ru": "%lld в очереди на установку",
+      "zh-Hans": "%lld 个等待安装",
+      "zh-Hant": "%lld 個等待安裝"
+    },
+    "%lld sent": {
+      "es": "%lld enviados",
+      "ja": "%lld 件送信済み",
+      "ru": "%lld отправлено",
+      "zh-Hans": "已发送 %lld 个",
+      "zh-Hant": "已傳送 %lld 個"
+    },
+    "A macOS file manager for Nintendo Switch via DBI MTP responder.": {
+      "es": "Un gestor de archivos de macOS para Nintendo Switch a través del respondedor MTP de DBI.",
+      "ja": "DBI の MTP レスポンダー経由で Nintendo Switch を扱う macOS 用ファイルマネージャー。",
+      "ru": "Файловый менеджер macOS для Nintendo Switch через MTP-респондер DBI.",
+      "zh-Hans": "通过 DBI 的 MTP 响应器管理 Nintendo Switch 文件的 macOS 文件管理器。",
+      "zh-Hant": "透過 DBI 的 MTP 回應器管理 Nintendo Switch 檔案的 macOS 檔案管理程式。"
+    },
+    "Back Up Saves…": {
+      "es": "Copia de seguridad de partidas…",
+      "ja": "セーブデータをバックアップ…",
+      "ru": "Резервная копия сохранений…",
+      "zh-Hans": "备份存档…",
+      "zh-Hant": "備份存檔…"
+    },
+    "Backing up saves to %@.": {
+      "es": "Copiando las partidas guardadas en %@.",
+      "ja": "セーブデータを %@ にバックアップしています。",
+      "ru": "Сохранения копируются в %@.",
+      "zh-Hans": "正在将存档备份到 %@。",
+      "zh-Hant": "正在將存檔備份到 %@。"
+    },
+    "Binary": {
+      "es": "Binario",
+      "ja": "バイナリ",
+      "ru": "Двоичный файл",
+      "zh-Hans": "二进制文件",
+      "zh-Hant": "二進位檔案"
+    },
+    "Cannot Install": {
+      "es": "No se puede instalar",
+      "ja": "インストールできません",
+      "ru": "Установка невозможна",
+      "zh-Hans": "无法安装",
+      "zh-Hant": "無法安裝"
+    },
+    "Cannot browse this storage": {
+      "es": "Este almacenamiento no se puede explorar",
+      "ja": "このストレージは閲覧できません",
+      "ru": "Это хранилище нельзя просматривать",
+      "zh-Hans": "无法浏览此存储",
+      "zh-Hant": "無法瀏覽此儲存空間"
+    },
+    "Cannot continue": {
+      "es": "No se puede continuar",
+      "ja": "続行できません",
+      "ru": "Продолжение невозможно",
+      "zh-Hans": "无法继续",
+      "zh-Hant": "無法繼續"
+    },
+    "Certificate": {
+      "es": "Certificado",
+      "ja": "証明書",
+      "ru": "Сертификат",
+      "zh-Hans": "证书",
+      "zh-Hant": "憑證"
+    },
+    "Choose": {
+      "es": "Elegir",
+      "ja": "選択",
+      "ru": "Выбрать",
+      "zh-Hans": "选择",
+      "zh-Hant": "選擇"
+    },
+    "Choose .nsp, .nsz, .xci or .xcz files to install.": {
+      "es": "Elige archivos .nsp, .nsz, .xci o .xcz para instalar.",
+      "ja": "インストールする .nsp、.nsz、.xci、.xcz ファイルを選択してください。",
+      "ru": "Выберите файлы .nsp, .nsz, .xci или .xcz для установки.",
+      "zh-Hans": "选择要安装的 .nsp、.nsz、.xci 或 .xcz 文件。",
+      "zh-Hant": "選擇要安裝的 .nsp、.nsz、.xci 或 .xcz 檔案。"
+    },
+    "Choose a folder created by Back Up Saves.": {
+      "es": "Elige una carpeta creada por «Copia de seguridad de partidas».",
+      "ja": "「セーブデータをバックアップ」で作成したフォルダーを選択してください。",
+      "ru": "Выберите папку, созданную командой «Резервная копия сохранений».",
+      "zh-Hans": "选择由“备份存档”创建的文件夹。",
+      "zh-Hant": "選擇由「備份存檔」建立的資料夾。"
+    },
+    "Choose where to save the files.": {
+      "es": "Elige dónde guardar los archivos.",
+      "ja": "ファイルの保存先を選択してください。",
+      "ru": "Выберите, куда сохранить файлы.",
+      "zh-Hans": "选择文件的保存位置。",
+      "zh-Hant": "選擇檔案的儲存位置。"
+    },
+    "Clear Finished": {
+      "es": "Borrar completados",
+      "ja": "完了した項目を消去",
+      "ru": "Очистить завершённые",
+      "zh-Hans": "清除已完成",
+      "zh-Hant": "清除已完成"
+    },
+    "Clear Queue": {
+      "es": "Vaciar la cola",
+      "ja": "キューを消去",
+      "ru": "Очистить очередь",
+      "zh-Hans": "清空队列",
+      "zh-Hant": "清空佇列"
+    },
+    "Compressed Switch package": {
+      "es": "Paquete de Switch comprimido",
+      "ja": "圧縮 Switch パッケージ",
+      "ru": "Сжатый пакет Switch",
+      "zh-Hans": "压缩的 Switch 安装包",
+      "zh-Hant": "壓縮的 Switch 安裝檔"
+    },
+    "Compressed gamecard dump": {
+      "es": "Volcado de tarjeta de juego comprimido",
+      "ja": "圧縮ゲームカードダンプ",
+      "ru": "Сжатый дамп игрового картриджа",
+      "zh-Hans": "压缩的卡带转储",
+      "zh-Hant": "壓縮的卡帶傾印"
+    },
+    "Continue": {
+      "es": "Continuar",
+      "ja": "続ける",
+      "ru": "Продолжить",
+      "zh-Hans": "继续",
+      "zh-Hant": "繼續"
+    },
+    "Copy Diagnostics": {
+      "es": "Copiar diagnóstico",
+      "ja": "診断情報をコピー",
+      "ru": "Копировать диагностику",
+      "zh-Hans": "拷贝诊断信息",
+      "zh-Hant": "拷貝診斷資訊"
+    },
+    "Copy Diagnostics and Continue": {
+      "es": "Copiar diagnóstico y continuar",
+      "ja": "診断情報をコピーして続ける",
+      "ru": "Копировать диагностику и продолжить",
+      "zh-Hans": "拷贝诊断信息并继续",
+      "zh-Hant": "拷貝診斷資訊並繼續"
+    },
+    "Could not collect diagnostics": {
+      "es": "No se pudo recopilar el diagnóstico",
+      "ja": "診断情報を収集できませんでした",
+      "ru": "Не удалось собрать диагностику",
+      "zh-Hans": "无法收集诊断信息",
+      "zh-Hant": "無法收集診斷資訊"
+    },
+    "Could not find CLI_USAGE.md in the application bundle.": {
+      "es": "No se encontró CLI_USAGE.md en el paquete de la aplicación.",
+      "ja": "アプリケーションバンドル内に CLI_USAGE.md が見つかりませんでした。",
+      "ru": "Файл CLI_USAGE.md не найден в пакете приложения.",
+      "zh-Hans": "在应用程序包中找不到 CLI_USAGE.md。",
+      "zh-Hant": "在應用程式套件中找不到 CLI_USAGE.md。"
+    },
+    "Date not reported by the device": {
+      "es": "El dispositivo no informa de la fecha",
+      "ja": "デバイスが日付を報告していません",
+      "ru": "Устройство не сообщает дату",
+      "zh-Hans": "设备未提供日期",
+      "zh-Hant": "裝置未提供日期"
+    },
+    "Diagnostics copied": {
+      "es": "Diagnóstico copiado",
+      "ja": "診断情報をコピーしました",
+      "ru": "Диагностика скопирована",
+      "zh-Hans": "已拷贝诊断信息",
+      "zh-Hant": "已拷貝診斷資訊"
+    },
+    "Dismiss": {
+      "es": "Descartar",
+      "ja": "閉じる",
+      "ru": "Скрыть",
+      "zh-Hans": "关闭",
+      "zh-Hant": "關閉"
+    },
+    "Drop NSP, NSZ, XCI or XCZ files here": {
+      "es": "Arrastra aquí archivos NSP, NSZ, XCI o XCZ",
+      "ja": "NSP、NSZ、XCI、XCZ ファイルをここにドロップ",
+      "ru": "Перетащите сюда файлы NSP, NSZ, XCI или XCZ",
+      "zh-Hans": "将 NSP、NSZ、XCI 或 XCZ 文件拖到此处",
+      "zh-Hant": "將 NSP、NSZ、XCI 或 XCZ 檔案拖到此處"
+    },
+    "Dump Gamecard…": {
+      "es": "Volcar tarjeta de juego…",
+      "ja": "ゲームカードをダンプ…",
+      "ru": "Дамп игрового картриджа…",
+      "zh-Hans": "转储卡带…",
+      "zh-Hant": "傾印卡帶…"
+    },
+    "Dumping gamecard to %@. This can take a long time; leave the gamecard inserted.": {
+      "es": "Volcando la tarjeta de juego en %@. Puede tardar bastante; no extraigas la tarjeta.",
+      "ja": "ゲームカードを %@ にダンプしています。時間がかかる場合があります。カードは挿したままにしてください。",
+      "ru": "Дамп игрового картриджа сохраняется в %@. Это может занять много времени; не извлекайте картридж.",
+      "zh-Hans": "正在将卡带转储到 %@。这可能需要较长时间，请勿取出卡带。",
+      "zh-Hant": "正在將卡帶傾印到 %@。這可能需要較長時間，請勿取出卡帶。"
+    },
+    "Dumps": {
+      "es": "Volcados",
+      "ja": "ダンプ",
+      "ru": "Дампы",
+      "zh-Hans": "转储",
+      "zh-Hant": "傾印"
+    },
+    "Error": {
+      "es": "Error",
+      "ja": "エラー",
+      "ru": "Ошибка",
+      "zh-Hans": "错误",
+      "zh-Hant": "錯誤"
+    },
+    "Export Album…": {
+      "es": "Exportar álbum…",
+      "ja": "アルバムをエクスポート…",
+      "ru": "Экспорт альбома…",
+      "zh-Hans": "导出相册…",
+      "zh-Hant": "導出相簿…"
+    },
+    "Export Failed": {
+      "es": "Error al exportar",
+      "ja": "エクスポートに失敗しました",
+      "ru": "Не удалось экспортировать",
+      "zh-Hans": "导出失败",
+      "zh-Hant": "導出失敗"
+    },
+    "Exporting Album to %@.": {
+      "es": "Exportando el álbum a %@.",
+      "ja": "アルバムを %@ にエクスポートしています。",
+      "ru": "Альбом экспортируется в %@.",
+      "zh-Hans": "正在将相册导出到 %@。",
+      "zh-Hant": "正在將相簿導出到 %@。"
+    },
+    "Files in “%@” will replace save data on the console. This cannot be undone. Back up your current saves first if you have not already.": {
+      "es": "Los archivos de «%@» reemplazarán las partidas guardadas de la consola. Esta acción no se puede deshacer. Haz antes una copia de seguridad si aún no la tienes.",
+      "ja": "「%@」内のファイルが本体のセーブデータを置き換えます。この操作は取り消せません。まだの場合は、先に現在のセーブデータをバックアップしてください。",
+      "ru": "Файлы из «%@» заменят сохранения на консоли. Это действие нельзя отменить. Сначала создайте резервную копию текущих сохранений, если вы этого ещё не сделали.",
+      "zh-Hans": "“%@”中的文件将替换主机上的存档数据。此操作无法撤销。如果尚未备份，请先备份当前存档。",
+      "zh-Hant": "「%@」中的檔案將取代主機上的存檔資料。此操作無法復原。若尚未備份，請先備份目前的存檔。"
+    },
+    "Finishing %@…": {
+      "es": "Finalizando %@…",
+      "ja": "%@ を完了しています…",
+      "ru": "Завершение %@…",
+      "zh-Hans": "正在完成 %@…",
+      "zh-Hant": "正在完成 %@…"
+    },
+    "For large installs, launch DBI in title mode (hold R while starting a game). In applet mode large transfers fail with \"Extra buffers exceeded\".": {
+      "es": "Para instalaciones grandes, abre DBI en modo título (mantén pulsado R al iniciar un juego). En modo applet, las transferencias grandes fallan con «Extra buffers exceeded».",
+      "ja": "大きなインストールを行うときは、DBI をタイトルモードで起動してください（ゲーム起動時に R を押したままにします）。アプレットモードでは大きな転送が「Extra buffers exceeded」で失敗します。",
+      "ru": "Для больших установок запускайте DBI в режиме игры (удерживайте R при запуске игры). В режиме апплета большие передачи завершаются ошибкой «Extra buffers exceeded».",
+      "zh-Hans": "安装大文件时，请以标题模式启动 DBI（启动游戏时按住 R）。在小程序模式下，大文件传输会因“Extra buffers exceeded”而失败。",
+      "zh-Hant": "安裝大型檔案時，請以標題模式啟動 DBI（啟動遊戲時按住 R）。在小程式模式下，大型傳輸會因「Extra buffers exceeded」而失敗。"
+    },
+    "Gamecard dump": {
+      "es": "Volcado de tarjeta de juego",
+      "ja": "ゲームカードダンプ",
+      "ru": "Дамп игрового картриджа",
+      "zh-Hans": "卡带转储",
+      "zh-Hant": "卡帶傾印"
+    },
+    "Generated on demand": {
+      "es": "Generado a petición",
+      "ja": "必要に応じて生成されます",
+      "ru": "Создаётся по запросу",
+      "zh-Hans": "按需生成",
+      "zh-Hant": "依需求產生"
+    },
+    "GitHub opens with your version (%@) and macOS version already filled in. This Mac is %@.\n\nDiagnostics are not available until the app has started scanning for a console.": {
+      "es": "GitHub se abrirá con tu versión (%@) y la versión de macOS ya rellenadas. Este Mac es %@.\n\nEl diagnóstico no está disponible hasta que la app haya empezado a buscar una consola.",
+      "ja": "GitHub が開き、お使いのバージョン（%@）と macOS のバージョンがあらかじめ入力されます。この Mac は %@ です。\n\n診断情報は、アプリが本体の検出を開始するまで利用できません。",
+      "ru": "GitHub откроется с уже заполненной вашей версией (%@) и версией macOS. Этот Mac — %@.\n\nДиагностика недоступна, пока приложение не начнёт поиск консоли.",
+      "zh-Hans": "GitHub 将打开，并已填入你的版本（%@）和 macOS 版本。此 Mac 为 %@。\n\n在 App 开始扫描主机之前，诊断信息不可用。",
+      "zh-Hant": "GitHub 將開啟，並已填入你的版本（%@）和 macOS 版本。此 Mac 為 %@。\n\n在 App 開始掃描主機之前，診斷資訊無法使用。"
+    },
+    "GitHub opens with your version (%@) and macOS version already filled in. This Mac is %@.\n\nSwitchMTP can also copy a diagnostics report to the clipboard for you to paste into the report. It lists connected USB devices, any process holding the USB interface, and what the console said it can do. It contains no file contents.": {
+      "es": "GitHub se abrirá con tu versión (%@) y la versión de macOS ya rellenadas. Este Mac es %@.\n\nSwitchMTP también puede copiar un informe de diagnóstico al portapapeles para que lo pegues en el informe. Incluye los dispositivos USB conectados, cualquier proceso que retenga la interfaz USB y lo que la consola indicó que puede hacer. No contiene el contenido de ningún archivo.",
+      "ja": "GitHub が開き、お使いのバージョン（%@）と macOS のバージョンがあらかじめ入力されます。この Mac は %@ です。\n\nSwitchMTP は診断レポートをクリップボードにコピーして、報告に貼り付けられるようにすることもできます。レポートには接続中の USB デバイス、USB インターフェイスを占有しているプロセス、本体が申告した対応機能が含まれます。ファイルの内容は含まれません。",
+      "ru": "GitHub откроется с уже заполненной вашей версией (%@) и версией macOS. Этот Mac — %@.\n\nSwitchMTP также может скопировать диагностический отчёт в буфер обмена, чтобы вы вставили его в сообщение. В отчёте перечислены подключённые USB-устройства, процессы, удерживающие USB-интерфейс, и заявленные возможности консоли. Содержимое файлов в него не входит.",
+      "zh-Hans": "GitHub 将打开，并已填入你的版本（%@）和 macOS 版本。此 Mac 为 %@。\n\nSwitchMTP 还可以将诊断报告拷贝到剪贴板，供你粘贴到报告中。报告会列出已连接的 USB 设备、占用 USB 接口的进程，以及主机声明的功能。其中不包含任何文件内容。",
+      "zh-Hant": "GitHub 將開啟，並已填入你的版本（%@）和 macOS 版本。此 Mac 為 %@。\n\nSwitchMTP 也可以將診斷報告拷貝到剪貼板，供你貼到報告中。報告會列出已連接的 USB 裝置、佔用 USB 介面的程序，以及主機宣告的功能。其中不含任何檔案內容。"
+    },
+    "Homebrew app": {
+      "es": "App homebrew",
+      "ja": "自作アプリ",
+      "ru": "Homebrew-приложение",
+      "zh-Hans": "自制应用",
+      "zh-Hant": "自製應用程式"
+    },
+    "If it still fails, run Troubleshooting.": {
+      "es": "Si sigue fallando, ejecuta «Solución de problemas».",
+      "ja": "それでも失敗する場合は、トラブルシューティングを実行してください。",
+      "ru": "Если ошибка повторяется, запустите «Устранение неполадок».",
+      "zh-Hans": "如果仍然失败，请运行“疑难解答”。",
+      "zh-Hant": "若仍然失敗，請執行「疑難排解」。"
+    },
+    "Install": {
+      "es": "Instalar",
+      "ja": "インストール",
+      "ru": "Установить",
+      "zh-Hans": "安装",
+      "zh-Hant": "安裝"
+    },
+    "Install queue": {
+      "es": "Cola de instalación",
+      "ja": "インストールキュー",
+      "ru": "Очередь установки",
+      "zh-Hans": "安装队列",
+      "zh-Hant": "安裝佇列"
+    },
+    "Install to %@…": {
+      "es": "Instalar en %@…",
+      "ja": "%@ にインストール…",
+      "ru": "Установить в %@…",
+      "zh-Hans": "安装到 %@…",
+      "zh-Hant": "安裝到 %@…"
+    },
+    "Install to NAND": {
+      "es": "Instalar en la NAND",
+      "ja": "本体メモリーにインストール",
+      "ru": "Установить в NAND",
+      "zh-Hans": "安装到主机内存",
+      "zh-Hant": "安裝到主機記憶體"
+    },
+    "Install to NAND…": {
+      "es": "Instalar en la NAND…",
+      "ja": "本体メモリーにインストール…",
+      "ru": "Установить в NAND…",
+      "zh-Hans": "安装到主机内存…",
+      "zh-Hant": "安裝到主機記憶體…"
+    },
+    "Install to SD": {
+      "es": "Instalar en la SD",
+      "ja": "SD カードにインストール",
+      "ru": "Установить на SD",
+      "zh-Hans": "安装到 SD 卡",
+      "zh-Hant": "安裝到 SD 卡"
+    },
+    "Install to SD Card…": {
+      "es": "Instalar en la tarjeta SD…",
+      "ja": "SD カードにインストール…",
+      "ru": "Установить на SD-карту…",
+      "zh-Hans": "安装到 SD 卡…",
+      "zh-Hant": "安裝到 SD 卡…"
+    },
+    "Install to Switch…": {
+      "es": "Instalar en la Switch…",
+      "ja": "Switch にインストール…",
+      "ru": "Установить на Switch…",
+      "zh-Hans": "安装到 Switch…",
+      "zh-Hant": "安裝到 Switch…"
+    },
+    "Installing %@ on the console…": {
+      "es": "Instalando %@ en la consola…",
+      "ja": "%@ を本体にインストールしています…",
+      "ru": "Установка %@ на консоли…",
+      "zh-Hans": "正在主机上安装 %@…",
+      "zh-Hant": "正在主機上安裝 %@…"
+    },
+    "Installing %@. Progress is shown on the console.": {
+      "es": "Instalando %@. El progreso se muestra en la consola.",
+      "ja": "%@ をインストールしています。進行状況は本体の画面に表示されます。",
+      "ru": "Устанавливается %@. Ход установки отображается на консоли.",
+      "zh-Hans": "正在安装 %@。进度显示在主机上。",
+      "zh-Hant": "正在安裝 %@。進度顯示在主機上。"
+    },
+    "Installing %@; %lld more queued.": {
+      "es": "Instalando %@; quedan %lld en la cola.",
+      "ja": "%@ をインストール中。残り %lld 件がキューにあります。",
+      "ru": "Устанавливается %@; ещё %lld в очереди.",
+      "zh-Hans": "正在安装 %@；队列中还有 %lld 个。",
+      "zh-Hant": "正在安裝 %@；佇列中還有 %lld 個。"
+    },
+    "Installing on the console…": {
+      "es": "Instalando en la consola…",
+      "ja": "本体にインストールしています…",
+      "ru": "Установка на консоли…",
+      "zh-Hans": "正在主机上安装…",
+      "zh-Hant": "正在主機上安裝…"
+    },
+    "Launch DBI on the Switch.": {
+      "es": "Abre DBI en la Switch.",
+      "ja": "Switch で DBI を起動します。",
+      "ru": "Запустите DBI на Switch.",
+      "zh-Hans": "在 Switch 上启动 DBI。",
+      "zh-Hant": "在 Switch 上啟動 DBI。"
+    },
+    "No files to install.": {
+      "es": "No hay archivos para instalar.",
+      "ja": "インストールするファイルがありません。",
+      "ru": "Нет файлов для установки.",
+      "zh-Hans": "没有可安装的文件。",
+      "zh-Hant": "沒有可安裝的檔案。"
+    },
+    "No files were provided.": {
+      "es": "No se proporcionó ningún archivo.",
+      "ja": "ファイルが指定されていません。",
+      "ru": "Файлы не указаны.",
+      "zh-Hans": "未提供任何文件。",
+      "zh-Hant": "未提供任何檔案。"
+    },
+    "No gamecard is inserted, or DBI is not exposing the Gamecard storage.": {
+      "es": "No hay ninguna tarjeta de juego insertada, o DBI no expone el almacenamiento Gamecard.",
+      "ja": "ゲームカードが挿入されていないか、DBI が Gamecard ストレージを公開していません。",
+      "ru": "Игровой картридж не вставлен, либо DBI не предоставляет хранилище Gamecard.",
+      "zh-Hans": "未插入卡带，或 DBI 未开放 Gamecard 存储。",
+      "zh-Hant": "未插入卡帶，或 DBI 未開放 Gamecard 儲存空間。"
+    },
+    "No progress for %llds. The console may be busy; DBI shows the real state on screen.": {
+      "es": "Sin progreso durante %llds. Puede que la consola esté ocupada; DBI muestra el estado real en pantalla.",
+      "ja": "%lld 秒間、進行がありません。本体が処理中の可能性があります。実際の状態は DBI の画面に表示されます。",
+      "ru": "Нет прогресса уже %lld с. Возможно, консоль занята; реальное состояние показывает DBI на экране.",
+      "zh-Hans": "已有 %lld 秒没有进度。主机可能正忙；DBI 会在屏幕上显示真实状态。",
+      "zh-Hant": "已有 %lld 秒沒有進度。主機可能正忙；DBI 會在螢幕上顯示真實狀態。"
+    },
+    "No progress reported yet. The console may still be preparing — DBI shows the real state on screen.": {
+      "es": "Aún no se ha informado de ningún progreso. Puede que la consola siga preparándose: DBI muestra el estado real en pantalla.",
+      "ja": "まだ進行状況が報告されていません。本体が準備中の可能性があります。実際の状態は DBI の画面に表示されます。",
+      "ru": "Прогресс пока не сообщается. Возможно, консоль ещё готовится — реальное состояние показывает DBI на экране.",
+      "zh-Hans": "尚未报告进度。主机可能仍在准备中——DBI 会在屏幕上显示真实状态。",
+      "zh-Hant": "尚未回報進度。主機可能仍在準備中——DBI 會在螢幕上顯示真實狀態。"
+    },
+    "Only .nsp, .nsz, .xci and .xcz files can be installed. Skipped: %@": {
+      "es": "Solo se pueden instalar archivos .nsp, .nsz, .xci y .xcz. Omitidos: %@",
+      "ja": "インストールできるのは .nsp、.nsz、.xci、.xcz ファイルのみです。スキップ: %@",
+      "ru": "Устанавливать можно только файлы .nsp, .nsz, .xci и .xcz. Пропущено: %@",
+      "zh-Hans": "只能安装 .nsp、.nsz、.xci 和 .xcz 文件。已跳过：%@",
+      "zh-Hant": "只能安裝 .nsp、.nsz、.xci 和 .xcz 檔案。已略過：%@"
+    },
+    "Overwrite save data on the Switch?": {
+      "es": "¿Sobrescribir las partidas guardadas de la Switch?",
+      "ja": "Switch のセーブデータを上書きしますか？",
+      "ru": "Перезаписать сохранения на Switch?",
+      "zh-Hans": "要覆盖 Switch 上的存档数据吗？",
+      "zh-Hant": "要覆蓋 Switch 上的存檔資料嗎？"
+    },
+    "Paste the report into a bug report. It lists USB devices, any process holding the USB interface, and the connected device's capabilities.": {
+      "es": "Pega el informe en el reporte de error. Incluye los dispositivos USB, cualquier proceso que retenga la interfaz USB y las capacidades del dispositivo conectado.",
+      "ja": "このレポートを不具合報告に貼り付けてください。USB デバイス、USB インターフェイスを占有しているプロセス、接続中のデバイスの対応機能が含まれます。",
+      "ru": "Вставьте отчёт в сообщение об ошибке. В нём перечислены USB-устройства, процессы, удерживающие USB-интерфейс, и возможности подключённого устройства.",
+      "zh-Hans": "将报告粘贴到错误报告中。其中列出了 USB 设备、占用 USB 接口的进程，以及已连接设备的功能。",
+      "zh-Hant": "將報告貼到錯誤報告中。其中列出了 USB 裝置、佔用 USB 介面的程序，以及已連接裝置的功能。"
+    },
+    "Press X → Run MTP responder.": {
+      "es": "Pulsa X → «Run MTP responder».",
+      "ja": "X ボタン →「Run MTP responder」を選びます。",
+      "ru": "Нажмите X → «Run MTP responder».",
+      "zh-Hans": "按 X → 选择“Run MTP responder”。",
+      "zh-Hant": "按 X → 選擇「Run MTP responder」。"
+    },
+    "Queued %lld file(s) for %@. They will install one after another.": {
+      "es": "Se han añadido %lld archivo(s) a la cola de %@. Se instalarán uno tras otro.",
+      "ja": "%lld 件のファイルを %@ のキューに追加しました。順番にインストールされます。",
+      "ru": "В очередь для %2$@ добавлено файлов: %1$lld. Они установятся один за другим.",
+      "zh-Hans": "已将 %lld 个文件加入 %@ 的队列。它们将逐个安装。",
+      "zh-Hant": "已將 %lld 個檔案加入 %@ 的佇列。它們將逐一安裝。"
+    },
+    "Reading files…": {
+      "es": "Leyendo archivos…",
+      "ja": "ファイルを読み込んでいます…",
+      "ru": "Чтение файлов…",
+      "zh-Hans": "正在读取文件…",
+      "zh-Hant": "正在讀取檔案…"
+    },
+    "Remove from queue": {
+      "es": "Quitar de la cola",
+      "ja": "キューから削除",
+      "ru": "Убрать из очереди",
+      "zh-Hans": "从队列中移除",
+      "zh-Hant": "從佇列中移除"
+    },
+    "Report an Issue…": {
+      "es": "Informar de un problema…",
+      "ja": "問題を報告…",
+      "ru": "Сообщить о проблеме…",
+      "zh-Hans": "报告问题…",
+      "zh-Hant": "回報問題…"
+    },
+    "Report an issue": {
+      "es": "Informar de un problema",
+      "ja": "問題を報告",
+      "ru": "Сообщить о проблеме",
+      "zh-Hans": "报告问题",
+      "zh-Hant": "回報問題"
+    },
+    "Restore": {
+      "es": "Restaurar",
+      "ja": "復元",
+      "ru": "Восстановить",
+      "zh-Hans": "恢复",
+      "zh-Hant": "還原"
+    },
+    "Restore Saves…": {
+      "es": "Restaurar partidas guardadas…",
+      "ja": "セーブデータを復元…",
+      "ru": "Восстановить сохранения…",
+      "zh-Hans": "恢复存档…",
+      "zh-Hant": "還原存檔…"
+    },
+    "Restoring %lld item(s) to the console's save storage.": {
+      "es": "Restaurando %lld elemento(s) en el almacenamiento de partidas de la consola.",
+      "ja": "%lld 件の項目を本体のセーブデータ用ストレージに復元しています。",
+      "ru": "Восстановление %lld объект(ов) в хранилище сохранений консоли.",
+      "zh-Hans": "正在将 %lld 个项目恢复到主机的存档存储。",
+      "zh-Hant": "正在將 %lld 個項目還原到主機的存檔儲存空間。"
+    },
+    "Sent %@ — waiting for the console": {
+      "es": "Enviado %@: esperando a la consola",
+      "ja": "%@ を送信しました — 本体の応答を待っています",
+      "ru": "Отправлено %@ — ожидание консоли",
+      "zh-Hans": "已发送 %@ — 正在等待主机",
+      "zh-Hant": "已傳送 %@ — 正在等待主機"
+    },
+    "Sent — DBI reports the result on the console.": {
+      "es": "Enviado: DBI muestra el resultado en la consola.",
+      "ja": "送信しました — 結果は DBI が本体に表示します。",
+      "ru": "Отправлено — DBI покажет результат на консоли.",
+      "zh-Hans": "已发送——DBI 会在主机上显示结果。",
+      "zh-Hant": "已傳送——DBI 會在主機上顯示結果。"
+    },
+    "Size not reported by the device": {
+      "es": "El dispositivo no informa del tamaño",
+      "ja": "デバイスがサイズを報告していません",
+      "ru": "Устройство не сообщает размер",
+      "zh-Hans": "设备未提供大小",
+      "zh-Hant": "裝置未提供大小"
+    },
+    "Skipped (not installable): %@": {
+      "es": "Omitido (no instalable): %@",
+      "ja": "スキップ（インストール不可）: %@",
+      "ru": "Пропущено (нельзя установить): %@",
+      "zh-Hans": "已跳过（无法安装）：%@",
+      "zh-Hant": "已略過（無法安裝）：%@"
+    },
+    "Started": {
+      "es": "Iniciado",
+      "ja": "開始済み",
+      "ru": "Запущено",
+      "zh-Hans": "已启动",
+      "zh-Hant": "已啟動"
+    },
+    "Stop the current transfer": {
+      "es": "Detener la transferencia actual",
+      "ja": "現在の転送を停止",
+      "ru": "Остановить текущую передачу",
+      "zh-Hans": "停止当前传输",
+      "zh-Hant": "停止目前的傳輸"
+    },
+    "Switch content archive": {
+      "es": "Archivo de contenido de Switch",
+      "ja": "Switch コンテンツアーカイブ",
+      "ru": "Архив содержимого Switch",
+      "zh-Hans": "Switch 内容存档",
+      "zh-Hant": "Switch 內容封存"
+    },
+    "Switch is in a homebrew USB mode": {
+      "es": "La Switch está en un modo USB homebrew",
+      "ja": "Switch が自作ソフトの USB モードになっています",
+      "ru": "Switch находится в homebrew-режиме USB",
+      "zh-Hans": "Switch 处于自制软件 USB 模式",
+      "zh-Hant": "Switch 處於自製軟體 USB 模式"
+    },
+    "Switch package": {
+      "es": "Paquete de Switch",
+      "ja": "Switch パッケージ",
+      "ru": "Пакет Switch",
+      "zh-Hans": "Switch 安装包",
+      "zh-Hant": "Switch 安裝檔"
+    },
+    "SwitchMTP needs DBI's MTP responder. On the Switch, open DBI, press X, and choose “Run MTP responder”. Awoo-Installer and GoldLeaf also appear this way — exit them and start DBI instead.": {
+      "es": "SwitchMTP necesita el respondedor MTP de DBI. En la Switch, abre DBI, pulsa X y elige «Run MTP responder». Awoo-Installer y GoldLeaf también aparecen así: ciérralos y abre DBI en su lugar.",
+      "ja": "SwitchMTP には DBI の MTP レスポンダーが必要です。Switch で DBI を開き、X ボタンを押して「Run MTP responder」を選択してください。Awoo-Installer や GoldLeaf も同じように認識されます。その場合は終了して DBI を起動してください。",
+      "ru": "SwitchMTP требуется MTP-респондер DBI. На Switch откройте DBI, нажмите X и выберите «Run MTP responder». Awoo-Installer и GoldLeaf определяются так же — закройте их и запустите DBI.",
+      "zh-Hans": "SwitchMTP 需要 DBI 的 MTP 响应器。在 Switch 上打开 DBI，按 X 并选择“Run MTP responder”。Awoo-Installer 和 GoldLeaf 也会以这种方式出现——请退出它们并改为启动 DBI。",
+      "zh-Hant": "SwitchMTP 需要 DBI 的 MTP 回應器。在 Switch 上開啟 DBI，按 X 並選擇「Run MTP responder」。Awoo-Installer 和 GoldLeaf 也會以這種方式出現——請結束它們並改為啟動 DBI。"
+    },
+    "System": {
+      "es": "Sistema",
+      "ja": "システム",
+      "ru": "Система",
+      "zh-Hans": "系统",
+      "zh-Hant": "系統"
+    },
+    "That folder is empty — pick a folder created by Back Up Saves.": {
+      "es": "Esa carpeta está vacía: elige una carpeta creada por «Copia de seguridad de partidas».",
+      "ja": "そのフォルダーは空です。「セーブデータをバックアップ」で作成したフォルダーを選択してください。",
+      "ru": "Эта папка пуста — выберите папку, созданную командой «Резервная копия сохранений».",
+      "zh-Hans": "该文件夹为空——请选择由“备份存档”创建的文件夹。",
+      "zh-Hant": "該資料夾是空的——請選擇由「備份存檔」建立的資料夾。"
+    },
+    "That install storage is no longer available. Reconnect the console and try again.": {
+      "es": "Ese almacenamiento de instalación ya no está disponible. Vuelve a conectar la consola e inténtalo de nuevo.",
+      "ja": "そのインストール先ストレージは利用できなくなりました。本体を接続し直してからもう一度お試しください。",
+      "ru": "Это хранилище для установки больше недоступно. Переподключите консоль и повторите попытку.",
+      "zh-Hans": "该安装存储已不可用。请重新连接主机后再试。",
+      "zh-Hant": "該安裝儲存空間已無法使用。請重新連接主機後再試。"
+    },
+    "The Saves storage is not readable on this device.": {
+      "es": "El almacenamiento de partidas no se puede leer en este dispositivo.",
+      "ja": "このデバイスでは Saves ストレージを読み取れません。",
+      "ru": "Хранилище сохранений на этом устройстве недоступно для чтения.",
+      "zh-Hans": "此设备上的存档存储不可读取。",
+      "zh-Hant": "此裝置上的存檔儲存空間無法讀取。"
+    },
+    "The Saves storage is read-only on this device. Enable save write access in DBI, then reconnect.": {
+      "es": "El almacenamiento de partidas es de solo lectura en este dispositivo. Activa el acceso de escritura a partidas en DBI y vuelve a conectar.",
+      "ja": "このデバイスでは Saves ストレージが読み取り専用です。DBI でセーブデータへの書き込みを有効にしてから、接続し直してください。",
+      "ru": "Хранилище сохранений на этом устройстве доступно только для чтения. Включите запись сохранений в DBI и переподключитесь.",
+      "zh-Hans": "此设备上的存档存储为只读。请在 DBI 中启用存档写入权限，然后重新连接。",
+      "zh-Hant": "此裝置上的存檔儲存空間為唯讀。請在 DBI 中啟用存檔寫入權限，然後重新連接。"
+    },
+    "This device does not expose a Saves storage. In DBI, enable save access before connecting.": {
+      "es": "Este dispositivo no expone un almacenamiento de partidas. Activa el acceso a partidas en DBI antes de conectar.",
+      "ja": "このデバイスは Saves ストレージを公開していません。接続する前に DBI でセーブデータへのアクセスを有効にしてください。",
+      "ru": "Это устройство не предоставляет хранилище сохранений. Включите доступ к сохранениям в DBI перед подключением.",
+      "zh-Hans": "此设备未开放存档存储。请先在 DBI 中启用存档访问，然后再连接。",
+      "zh-Hant": "此裝置未開放存檔儲存空間。請先在 DBI 中啟用存檔存取，然後再連接。"
+    },
+    "This device does not expose an Album storage.": {
+      "es": "Este dispositivo no expone un almacenamiento de álbum.",
+      "ja": "このデバイスは Album ストレージを公開していません。",
+      "ru": "Это устройство не предоставляет хранилище альбома.",
+      "zh-Hans": "此设备未开放相册存储。",
+      "zh-Hant": "此裝置未開放相簿儲存空間。"
+    },
+    "This storage does not allow creating folders.": {
+      "es": "Este almacenamiento no permite crear carpetas.",
+      "ja": "このストレージではフォルダーを作成できません。",
+      "ru": "В этом хранилище нельзя создавать папки.",
+      "zh-Hans": "此存储不允许创建文件夹。",
+      "zh-Hant": "此儲存空間不允許建立資料夾。"
+    },
+    "This storage does not allow deleting items.": {
+      "es": "Este almacenamiento no permite eliminar elementos.",
+      "ja": "このストレージでは項目を削除できません。",
+      "ru": "В этом хранилище нельзя удалять объекты.",
+      "zh-Hans": "此存储不允许删除项目。",
+      "zh-Hant": "此儲存空間不允許刪除項目。"
+    },
+    "This storage does not allow renaming items.": {
+      "es": "Este almacenamiento no permite renombrar elementos.",
+      "ja": "このストレージでは項目の名前を変更できません。",
+      "ru": "В этом хранилище нельзя переименовывать объекты.",
+      "zh-Hans": "此存储不允许重命名项目。",
+      "zh-Hant": "此儲存空間不允許重新命名項目。"
+    },
+    "This storage does not allow uploads.": {
+      "es": "Este almacenamiento no permite subir archivos.",
+      "ja": "このストレージにはアップロードできません。",
+      "ru": "В это хранилище нельзя загружать файлы.",
+      "zh-Hans": "此存储不允许上传。",
+      "zh-Hant": "此儲存空間不允許上傳。"
+    },
+    "This storage is not browsable.": {
+      "es": "Este almacenamiento no se puede explorar.",
+      "ja": "このストレージは閲覧できません。",
+      "ru": "Это хранилище нельзя просматривать.",
+      "zh-Hans": "此存储无法浏览。",
+      "zh-Hant": "此儲存空間無法瀏覽。"
+    },
+    "Those files are already queued.": {
+      "es": "Esos archivos ya están en la cola.",
+      "ja": "それらのファイルはすでにキューに入っています。",
+      "ru": "Эти файлы уже в очереди.",
+      "zh-Hans": "这些文件已在队列中。",
+      "zh-Hant": "這些檔案已在佇列中。"
+    },
+    "Ticket": {
+      "es": "Ticket",
+      "ja": "チケット",
+      "ru": "Тикет",
+      "zh-Hans": "许可证",
+      "zh-Hant": "授權票證"
+    },
+    "Tip for large installs": {
+      "es": "Consejo para instalaciones grandes",
+      "ja": "大きなインストールのヒント",
+      "ru": "Совет для больших установок",
+      "zh-Hans": "大文件安装提示",
+      "zh-Hant": "大型安裝提示"
+    },
+    "Toggle Sidebar": {
+      "es": "Mostrar u ocultar la barra lateral",
+      "ja": "サイドバーの表示/非表示",
+      "ru": "Показать или скрыть боковое меню",
+      "zh-Hans": "显示或隐藏边栏",
+      "zh-Hant": "顯示或隱藏側邊欄"
+    },
+    "Try again in a moment.": {
+      "es": "Vuelve a intentarlo en un momento.",
+      "ja": "しばらくしてからもう一度お試しください。",
+      "ru": "Повторите попытку через мгновение.",
+      "zh-Hans": "请稍后再试。",
+      "zh-Hant": "請稍後再試。"
+    },
+    "Unknown Device": {
+      "es": "Dispositivo desconocido",
+      "ja": "不明なデバイス",
+      "ru": "Неизвестное устройство",
+      "zh-Hans": "未知设备",
+      "zh-Hant": "未知裝置"
+    },
+    "Use a USB-C data cable.": {
+      "es": "Usa un cable de datos USB-C.",
+      "ja": "USB-C データケーブルを使用してください。",
+      "ru": "Используйте кабель USB-C для передачи данных.",
+      "zh-Hans": "请使用 USB-C 数据线。",
+      "zh-Hant": "請使用 USB-C 資料線。"
+    },
+    "Use a USB-C data cable.\nLaunch DBI.\nPress X → Run MTP responder.": {
+      "es": "Usa un cable de datos USB-C.\nAbre DBI.\nPulsa X → «Run MTP responder».",
+      "ja": "USB-C データケーブルを使用します。\nDBI を起動します。\nX ボタン →「Run MTP responder」を選びます。",
+      "ru": "Используйте кабель USB-C для передачи данных.\nЗапустите DBI.\nНажмите X → «Run MTP responder».",
+      "zh-Hans": "请使用 USB-C 数据线。\n启动 DBI。\n按 X → 选择“Run MTP responder”。",
+      "zh-Hant": "請使用 USB-C 資料線。\n啟動 DBI。\n按 X → 選擇「Run MTP responder」。"
+    }
+  }
+}

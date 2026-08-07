@@ -1,6 +1,12 @@
 {
   "sourceLanguage": "en",
   "strings": {
+    "%@ %@ %@": {
+      "shouldTranslate": false
+    },
+    "%@ - %@": {
+      "shouldTranslate": false
+    },
     "%@ file": {
       "extractionState": "manual",
       "localizations": {
@@ -79,6 +85,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "%@ 可用，總計 %@"
+          }
+        }
+      }
+    },
+    "%@ is no longer readable. It may have been moved, renamed or ejected.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ is no longer readable. It may have been moved, renamed or ejected."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ya no se puede leer %@. Puede que se haya movido, renombrado o expulsado."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ を読み取れなくなりました。移動、名前変更、または取り出しが行われた可能性があります。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файл %@ больше не читается. Возможно, он был перемещён, переименован или извлечён."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法再读取 %@。它可能已被移动、重命名或弹出。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法再讀取 %@。它可能已被移動、重新命名或退出。"
           }
         }
       }
@@ -452,6 +498,169 @@
         }
       }
     },
+    "%lld": {
+      "shouldTranslate": false
+    },
+    "%lld already queued.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld already queued."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld ya están en la cola."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 件はすでにキューに入っています。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld уже в очереди."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 个已在队列中。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 個已在佇列中。"
+          }
+        }
+      }
+    },
+    "%lld failed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld failed"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld con errores"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 件失敗"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld с ошибкой"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 个失败"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 個失敗"
+          }
+        }
+      }
+    },
+    "%lld queued for install": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld queued for install"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld en cola para instalar"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 件がインストール待ち"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld в очереди на установку"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 个等待安装"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 個等待安裝"
+          }
+        }
+      }
+    },
+    "%lld sent": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld sent"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld enviados"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 件送信済み"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld отправлено"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已发送 %lld 个"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已傳送 %lld 個"
+          }
+        }
+      }
+    },
     "/path/to/folder": {
       "extractionState": "manual",
       "localizations": {
@@ -694,6 +903,47 @@
           "stringUnit": {
             "state": "translated",
             "value": "已存在同名的檔案或檔案夾。"
+          }
+        }
+      }
+    },
+    "A macOS file manager for Nintendo Switch via DBI MTP responder.": {
+      "comment": "Settings App Description",
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "A macOS file manager for Nintendo Switch via DBI MTP responder."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Un gestor de archivos de macOS para Nintendo Switch a través del respondedor MTP de DBI."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "DBI の MTP レスポンダー経由で Nintendo Switch を扱う macOS 用ファイルマネージャー。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файловый менеджер macOS для Nintendo Switch через MTP-респондер DBI."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "通过 DBI 的 MTP 响应器管理 Nintendo Switch 文件的 macOS 文件管理器。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "透過 DBI 的 MTP 回應器管理 Nintendo Switch 檔案的 macOS 檔案管理程式。"
           }
         }
       }
@@ -1357,6 +1607,9 @@
         }
       }
     },
+    "Apple Silicon": {
+      "shouldTranslate": false
+    },
     "Archive": {
       "extractionState": "manual",
       "localizations": {
@@ -1439,6 +1692,126 @@
         }
       }
     },
+    "Back Up Saves…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Back Up Saves…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copia de seguridad de partidas…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "セーブデータをバックアップ…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Резервная копия сохранений…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "备份存档…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "備份存檔…"
+          }
+        }
+      }
+    },
+    "Backing up saves to %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Backing up saves to %@."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiando las partidas guardadas en %@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "セーブデータを %@ にバックアップしています。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сохранения копируются в %@."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在将存档备份到 %@。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在將存檔備份到 %@。"
+          }
+        }
+      }
+    },
+    "Binary": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Binary"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Binario"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "バイナリ"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Двоичный файл"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "二进制文件"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "二進位檔案"
+          }
+        }
+      }
+    },
     "Bluetooth": {
       "comment": "Built-in favorite: /bluetooth",
       "extractionState": "manual",
@@ -1502,6 +1875,12 @@
             "value": "組み込み項目は削除できません。"
           }
         },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Встроенный элемент нельзя удалить."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -1512,12 +1891,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "內建項目無法移除。"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Встроенный элемент нельзя удалить."
           }
         }
       }
@@ -1686,6 +2059,46 @@
         }
       }
     },
+    "Cannot Install": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot Install"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se puede instalar"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストールできません"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Установка невозможна"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法安装"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法安裝"
+          }
+        }
+      }
+    },
     "Cannot access device": {
       "comment": "USB permission denied",
       "extractionState": "manual",
@@ -1770,6 +2183,86 @@
         }
       }
     },
+    "Cannot browse this storage": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot browse this storage"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este almacenamiento no se puede explorar"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このストレージは閲覧できません"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Это хранилище нельзя просматривать"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法浏览此存储"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法瀏覽此儲存空間"
+          }
+        }
+      }
+    },
+    "Cannot continue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cannot continue"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se puede continuar"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "続行できません"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Продолжение невозможно"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法继续"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法繼續"
+          }
+        }
+      }
+    },
     "Cannot read device info": {
       "comment": "ErrorDeviceInfo – failed to retrieve device information",
       "extractionState": "manual",
@@ -1850,6 +2343,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "無法讀取儲存空間資訊"
+          }
+        }
+      }
+    },
+    "Certificate": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Certificate"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Certificado"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "証明書"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сертификат"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "证书"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "憑證"
           }
         }
       }
@@ -1979,6 +2512,166 @@
         }
       }
     },
+    "Choose": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elegir"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選択"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выбрать"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選擇"
+          }
+        }
+      }
+    },
+    "Choose .nsp, .nsz, .xci or .xcz files to install.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose .nsp, .nsz, .xci or .xcz files to install."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige archivos .nsp, .nsz, .xci o .xcz para instalar."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストールする .nsp、.nsz、.xci、.xcz ファイルを選択してください。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выберите файлы .nsp, .nsz, .xci или .xcz для установки."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择要安装的 .nsp、.nsz、.xci 或 .xcz 文件。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選擇要安裝的 .nsp、.nsz、.xci 或 .xcz 檔案。"
+          }
+        }
+      }
+    },
+    "Choose a folder created by Back Up Saves.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose a folder created by Back Up Saves."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige una carpeta creada por «Copia de seguridad de partidas»."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「セーブデータをバックアップ」で作成したフォルダーを選択してください。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выберите папку, созданную командой «Резервная копия сохранений»."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择由“备份存档”创建的文件夹。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選擇由「備份存檔」建立的資料夾。"
+          }
+        }
+      }
+    },
+    "Choose where to save the files.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Choose where to save the files."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Elige dónde guardar los archivos."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ファイルの保存先を選択してください。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Выберите, куда сохранить файлы."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "选择文件的保存位置。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "選擇檔案的儲存位置。"
+          }
+        }
+      }
+    },
     "Clear": {
       "extractionState": "manual",
       "localizations": {
@@ -2016,6 +2709,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "清理"
+          }
+        }
+      }
+    },
+    "Clear Finished": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear Finished"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Borrar completados"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "完了した項目を消去"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Очистить завершённые"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清除已完成"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清除已完成"
           }
         }
       }
@@ -2061,6 +2794,46 @@
         }
       }
     },
+    "Clear Queue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Clear Queue"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vaciar la cola"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キューを消去"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Очистить очередь"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清空队列"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "清空佇列"
+          }
+        }
+      }
+    },
     "Close": {
       "extractionState": "manual",
       "localizations": {
@@ -2098,6 +2871,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "關閉"
+          }
+        }
+      }
+    },
+    "Compressed Switch package": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compressed Switch package"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paquete de Switch comprimido"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "圧縮 Switch パッケージ"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сжатый пакет Switch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "压缩的 Switch 安装包"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "壓縮的 Switch 安裝檔"
+          }
+        }
+      }
+    },
+    "Compressed gamecard dump": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Compressed gamecard dump"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volcado de tarjeta de juego comprimido"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "圧縮ゲームカードダンプ"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сжатый дамп игрового картриджа"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "压缩的卡带转储"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "壓縮的卡帶傾印"
           }
         }
       }
@@ -2267,6 +3120,46 @@
         }
       }
     },
+    "Continue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continue"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Continuar"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "続ける"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Продолжить"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "继续"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "繼續"
+          }
+        }
+      }
+    },
     "Copy": {
       "extractionState": "manual",
       "localizations": {
@@ -2304,6 +3197,166 @@
           "stringUnit": {
             "state": "translated",
             "value": "拷貝"
+          }
+        }
+      }
+    },
+    "Copy Diagnostics": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy Diagnostics"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar diagnóstico"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "診断情報をコピー"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Копировать диагностику"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拷贝诊断信息"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拷貝診斷資訊"
+          }
+        }
+      }
+    },
+    "Copy Diagnostics and Continue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copy Diagnostics and Continue"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Copiar diagnóstico y continuar"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "診断情報をコピーして続ける"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Копировать диагностику и продолжить"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拷贝诊断信息并继续"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "拷貝診斷資訊並繼續"
+          }
+        }
+      }
+    },
+    "Could not collect diagnostics": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not collect diagnostics"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se pudo recopilar el diagnóstico"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "診断情報を収集できませんでした"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось собрать диагностику"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "无法收集诊断信息"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "無法收集診斷資訊"
+          }
+        }
+      }
+    },
+    "Could not find CLI_USAGE.md in the application bundle.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Could not find CLI_USAGE.md in the application bundle."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se encontró CLI_USAGE.md en el paquete de la aplicación."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アプリケーションバンドル内に CLI_USAGE.md が見つかりませんでした。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файл CLI_USAGE.md не найден в пакете приложения."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在应用程序包中找不到 CLI_USAGE.md。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在應用程式套件中找不到 CLI_USAGE.md。"
           }
         }
       }
@@ -2591,6 +3644,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "修改日期"
+          }
+        }
+      }
+    },
+    "Date not reported by the device": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Date not reported by the device"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El dispositivo no informa de la fecha"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "デバイスが日付を報告していません"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Устройство не сообщает дату"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设备未提供日期"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "裝置未提供日期"
           }
         }
       }
@@ -3298,6 +4391,46 @@
         }
       }
     },
+    "Diagnostics copied": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diagnostics copied"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Diagnóstico copiado"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "診断情報をコピーしました"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Диагностика скопирована"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已拷贝诊断信息"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已拷貝診斷資訊"
+          }
+        }
+      }
+    },
     "Disabled": {
       "extractionState": "manual",
       "localizations": {
@@ -3458,6 +4591,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "已中斷"
+          }
+        }
+      }
+    },
+    "Dismiss": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dismiss"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Descartar"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "閉じる"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Скрыть"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "关闭"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "關閉"
           }
         }
       }
@@ -3666,6 +4839,166 @@
           "stringUnit": {
             "state": "translated",
             "value": "下載"
+          }
+        }
+      }
+    },
+    "Drop NSP, NSZ, XCI or XCZ files here": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Drop NSP, NSZ, XCI or XCZ files here"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Arrastra aquí archivos NSP, NSZ, XCI o XCZ"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "NSP、NSZ、XCI、XCZ ファイルをここにドロップ"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перетащите сюда файлы NSP, NSZ, XCI или XCZ"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将 NSP、NSZ、XCI 或 XCZ 文件拖到此处"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "將 NSP、NSZ、XCI 或 XCZ 檔案拖到此處"
+          }
+        }
+      }
+    },
+    "Dump Gamecard…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dump Gamecard…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volcar tarjeta de juego…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ゲームカードをダンプ…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дамп игрового картриджа…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "转储卡带…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "傾印卡帶…"
+          }
+        }
+      }
+    },
+    "Dumping gamecard to %@. This can take a long time; leave the gamecard inserted.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dumping gamecard to %@. This can take a long time; leave the gamecard inserted."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volcando la tarjeta de juego en %@. Puede tardar bastante; no extraigas la tarjeta."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ゲームカードを %@ にダンプしています。時間がかかる場合があります。カードは挿したままにしてください。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дамп игрового картриджа сохраняется в %@. Это может занять много времени; не извлекайте картридж."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在将卡带转储到 %@。这可能需要较长时间，请勿取出卡带。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在將卡帶傾印到 %@。這可能需要較長時間，請勿取出卡帶。"
+          }
+        }
+      }
+    },
+    "Dumps": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dumps"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volcados"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ダンプ"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дампы"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "转储"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "傾印"
           }
         }
       }
@@ -3957,6 +5290,46 @@
         }
       }
     },
+    "Error": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "エラー"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ошибка"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "错误"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "錯誤"
+          }
+        }
+      }
+    },
     "Error:": {
       "extractionState": "manual",
       "localizations": {
@@ -4039,6 +5412,46 @@
         }
       }
     },
+    "Export Album…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export Album…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportar álbum…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アルバムをエクスポート…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Экспорт альбома…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导出相册…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "導出相簿…"
+          }
+        }
+      }
+    },
     "Export CLI Usage Guide": {
       "extractionState": "manual",
       "localizations": {
@@ -4076,6 +5489,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "導出 CLI 使用指南"
+          }
+        }
+      }
+    },
+    "Export Failed": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Export Failed"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Error al exportar"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "エクスポートに失敗しました"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Не удалось экспортировать"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "导出失败"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "導出失敗"
           }
         }
       }
@@ -4142,6 +5595,12 @@
             "value": "エクスポートが正常に完了しました。"
           }
         },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Экспорт успешно завершён."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -4152,12 +5611,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "導出成功"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Экспорт успешно завершён."
           }
         }
       }
@@ -4241,6 +5694,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "將所選檔案導出到 Mac"
+          }
+        }
+      }
+    },
+    "Exporting Album to %@.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exporting Album to %@."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Exportando el álbum a %@."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "アルバムを %@ にエクスポートしています。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Альбом экспортируется в %@."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在将相册导出到 %@。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在將相簿導出到 %@。"
           }
         }
       }
@@ -4872,6 +6365,86 @@
         }
       }
     },
+    "Files in “%@” will replace save data on the console. This cannot be undone. Back up your current saves first if you have not already.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Files in “%@” will replace save data on the console. This cannot be undone. Back up your current saves first if you have not already."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Los archivos de «%@» reemplazarán las partidas guardadas de la consola. Esta acción no se puede deshacer. Haz antes una copia de seguridad si aún no la tienes."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」内のファイルが本体のセーブデータを置き換えます。この操作は取り消せません。まだの場合は、先に現在のセーブデータをバックアップしてください。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файлы из «%@» заменят сохранения на консоли. Это действие нельзя отменить. Сначала создайте резервную копию текущих сохранений, если вы этого ещё не сделали."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "“%@”中的文件将替换主机上的存档数据。此操作无法撤销。如果尚未备份，请先备份当前存档。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "「%@」中的檔案將取代主機上的存檔資料。此操作無法復原。若尚未備份，請先備份目前的存檔。"
+          }
+        }
+      }
+    },
+    "Finishing %@…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finishing %@…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Finalizando %@…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ を完了しています…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Завершение %@…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在完成 %@…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在完成 %@…"
+          }
+        }
+      }
+    },
     "Folder": {
       "extractionState": "manual",
       "localizations": {
@@ -5036,6 +6609,46 @@
         }
       }
     },
+    "For large installs, launch DBI in title mode (hold R while starting a game). In applet mode large transfers fail with \"Extra buffers exceeded\".": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "For large installs, launch DBI in title mode (hold R while starting a game). In applet mode large transfers fail with \"Extra buffers exceeded\"."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Para instalaciones grandes, abre DBI en modo título (mantén pulsado R al iniciar un juego). En modo applet, las transferencias grandes fallan con «Extra buffers exceeded»."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大きなインストールを行うときは、DBI をタイトルモードで起動してください（ゲーム起動時に R を押したままにします）。アプレットモードでは大きな転送が「Extra buffers exceeded」で失敗します。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Для больших установок запускайте DBI в режиме игры (удерживайте R при запуске игры). В режиме апплета большие передачи завершаются ошибкой «Extra buffers exceeded»."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装大文件时，请以标题模式启动 DBI（启动游戏时按住 R）。在小程序模式下，大文件传输会因“Extra buffers exceeded”而失败。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安裝大型檔案時，請以標題模式啟動 DBI（啟動遊戲時按住 R）。在小程式模式下，大型傳輸會因「Extra buffers exceeded」而失敗。"
+          }
+        }
+      }
+    },
     "Free Space": {
       "extractionState": "manual",
       "localizations": {
@@ -5073,6 +6686,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "可用空間"
+          }
+        }
+      }
+    },
+    "Gamecard dump": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Gamecard dump"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Volcado de tarjeta de juego"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ゲームカードダンプ"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Дамп игрового картриджа"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卡带转储"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "卡帶傾印"
           }
         }
       }
@@ -5119,6 +6772,46 @@
         }
       }
     },
+    "Generated on demand": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generated on demand"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Generado a petición"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "必要に応じて生成されます"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Создаётся по запросу"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按需生成"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "依需求產生"
+          }
+        }
+      }
+    },
     "Get Started": {
       "extractionState": "manual",
       "localizations": {
@@ -5156,6 +6849,89 @@
           "stringUnit": {
             "state": "translated",
             "value": "開始使用"
+          }
+        }
+      }
+    },
+    "GitHub": {
+      "shouldTranslate": false
+    },
+    "GitHub opens with your version (%@) and macOS version already filled in. This Mac is %@.\n\nDiagnostics are not available until the app has started scanning for a console.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub opens with your version (%1$@) and macOS version already filled in. This Mac is %2$@.\n\nDiagnostics are not available until the app has started scanning for a console."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub se abrirá con tu versión (%@) y la versión de macOS ya rellenadas. Este Mac es %@.\n\nEl diagnóstico no está disponible hasta que la app haya empezado a buscar una consola."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub が開き、お使いのバージョン（%@）と macOS のバージョンがあらかじめ入力されます。この Mac は %@ です。\n\n診断情報は、アプリが本体の検出を開始するまで利用できません。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub откроется с уже заполненной вашей версией (%@) и версией macOS. Этот Mac — %@.\n\nДиагностика недоступна, пока приложение не начнёт поиск консоли."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub 将打开，并已填入你的版本（%@）和 macOS 版本。此 Mac 为 %@。\n\n在 App 开始扫描主机之前，诊断信息不可用。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub 將開啟，並已填入你的版本（%@）和 macOS 版本。此 Mac 為 %@。\n\n在 App 開始掃描主機之前，診斷資訊無法使用。"
+          }
+        }
+      }
+    },
+    "GitHub opens with your version (%@) and macOS version already filled in. This Mac is %@.\n\nSwitchMTP can also copy a diagnostics report to the clipboard for you to paste into the report. It lists connected USB devices, any process holding the USB interface, and what the console said it can do. It contains no file contents.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub opens with your version (%1$@) and macOS version already filled in. This Mac is %2$@.\n\nSwitchMTP can also copy a diagnostics report to the clipboard for you to paste into the report. It lists connected USB devices, any process holding the USB interface, and what the console said it can do. It contains no file contents."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub se abrirá con tu versión (%@) y la versión de macOS ya rellenadas. Este Mac es %@.\n\nSwitchMTP también puede copiar un informe de diagnóstico al portapapeles para que lo pegues en el informe. Incluye los dispositivos USB conectados, cualquier proceso que retenga la interfaz USB y lo que la consola indicó que puede hacer. No contiene el contenido de ningún archivo."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub が開き、お使いのバージョン（%@）と macOS のバージョンがあらかじめ入力されます。この Mac は %@ です。\n\nSwitchMTP は診断レポートをクリップボードにコピーして、報告に貼り付けられるようにすることもできます。レポートには接続中の USB デバイス、USB インターフェイスを占有しているプロセス、本体が申告した対応機能が含まれます。ファイルの内容は含まれません。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub откроется с уже заполненной вашей версией (%@) и версией macOS. Этот Mac — %@.\n\nSwitchMTP также может скопировать диагностический отчёт в буфер обмена, чтобы вы вставили его в сообщение. В отчёте перечислены подключённые USB-устройства, процессы, удерживающие USB-интерфейс, и заявленные возможности консоли. Содержимое файлов в него не входит."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub 将打开，并已填入你的版本（%@）和 macOS 版本。此 Mac 为 %@。\n\nSwitchMTP 还可以将诊断报告拷贝到剪贴板，供你粘贴到报告中。报告会列出已连接的 USB 设备、占用 USB 接口的进程，以及主机声明的功能。其中不包含任何文件内容。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "GitHub 將開啟，並已填入你的版本（%@）和 macOS 版本。此 Mac 為 %@。\n\nSwitchMTP 也可以將診斷報告拷貝到剪貼板，供你貼到報告中。報告會列出已連接的 USB 裝置、佔用 USB 介面的程序，以及主機宣告的功能。其中不含任何檔案內容。"
           }
         }
       }
@@ -5324,6 +7100,46 @@
         }
       }
     },
+    "Homebrew app": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Homebrew app"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "App homebrew"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自作アプリ"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Homebrew-приложение"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自制应用"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "自製應用程式"
+          }
+        }
+      }
+    },
     "How SwitchMTP Connects to Your Switch": {
       "extractionState": "manual",
       "localizations": {
@@ -5447,6 +7263,46 @@
         }
       }
     },
+    "If it still fails, run Troubleshooting.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "If it still fails, run Troubleshooting."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Si sigue fallando, ejecuta «Solución de problemas»."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "それでも失敗する場合は、トラブルシューティングを実行してください。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Если ошибка повторяется, запустите «Устранение неполадок»."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "如果仍然失败，请运行“疑难解答”。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "若仍然失敗，請執行「疑難排解」。"
+          }
+        }
+      }
+    },
     "Image": {
       "extractionState": "manual",
       "localizations": {
@@ -5550,6 +7406,12 @@
             "value": "インポートが正常に完了しました。"
           }
         },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Импорт успешно завершён."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -5560,12 +7422,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "導入成功"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Импорт успешно завершён."
           }
         }
       }
@@ -5776,6 +7632,489 @@
           }
         }
       }
+    },
+    "Install": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instalar"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストール"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Установить"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安裝"
+          }
+        }
+      }
+    },
+    "Install queue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install queue"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Cola de instalación"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストールキュー"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Очередь установки"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装队列"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安裝佇列"
+          }
+        }
+      }
+    },
+    "Install to %@…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install to %@…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instalar en %@…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ にインストール…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Установить в %@…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装到 %@…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安裝到 %@…"
+          }
+        }
+      }
+    },
+    "Install to NAND": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install to NAND"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instalar en la NAND"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本体メモリーにインストール"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Установить в NAND"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装到主机内存"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安裝到主機記憶體"
+          }
+        }
+      }
+    },
+    "Install to NAND…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install to NAND…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instalar en la NAND…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本体メモリーにインストール…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Установить в NAND…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装到主机内存…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安裝到主機記憶體…"
+          }
+        }
+      }
+    },
+    "Install to SD": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install to SD"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instalar en la SD"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SD カードにインストール"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Установить на SD"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装到 SD 卡"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安裝到 SD 卡"
+          }
+        }
+      }
+    },
+    "Install to SD Card…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install to SD Card…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instalar en la tarjeta SD…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SD カードにインストール…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Установить на SD-карту…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装到 SD 卡…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安裝到 SD 卡…"
+          }
+        }
+      }
+    },
+    "Install to Switch…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Install to Switch…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instalar en la Switch…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch にインストール…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Установить на Switch…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安装到 Switch…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "安裝到 Switch…"
+          }
+        }
+      }
+    },
+    "Installing %@ on the console…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installing %@ on the console…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instalando %@ en la consola…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ を本体にインストールしています…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Установка %@ на консоли…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在主机上安装 %@…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在主機上安裝 %@…"
+          }
+        }
+      }
+    },
+    "Installing %@. Progress is shown on the console.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installing %@. Progress is shown on the console."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instalando %@. El progreso se muestra en la consola."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ をインストールしています。進行状況は本体の画面に表示されます。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Устанавливается %@. Ход установки отображается на консоли."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在安装 %@。进度显示在主机上。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在安裝 %@。進度顯示在主機上。"
+          }
+        }
+      }
+    },
+    "Installing %@; %lld more queued.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installing %1$@; %2$lld more queued."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instalando %@; quedan %lld en la cola."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ をインストール中。残り %lld 件がキューにあります。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Устанавливается %@; ещё %lld в очереди."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在安装 %@；队列中还有 %lld 个。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在安裝 %@；佇列中還有 %lld 個。"
+          }
+        }
+      }
+    },
+    "Installing on the console…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Installing on the console…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Instalando en la consola…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本体にインストールしています…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Установка на консоли…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在主机上安装…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在主機上安裝…"
+          }
+        }
+      }
+    },
+    "Intel": {
+      "shouldTranslate": false
     },
     "Invalid API Key. Please check your settings.": {
       "extractionState": "manual",
@@ -6062,6 +8401,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "類型"
+          }
+        }
+      }
+    },
+    "Launch DBI on the Switch.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Launch DBI on the Switch."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Abre DBI en la Switch."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch で DBI を起動します。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запустите DBI на Switch."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Switch 上启动 DBI。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "在 Switch 上啟動 DBI。"
           }
         }
       }
@@ -6972,6 +9351,126 @@
         }
       }
     },
+    "No files to install.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No files to install."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay archivos para instalar."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストールするファイルがありません。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет файлов для установки."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "没有可安装的文件。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "沒有可安裝的檔案。"
+          }
+        }
+      }
+    },
+    "No files were provided.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No files were provided."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No se proporcionó ningún archivo."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ファイルが指定されていません。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Файлы не указаны."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未提供任何文件。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未提供任何檔案。"
+          }
+        }
+      }
+    },
+    "No gamecard is inserted, or DBI is not exposing the Gamecard storage.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No gamecard is inserted, or DBI is not exposing the Gamecard storage."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No hay ninguna tarjeta de juego insertada, o DBI no expone el almacenamiento Gamecard."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ゲームカードが挿入されていないか、DBI が Gamecard ストレージを公開していません。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Игровой картридж не вставлен, либо DBI не предоставляет хранилище Gamecard."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未插入卡带，或 DBI 未开放 Gamecard 存储。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未插入卡帶，或 DBI 未開放 Gamecard 儲存空間。"
+          }
+        }
+      }
+    },
     "No internet connection detected.": {
       "extractionState": "manual",
       "localizations": {
@@ -7009,6 +9508,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "未偵測到網路連線。"
+          }
+        }
+      }
+    },
+    "No progress for %llds. The console may be busy; DBI shows the real state on screen.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No progress for %llds. The console may be busy; DBI shows the real state on screen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sin progreso durante %llds. Puede que la consola esté ocupada; DBI muestra el estado real en pantalla."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 秒間、進行がありません。本体が処理中の可能性があります。実際の状態は DBI の画面に表示されます。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нет прогресса уже %lld с. Возможно, консоль занята; реальное состояние показывает DBI на экране."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已有 %lld 秒没有进度。主机可能正忙；DBI 会在屏幕上显示真实状态。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已有 %lld 秒沒有進度。主機可能正忙；DBI 會在螢幕上顯示真實狀態。"
+          }
+        }
+      }
+    },
+    "No progress reported yet. The console may still be preparing — DBI shows the real state on screen.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "No progress reported yet. The console may still be preparing — DBI shows the real state on screen."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Aún no se ha informado de ningún progreso. Puede que la consola siga preparándose: DBI muestra el estado real en pantalla."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "まだ進行状況が報告されていません。本体が準備中の可能性があります。実際の状態は DBI の画面に表示されます。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Прогресс пока не сообщается. Возможно, консоль ещё готовится — реальное состояние показывает DBI на экране."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尚未报告进度。主机可能仍在准备中——DBI 会在屏幕上显示真实状态。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "尚未回報進度。主機可能仍在準備中——DBI 會在螢幕上顯示真實狀態。"
           }
         }
       }
@@ -7302,6 +9881,46 @@
         }
       }
     },
+    "Only .nsp, .nsz, .xci and .xcz files can be installed. Skipped: %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Only .nsp, .nsz, .xci and .xcz files can be installed. Skipped: %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Solo se pueden instalar archivos .nsp, .nsz, .xci y .xcz. Omitidos: %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "インストールできるのは .nsp、.nsz、.xci、.xcz ファイルのみです。スキップ: %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Устанавливать можно только файлы .nsp, .nsz, .xci и .xcz. Пропущено: %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只能安装 .nsp、.nsz、.xci 和 .xcz 文件。已跳过：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "只能安裝 .nsp、.nsz、.xci 和 .xcz 檔案。已略過：%@"
+          }
+        }
+      }
+    },
     "Only the port your Switch is plugged into is reset. Other USB devices are untouched.": {
       "extractionState": "manual",
       "localizations": {
@@ -7384,6 +10003,46 @@
         }
       }
     },
+    "Overwrite save data on the Switch?": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Overwrite save data on the Switch?"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "¿Sobrescribir las partidas guardadas de la Switch?"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch のセーブデータを上書きしますか？"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Перезаписать сохранения на Switch?"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要覆盖 Switch 上的存档数据吗？"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "要覆蓋 Switch 上的存檔資料嗎？"
+          }
+        }
+      }
+    },
     "PDF": {
       "extractionState": "manual",
       "localizations": {
@@ -7462,6 +10121,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "貼上"
+          }
+        }
+      }
+    },
+    "Paste the report into a bug report. It lists USB devices, any process holding the USB interface, and the connected device's capabilities.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paste the report into a bug report. It lists USB devices, any process holding the USB interface, and the connected device's capabilities."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pega el informe en el reporte de error. Incluye los dispositivos USB, cualquier proceso que retenga la interfaz USB y las capacidades del dispositivo conectado."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このレポートを不具合報告に貼り付けてください。USB デバイス、USB インターフェイスを占有しているプロセス、接続中のデバイスの対応機能が含まれます。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Вставьте отчёт в сообщение об ошибке. В нём перечислены USB-устройства, процессы, удерживающие USB-интерфейс, и возможности подключённого устройства."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "将报告粘贴到错误报告中。其中列出了 USB 设备、占用 USB 接口的进程，以及已连接设备的功能。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "將報告貼到錯誤報告中。其中列出了 USB 裝置、佔用 USB 介面的程序，以及已連接裝置的功能。"
           }
         }
       }
@@ -7632,6 +10331,46 @@
         }
       }
     },
+    "Press X → Run MTP responder.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Press X → Run MTP responder."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Pulsa X → «Run MTP responder»."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "X ボタン →「Run MTP responder」を選びます。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Нажмите X → «Run MTP responder»."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按 X → 选择“Run MTP responder”。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "按 X → 選擇「Run MTP responder」。"
+          }
+        }
+      }
+    },
     "Progress:": {
       "extractionState": "manual",
       "localizations": {
@@ -7755,6 +10494,46 @@
         }
       }
     },
+    "Queued %lld file(s) for %@. They will install one after another.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Queued %1$lld file(s) for %2$@. They will install one after another."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Se han añadido %lld archivo(s) a la cola de %@. Se instalarán uno tras otro."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 件のファイルを %@ のキューに追加しました。順番にインストールされます。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В очередь для %2$@ добавлено файлов: %1$lld. Они установятся один за другим."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已将 %lld 个文件加入 %@ 的队列。它们将逐个安装。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已將 %lld 個檔案加入 %@ 的佇列。它們將逐一安裝。"
+          }
+        }
+      }
+    },
     "Quick Look": {
       "extractionState": "manual",
       "localizations": {
@@ -7833,6 +10612,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "超出速率限制。請稍後再試。"
+          }
+        }
+      }
+    },
+    "Reading files…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Reading files…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Leyendo archivos…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ファイルを読み込んでいます…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Чтение файлов…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在读取文件…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在讀取檔案…"
           }
         }
       }
@@ -7919,6 +10738,46 @@
         }
       }
     },
+    "Remove from queue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Remove from queue"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Quitar de la cola"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "キューから削除"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Убрать из очереди"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "从队列中移除"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "從佇列中移除"
+          }
+        }
+      }
+    },
     "Remove item from Favorites list.": {
       "extractionState": "manual",
       "localizations": {
@@ -7940,6 +10799,12 @@
             "value": "よく使う項目リストから削除します。"
           }
         },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Удалить элемент из списка избранного."
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -7950,12 +10815,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "從個人收藏列表中移除項目。"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Удалить элемент из списка избранного."
           }
         }
       }
@@ -8083,6 +10942,86 @@
         }
       }
     },
+    "Report an Issue…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Report an Issue…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Informar de un problema…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "問題を報告…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сообщить о проблеме…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "报告问题…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回報問題…"
+          }
+        }
+      }
+    },
+    "Report an issue": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Report an issue"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Informar de un problema"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "問題を報告"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Сообщить о проблеме"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "报告问题"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "回報問題"
+          }
+        }
+      }
+    },
     "Request timed out. The server took too long to respond.": {
       "extractionState": "manual",
       "localizations": {
@@ -8120,6 +11059,126 @@
           "stringUnit": {
             "state": "translated",
             "value": "請求超時。伺服器回應時間過長。"
+          }
+        }
+      }
+    },
+    "Restore": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurar"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "復元"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Восстановить"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "恢复"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還原"
+          }
+        }
+      }
+    },
+    "Restore Saves…": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restore Saves…"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurar partidas guardadas…"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "セーブデータを復元…"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Восстановить сохранения…"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "恢复存档…"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "還原存檔…"
+          }
+        }
+      }
+    },
+    "Restoring %lld item(s) to the console's save storage.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restoring %lld item(s) to the console's save storage."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Restaurando %lld elemento(s) en el almacenamiento de partidas de la consola."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%lld 件の項目を本体のセーブデータ用ストレージに復元しています。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Восстановление %lld объект(ов) в хранилище сохранений консоли."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在将 %lld 个项目恢复到主机的存档存储。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "正在將 %lld 個項目還原到主機的存檔儲存空間。"
           }
         }
       }
@@ -8244,6 +11303,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "搜尋"
+          }
+        }
+      }
+    },
+    "Sent %@ — waiting for the console": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sent %@ — waiting for the console"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviado %@: esperando a la consola"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ を送信しました — 本体の応答を待っています"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отправлено %@ — ожидание консоли"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已发送 %@ — 正在等待主机"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已傳送 %@ — 正在等待主機"
+          }
+        }
+      }
+    },
+    "Sent — DBI reports the result on the console.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sent — DBI reports the result on the console."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Enviado: DBI muestra el resultado en la consola."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "送信しました — 結果は DBI が本体に表示します。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Отправлено — DBI покажет результат на консоли."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已发送——DBI 会在主机上显示结果。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已傳送——DBI 會在主機上顯示結果。"
           }
         }
       }
@@ -8494,6 +11633,166 @@
         }
       }
     },
+    "Size not reported by the device": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Size not reported by the device"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El dispositivo no informa del tamaño"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "デバイスがサイズを報告していません"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Устройство не сообщает размер"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "设备未提供大小"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "裝置未提供大小"
+          }
+        }
+      }
+    },
+    "Skipped (not installable): %@": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Skipped (not installable): %@"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Omitido (no instalable): %@"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "スキップ（インストール不可）: %@"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пропущено (нельзя установить): %@"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已跳过（无法安装）：%@"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已略過（無法安裝）：%@"
+          }
+        }
+      }
+    },
+    "Started": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Started"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Iniciado"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "開始済み"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Запущено"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已启动"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "已啟動"
+          }
+        }
+      }
+    },
+    "Stop the current transfer": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Stop the current transfer"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Detener la transferencia actual"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "現在の転送を停止"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Остановить текущую передачу"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停止当前传输"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "停止目前的傳輸"
+          }
+        }
+      }
+    },
     "Storage": {
       "extractionState": "manual",
       "localizations": {
@@ -8619,6 +11918,172 @@
         }
       }
     },
+    "Switch": {
+      "shouldTranslate": false
+    },
+    "Switch content archive": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch content archive"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Archivo de contenido de Switch"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch コンテンツアーカイブ"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Архив содержимого Switch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch 内容存档"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch 內容封存"
+          }
+        }
+      }
+    },
+    "Switch is in a homebrew USB mode": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch is in a homebrew USB mode"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La Switch está en un modo USB homebrew"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch が自作ソフトの USB モードになっています"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch находится в homebrew-режиме USB"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch 处于自制软件 USB 模式"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch 處於自製軟體 USB 模式"
+          }
+        }
+      }
+    },
+    "Switch package": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch package"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Paquete de Switch"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch パッケージ"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Пакет Switch"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch 安装包"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Switch 安裝檔"
+          }
+        }
+      }
+    },
+    "SwitchMTP": {
+      "shouldTranslate": false
+    },
+    "SwitchMTP needs DBI's MTP responder. On the Switch, open DBI, press X, and choose “Run MTP responder”. Awoo-Installer and GoldLeaf also appear this way — exit them and start DBI instead.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwitchMTP needs DBI's MTP responder. On the Switch, open DBI, press X, and choose “Run MTP responder”. Awoo-Installer and GoldLeaf also appear this way — exit them and start DBI instead."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwitchMTP necesita el respondedor MTP de DBI. En la Switch, abre DBI, pulsa X y elige «Run MTP responder». Awoo-Installer y GoldLeaf también aparecen así: ciérralos y abre DBI en su lugar."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwitchMTP には DBI の MTP レスポンダーが必要です。Switch で DBI を開き、X ボタンを押して「Run MTP responder」を選択してください。Awoo-Installer や GoldLeaf も同じように認識されます。その場合は終了して DBI を起動してください。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwitchMTP требуется MTP-респондер DBI. На Switch откройте DBI, нажмите X и выберите «Run MTP responder». Awoo-Installer и GoldLeaf определяются так же — закройте их и запустите DBI."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwitchMTP 需要 DBI 的 MTP 响应器。在 Switch 上打开 DBI，按 X 并选择“Run MTP responder”。Awoo-Installer 和 GoldLeaf 也会以这种方式出现——请退出它们并改为启动 DBI。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "SwitchMTP 需要 DBI 的 MTP 回應器。在 Switch 上開啟 DBI，按 X 並選擇「Run MTP responder」。Awoo-Installer 和 GoldLeaf 也會以這種方式出現——請結束它們並改為啟動 DBI。"
+          }
+        }
+      }
+    },
     "SwitchMTP on GitHub": {
       "extractionState": "manual",
       "localizations": {
@@ -8656,6 +12121,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "GitHub 上的 SwitchMTP"
+          }
+        }
+      }
+    },
+    "System": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "System"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Sistema"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "システム"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Система"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系统"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "系統"
           }
         }
       }
@@ -8698,6 +12203,166 @@
           "stringUnit": {
             "state": "translated",
             "value": "系統記憶體錯誤"
+          }
+        }
+      }
+    },
+    "That folder is empty — pick a folder created by Back Up Saves.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That folder is empty — pick a folder created by Back Up Saves."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esa carpeta está vacía: elige una carpeta creada por «Copia de seguridad de partidas»."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "そのフォルダーは空です。「セーブデータをバックアップ」で作成したフォルダーを選択してください。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Эта папка пуста — выберите папку, созданную командой «Резервная копия сохранений»."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "该文件夹为空——请选择由“备份存档”创建的文件夹。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "該資料夾是空的——請選擇由「備份存檔」建立的資料夾。"
+          }
+        }
+      }
+    },
+    "That install storage is no longer available. Reconnect the console and try again.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "That install storage is no longer available. Reconnect the console and try again."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ese almacenamiento de instalación ya no está disponible. Vuelve a conectar la consola e inténtalo de nuevo."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "そのインストール先ストレージは利用できなくなりました。本体を接続し直してからもう一度お試しください。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Это хранилище для установки больше недоступно. Переподключите консоль и повторите попытку."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "该安装存储已不可用。请重新连接主机后再试。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "該安裝儲存空間已無法使用。請重新連接主機後再試。"
+          }
+        }
+      }
+    },
+    "The Saves storage is not readable on this device.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Saves storage is not readable on this device."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El almacenamiento de partidas no se puede leer en este dispositivo."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このデバイスでは Saves ストレージを読み取れません。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хранилище сохранений на этом устройстве недоступно для чтения."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此设备上的存档存储不可读取。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此裝置上的存檔儲存空間無法讀取。"
+          }
+        }
+      }
+    },
+    "The Saves storage is read-only on this device. Enable save write access in DBI, then reconnect.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The Saves storage is read-only on this device. Enable save write access in DBI, then reconnect."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "El almacenamiento de partidas es de solo lectura en este dispositivo. Activa el acceso de escritura a partidas en DBI y vuelve a conectar."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このデバイスでは Saves ストレージが読み取り専用です。DBI でセーブデータへの書き込みを有効にしてから、接続し直してください。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Хранилище сохранений на этом устройстве доступно только для чтения. Включите запись сохранений в DBI и переподключитесь."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此设备上的存档存储为只读。请在 DBI 中启用存档写入权限，然后重新连接。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此裝置上的存檔儲存空間為唯讀。請在 DBI 中啟用存檔寫入權限，然後重新連接。"
           }
         }
       }
@@ -8866,6 +12531,86 @@
         }
       }
     },
+    "This device does not expose a Saves storage. In DBI, enable save access before connecting.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This device does not expose a Saves storage. In DBI, enable save access before connecting."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este dispositivo no expone un almacenamiento de partidas. Activa el acceso a partidas en DBI antes de conectar."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このデバイスは Saves ストレージを公開していません。接続する前に DBI でセーブデータへのアクセスを有効にしてください。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Это устройство не предоставляет хранилище сохранений. Включите доступ к сохранениям в DBI перед подключением."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此设备未开放存档存储。请先在 DBI 中启用存档访问，然后再连接。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此裝置未開放存檔儲存空間。請先在 DBI 中啟用存檔存取，然後再連接。"
+          }
+        }
+      }
+    },
+    "This device does not expose an Album storage.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This device does not expose an Album storage."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este dispositivo no expone un almacenamiento de álbum."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このデバイスは Album ストレージを公開していません。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Это устройство не предоставляет хранилище альбома."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此设备未开放相册存储。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此裝置未開放相簿儲存空間。"
+          }
+        }
+      }
+    },
     "This folder is empty": {
       "extractionState": "manual",
       "localizations": {
@@ -8907,6 +12652,326 @@
         }
       }
     },
+    "This storage does not allow creating folders.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This storage does not allow creating folders."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este almacenamiento no permite crear carpetas."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このストレージではフォルダーを作成できません。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В этом хранилище нельзя создавать папки."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此存储不允许创建文件夹。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此儲存空間不允許建立資料夾。"
+          }
+        }
+      }
+    },
+    "This storage does not allow deleting items.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This storage does not allow deleting items."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este almacenamiento no permite eliminar elementos."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このストレージでは項目を削除できません。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В этом хранилище нельзя удалять объекты."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此存储不允许删除项目。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此儲存空間不允許刪除項目。"
+          }
+        }
+      }
+    },
+    "This storage does not allow renaming items.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This storage does not allow renaming items."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este almacenamiento no permite renombrar elementos."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このストレージでは項目の名前を変更できません。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В этом хранилище нельзя переименовывать объекты."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此存储不允许重命名项目。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此儲存空間不允許重新命名項目。"
+          }
+        }
+      }
+    },
+    "This storage does not allow uploads.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This storage does not allow uploads."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este almacenamiento no permite subir archivos."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このストレージにはアップロードできません。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "В это хранилище нельзя загружать файлы."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此存储不允许上传。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此儲存空間不允許上傳。"
+          }
+        }
+      }
+    },
+    "This storage is not browsable.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This storage is not browsable."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Este almacenamiento no se puede explorar."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "このストレージは閲覧できません。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Это хранилище нельзя просматривать."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此存储无法浏览。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "此儲存空間無法瀏覽。"
+          }
+        }
+      }
+    },
+    "Those files are already queued.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Those files are already queued."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esos archivos ya están en la cola."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "それらのファイルはすでにキューに入っています。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Эти файлы уже в очереди."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "这些文件已在队列中。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "這些檔案已在佇列中。"
+          }
+        }
+      }
+    },
+    "Ticket": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ticket"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Ticket"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "チケット"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Тикет"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "许可证"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "授權票證"
+          }
+        }
+      }
+    },
+    "Tip for large installs": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Tip for large installs"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Consejo para instalaciones grandes"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大きなインストールのヒント"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Совет для больших установок"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大文件安装提示"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "大型安裝提示"
+          }
+        }
+      }
+    },
     "To get past this, SwitchMTP briefly resets the USB port your Switch is plugged into. macOS releases the connection, and SwitchMTP takes it immediately.": {
       "extractionState": "manual",
       "localizations": {
@@ -8944,6 +13009,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "為此，SwitchMTP 會短暫重設 Switch 所連接的 USB 埠。macOS 隨即釋放連線，SwitchMTP 立刻接管。"
+          }
+        }
+      }
+    },
+    "Toggle Sidebar": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Toggle Sidebar"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Mostrar u ocultar la barra lateral"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "サイドバーの表示/非表示"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Показать или скрыть боковое меню"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "显示或隐藏边栏"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "顯示或隱藏側邊欄"
           }
         }
       }
@@ -9010,6 +13115,12 @@
             "value": "転送完了"
           }
         },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Передача завершена"
+          }
+        },
         "zh-Hans": {
           "stringUnit": {
             "state": "translated",
@@ -9020,12 +13131,6 @@
           "stringUnit": {
             "state": "translated",
             "value": "傳輸完成"
-          }
-        },
-        "ru": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "Передача завершена"
           }
         }
       }
@@ -9194,6 +13299,46 @@
         }
       }
     },
+    "Try again in a moment.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Try again in a moment."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Vuelve a intentarlo en un momento."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "しばらくしてからもう一度お試しください。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Повторите попытку через мгновение."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请稍后再试。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請稍後再試。"
+          }
+        }
+      }
+    },
     "Type": {
       "extractionState": "manual",
       "localizations": {
@@ -9318,6 +13463,46 @@
         }
       }
     },
+    "Unknown Device": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Unknown Device"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Dispositivo desconocido"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "不明なデバイス"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Неизвестное устройство"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未知设备"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "未知裝置"
+          }
+        }
+      }
+    },
     "Unknown error": {
       "comment": "Generic unknown error",
       "extractionState": "manual",
@@ -9398,6 +13583,86 @@
           "stringUnit": {
             "state": "translated",
             "value": "有更新可用"
+          }
+        }
+      }
+    },
+    "Use a USB-C data cable.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use a USB-C data cable."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usa un cable de datos USB-C."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USB-C データケーブルを使用してください。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Используйте кабель USB-C для передачи данных."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请使用 USB-C 数据线。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請使用 USB-C 資料線。"
+          }
+        }
+      }
+    },
+    "Use a USB-C data cable.\nLaunch DBI.\nPress X → Run MTP responder.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Use a USB-C data cable.\nLaunch DBI.\nPress X → Run MTP responder."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Usa un cable de datos USB-C.\nAbre DBI.\nPulsa X → «Run MTP responder»."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "USB-C データケーブルを使用します。\nDBI を起動します。\nX ボタン →「Run MTP responder」を選びます。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Используйте кабель USB-C для передачи данных.\nЗапустите DBI.\nНажмите X → «Run MTP responder»."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "请使用 USB-C 数据线。\n启动 DBI。\n按 X → 选择“Run MTP responder”。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "請使用 USB-C 資料線。\n啟動 DBI。\n按 X → 選擇「Run MTP responder」。"
           }
         }
       }
@@ -9607,6 +13872,12 @@
           }
         }
       }
+    },
+    "v%@": {
+      "shouldTranslate": false
+    },
+    "—": {
+      "shouldTranslate": false
     }
   },
   "version": "1.0"

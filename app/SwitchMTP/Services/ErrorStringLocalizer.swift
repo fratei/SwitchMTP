@@ -88,10 +88,6 @@ struct ErrorStringLocalizer {
             return String(localized: "Storage space full")
         }
         
-        if let aiError = localizeAIErrors(errorString) {
-            return aiError
-        }
-        
         // Try to extract error type prefix (e.g., "ErrorDeviceChanged: some message")
         if let colonIndex = errorString.firstIndex(of: ":") {
             let errorType = String(errorString[..<colonIndex]).trimmingCharacters(in: .whitespaces)
@@ -113,87 +109,6 @@ struct ErrorStringLocalizer {
     }
     
     // MARK: - Private Helpers
-    
-    private static func localizeAIErrors(_ errorString: String) -> String? {
-        switch errorString {
-        case "No directory context available. Please make sure the file list has loaded before using AI.":
-            return String(localized: "No directory context available. Please make sure the file list has loaded before using AI.")
-        case "No query specified.":
-            return String(localized: "No query specified.")
-        case "AI is not configured. Please set up an AI provider in Settings → AI.":
-            return String(localized: "AI is not configured. Please set up an AI provider in Settings → AI.")
-        case "This feature is currently only available in API mode. Apple Foundation Models are not supported yet.":
-            return String(localized: "This feature is currently only available in API mode. Apple Foundation Models are not supported yet.")
-        case "API configuration is incomplete. Please check Settings → AI.":
-            return String(localized: "API configuration is incomplete. Please check Settings → AI.")
-        case "Failed to construct request.":
-            return String(localized: "Failed to construct request.")
-        case "Invalid API Key. Please check your settings.":
-            return String(localized: "Invalid API Key. Please check your settings.")
-        case "API endpoint not found. Please check the URL.":
-            return String(localized: "API endpoint not found. Please check the URL.")
-        case "Rate limit exceeded. Please try again later.":
-            return String(localized: "Rate limit exceeded. Please try again later.")
-        case "Invalid server response.":
-            return String(localized: "Invalid server response.")
-        case "Request timed out. The server took too long to respond.":
-            return String(localized: "Request timed out. The server took too long to respond.")
-        case "No internet connection detected.":
-            return String(localized: "No internet connection detected.")
-        case "Could not find the AI server. Check the URL.":
-            return String(localized: "Could not find the AI server. Check the URL.")
-        case "SSL/TLS connection failed.":
-            return String(localized: "SSL/TLS connection failed.")
-        case "Apple Intelligence hasn't been turned on.":
-            return String(localized: "Apple Intelligence hasn't been turned on.")
-        case "Model is not ready yet. Try again later.":
-            return String(localized: "Model is not ready yet. Try again later.")
-        case "Your Mac is not eligible for Apple Intelligence.":
-            return String(localized: "Your Mac is not eligible for Apple Intelligence.")
-        case "Not available for unknown reasons.":
-            return String(localized: "Not available for unknown reasons.")
-        case "Apple Foundation Models require macOS 26 or later with Apple Intelligence enabled.":
-            return String(localized: "Apple Foundation Models require macOS 26 or later with Apple Intelligence enabled.")
-        case "Apple Foundation Models are not available. Build with Xcode 26+ targeting macOS 26+.":
-            return String(localized: "Apple Foundation Models are not available. Build with Xcode 26+ targeting macOS 26+.")
-        case "Apple Foundation Model returned an empty response.":
-            return String(localized: "Apple Foundation Model returned an empty response.")
-        default:
-            break
-        }
-        
-        let lowercased = errorString.lowercased()
-        if lowercased.hasPrefix("server returned error") {
-            let suffix = errorString.dropFirst("Server returned error".count)
-            return String(localized: "Server returned error") + String(suffix)
-        }
-        if lowercased.hasPrefix("server error") {
-            let suffix = errorString.dropFirst("Server error".count)
-            return String(localized: "Server error") + String(suffix)
-        }
-        if lowercased.hasPrefix("failed to parse ai response") {
-            let suffix = errorString.dropFirst("Failed to parse AI response".count)
-            return String(localized: "Failed to parse AI response") + String(suffix)
-        }
-        if lowercased.hasPrefix("network error:") {
-            let suffix = errorString.dropFirst("Network error:".count)
-            return String(localized: "Network error:") + String(suffix)
-        }
-        if lowercased.hasPrefix("unexpected error:") {
-            let suffix = errorString.dropFirst("Unexpected error:".count)
-            return String(localized: "Unexpected error:") + String(suffix)
-        }
-        if lowercased.hasPrefix("error:") {
-            let suffix = errorString.dropFirst("Error:".count)
-            return String(localized: "Error:") + String(suffix)
-        }
-        if lowercased.hasPrefix("apple foundation model error:") {
-            let suffix = errorString.dropFirst("Apple Foundation Model error:".count)
-            return String(localized: "Apple Foundation Model error:") + String(suffix)
-        }
-        
-        return nil
-    }
     
     private static func localizeErrorType(_ errorType: String) -> String {
         switch errorType {

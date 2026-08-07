@@ -22,12 +22,12 @@ import UniformTypeIdentifiers
 /// kind and run against the whole thing.
 struct SwitchCommands: Commands {
     @FocusedValue(\.mtpManager) private var manager
-    @FocusedValue(\.isTransferActive) private var isTransferActive
+    @FocusedValue(\.switchMenuState) private var state
 
     /// Workflows move whole storages, so running two at once would interleave
     /// transfers on a single-session protocol.
-    private var isBusy: Bool { isTransferActive == true }
-    private var isReady: Bool { manager?.connectionState.isConnected == true && !isBusy }
+    private var isBusy: Bool { state?.isTransferActive == true }
+    private var isReady: Bool { state?.isConnected == true && !isBusy }
 
     var body: some Commands {
         CommandMenu(String(localized: "Switch")) {
@@ -36,14 +36,14 @@ struct SwitchCommands: Commands {
             } label: {
                 Label("Back Up Saves…", systemImage: "square.and.arrow.down.on.square")
             }
-            .disabled(!isReady || manager?.storage(ofKind: .saves) == nil)
+            .disabled(!isReady || !(state?.hasSaves ?? false))
 
             Button {
                 confirmRestore()
             } label: {
                 Label("Restore Saves…", systemImage: "square.and.arrow.up.on.square")
             }
-            .disabled(!isReady || manager?.storage(ofKind: .saves)?.capabilities.write != true)
+            .disabled(!isReady || !(state?.canWriteSaves ?? false))
 
             Divider()
 
@@ -52,14 +52,14 @@ struct SwitchCommands: Commands {
             } label: {
                 Label("Export Album…", systemImage: "photo.on.rectangle.angled")
             }
-            .disabled(!isReady || manager?.storage(ofKind: .album) == nil)
+            .disabled(!isReady || !(state?.hasAlbum ?? false))
 
             Button {
                 run { m, url in m.dumpGamecard(to: url) }
             } label: {
                 Label("Dump Gamecard…", systemImage: "opticaldiscdrive")
             }
-            .disabled(!isReady || manager?.storage(ofKind: .gamecard) == nil)
+            .disabled(!isReady || !(state?.hasGamecard ?? false))
 
             Divider()
 
@@ -76,13 +76,13 @@ struct SwitchCommands: Commands {
             // stays enabled whenever the app has actually started scanning.
             // Before that, collecting them would touch USB, so it is disabled
             // rather than failing with a misleading "try again" message.
-            .disabled(manager?.isStarted != true)
+            .disabled(state?.isStarted != true)
         }
     }
 
     @ViewBuilder
     private var installMenu: some View {
-        let targets = manager?.installTargets ?? []
+        let targets = state?.installTargets ?? []
         if targets.isEmpty {
             Button {} label: { Label("Install to Switch…", systemImage: "arrow.down.circle") }
                 .disabled(true)
@@ -184,5 +184,50 @@ struct SwitchCommands: Commands {
             : String(localized: "Started")
         alert.informativeText = outcome.message
         alert.runModal()
+    }
+}
+
+/// Everything the **Switch** menu needs in order to decide what is enabled.
+///
+/// The menu deliberately does *not* read this from `\.mtpManager`.
+/// `@FocusedValue` hands back the manager but does not observe its
+/// `@Published` properties, so a `Commands` body that reads
+/// `manager.connectionState` is never re-evaluated when the console connects —
+/// the menu freezes in whatever state it happened to be built in, leaving every
+/// workflow greyed out against a live device. Publishing a plain `Equatable`
+/// snapshot from a view that *does* observe the manager makes those changes
+/// visible to SwiftUI. The manager itself is still injected separately, because
+/// the actions need it once the user actually picks an item.
+struct SwitchMenuState: Equatable {
+    var isStarted = false
+    var isConnected = false
+    var isTransferActive = false
+    var hasSaves = false
+    var canWriteSaves = false
+    var hasAlbum = false
+    var hasGamecard = false
+    var installTargets: [MTPStorage] = []
+
+    init() {}
+
+    init(_ manager: MTPManager) {
+        isStarted = manager.isStarted
+        isConnected = manager.connectionState.isConnected
+        isTransferActive = manager.isTransferActive
+        let saves = manager.storage(ofKind: .saves)
+        hasSaves = saves != nil
+        canWriteSaves = saves?.capabilities.write == true
+        hasAlbum = manager.storage(ofKind: .album) != nil
+        hasGamecard = manager.storage(ofKind: .gamecard) != nil
+        installTargets = manager.installTargets
+    }
+}
+
+struct SwitchMenuStateFocusedKey: FocusedValueKey { typealias Value = SwitchMenuState }
+
+extension FocusedValues {
+    var switchMenuState: SwitchMenuState? {
+        get { self[SwitchMenuStateFocusedKey.self] }
+        set { self[SwitchMenuStateFocusedKey.self] = newValue }
     }
 }

@@ -247,7 +247,10 @@ struct SidebarView: View {
                     ProgressView(value: Double(storage.usedSpace), total: Double(storage.totalSpace))
                         .progressViewStyle(.linear)
                         .tint(storageColor(storage))
-                    Text("\(storage.displayFreeSpace) \(String(localized: "free of")) \(storage.displayTotalSpace)")
+                    // One format string rather than "free" + "of" concatenation:
+                    // languages that put the quantities in a different order
+                    // cannot be served by gluing fragments together.
+                    Text("\(storage.displayFreeSpace) free of \(storage.displayTotalSpace)")
                         .font(.system(size: 10))
                         .foregroundStyle(.secondary)
                 } else if let captionOverride {

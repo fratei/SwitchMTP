@@ -8,6 +8,44 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- **The file browser hung on "Loading files…" after connecting.** Clearing the operation
+  state machine was moved into the same main-queue block as the follow-up directory walk,
+  but it landed *after* the call that arms it. `loadFiles(at:)` claims the state machine by
+  setting `operation = .walking`, so clearing it afterwards overwrote that claim, and the
+  walk's completion callback was dispatched against `.none` — the listing was decoded,
+  matched no case, and thrown away. The browser then span forever against a perfectly
+  healthy console. The clear now happens before the walk is armed, at both sites.
+- **File ▸ Import (and the rest of the File menu) was greyed out while the toolbar worked.**
+  The File menu was built inline in the `App` struct's `.commands { }` from thirteen
+  `@FocusedValue` properties. An `App` body is not re-evaluated when a focused value
+  changes, so the menu's structural parts kept whatever value was current when the body last
+  ran — it offered "Connect Device" against an already-connected console — while the
+  sibling `.disabled()` modifiers saw fresh values. The commands now live in a
+  `FileMenuCommands: Commands` type, which tracks focused values properly.
+- **Every command in the Switch menu was permanently disabled.** Two causes. `MainView`
+  published the manager with `.focusedValue`, which only resolves while the view holds
+  keyboard focus — the file list takes it as soon as it appears — so the value was nil; it
+  now uses `.focusedSceneValue` like every other key. And even once the manager arrived, the
+  menu read `manager.connectionState` directly: `@FocusedValue` hands back the object but
+  does not observe its `@Published` properties, so the menu never rebuilt on connect. The
+  menu now reads an `Equatable` snapshot published from the view that does observe it.
+  Help ▸ Report an Issue was affected by the same nil manager and silently omitted
+  diagnostics from bug reports.
+
+### Changed
+
+- **The interface is fully localised again.** 116 SwitchMTP-specific strings — the entire
+  Switch menu, the install queue, storage capability errors, DBI setup guidance and the
+  issue reporter — had only ever existed in English; every translated string in the catalog
+  came from the upstream fork. They are now translated into Spanish, Japanese, Russian,
+  Simplified Chinese and Traditional Chinese, and `scripts/apply-translations.py` fails if
+  any key is left untranslated.
+- Free-space labels in the sidebar are built from a single format string instead of gluing
+  `"free of"` between two numbers, which could not be ordered correctly in every language.
+- Removed the dead Apple Intelligence and AI-provider error messages inherited from the
+  upstream fork. SwitchMTP has no AI features, so none of those errors could ever be
+  produced; they were only inflating the translation surface.
+
 - **Transfers were stuck on "Preparing transfer…" and never showed progress.** The Go
   backend reports `elapsedTime` as fractional seconds, but the Swift model declared it as
   `Int64`. `JSONDecoder` refuses to coerce `0.4231234` into an integer and rejects the

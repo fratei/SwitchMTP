@@ -509,13 +509,6 @@ final class MTPManager: ObservableObject {
             DispatchQueue.main.async {
                 self.connectionState = .connected(device)
                 self.selectedStorage = first
-                if let pendingPath = self.pendingNavigationPath {
-                    self.pendingNavigationPath = nil
-                    self.navigateToPath(pendingPath)
-                } else {
-                    self.navigationStack = ["/"]
-                    self.loadFiles(at: "/")
-                }
                 // `operation` must be cleared on the main queue, in the same
                 // block that arms the follow-up walk. Clearing it on the
                 // callback thread opens a window in which `isDeviceIdle` is
@@ -523,7 +516,21 @@ final class MTPManager: ObservableObject {
                 // install-queue drain that slipped into that window would have
                 // its `operation` overwritten -- silently dropping every
                 // progress callback for the upload it just started.
-                self.operation = .none // will be overwritten by loadFiles(_:).
+                //
+                // It must also be cleared *before* the walk is armed, never
+                // after: `loadFiles(at:)` claims the state machine by setting
+                // `operation = .walking`, so clearing afterwards overwrites it
+                // and the walk's completion callback is dispatched as `.none`.
+                // The listing then never arrives and the browser spins on
+                // "Loading files…" forever.
+                self.operation = .none
+                if let pendingPath = self.pendingNavigationPath {
+                    self.pendingNavigationPath = nil
+                    self.navigateToPath(pendingPath)
+                } else {
+                    self.navigationStack = ["/"]
+                    self.loadFiles(at: "/")
+                }
                 // A queue can outlive a disconnect: items stay `.waiting` while
                 // the drain loop deliberately stops itself. Re-arm it now that
                 // the console is back, or they would wait forever.
@@ -611,13 +618,15 @@ final class MTPManager: ObservableObject {
             
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
-                self.loadFiles(at: self.currentPath)
                 // Cleared here, not on the callback thread: see the note in
                 // `.fetchingStorages`. Between clearing `operation` and
                 // `loadFiles` claiming it, `isDeviceIdle` reports true, and an
                 // install-queue drain landing in that window would lose every
-                // progress callback for the upload it started.
+                // progress callback for the upload it started. Clearing must
+                // also come *before* the walk, or it overwrites the `.walking`
+                // state the walk just claimed and the listing never arrives.
                 self.operation = .none
+                self.loadFiles(at: self.currentPath)
             }
             
         case .silentDownloading:

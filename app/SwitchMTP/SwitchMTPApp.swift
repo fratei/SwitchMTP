@@ -18,7 +18,40 @@ struct SwitchMTPApp: App {
     init() {
         NSWindow.allowsAutomaticWindowTabbing = false
     }
-    
+
+    var body: some Scene {
+        WindowGroup {
+            MainView()
+        }
+        .commands {
+            SwitchCommands()
+            CommandGroup(replacing: .newItem) {}
+            FileMenuCommands()
+            
+            GoMenuCommands()
+            
+            SidebarCommands()
+        }
+        //.defaultSize(width: 900, height: 600)
+        
+        Settings {
+            SettingsView()
+        }
+    }
+}
+
+/// The File menu.
+///
+/// This is a `Commands` type rather than an inline `CommandGroup` in the `App`
+/// body, and that distinction is load-bearing. `@FocusedValue` is a dynamic
+/// property; an `App` struct's body is not re-evaluated when one changes.
+/// Declared there, the *structural* part of this menu -- the `if isConnected`
+/// branch -- kept whatever value was current when the body last ran, so the
+/// menu offered "Connect Device" for an already-connected console while the
+/// sibling `.disabled()` modifiers saw the correct value. A `Commands` type
+/// tracks focused values properly, which is what `SwitchCommands` and
+/// `GoMenuCommands` were already doing.
+struct FileMenuCommands: Commands {
     @FocusedValue(\.isConnected) var isConnected
     @FocusedValue(\.isTransferActive) var isTransferActive
     @FocusedValue(\.isSelectedFilesEmpty) var isSelectedFilesEmpty
@@ -34,74 +67,58 @@ struct SwitchMTPApp: App {
     @FocusedValue(\.openFileAction) var openFileAction
     @FocusedValue(\.quickLookAction) var quickLookAction
 
-    var body: some Scene {
-        WindowGroup {
-            MainView()
-        }
-        .commands {
-            SwitchCommands()
-            CommandGroup(replacing: .newItem) {}
-            CommandGroup(after: .newItem) {
-                Button { showNewFolderAction?() } label: { Label("New Folder", systemImage: "folder.badge.plus") }
-                    .keyboardShortcut("n", modifiers: [.command, .shift])
-                    .disabled(isConnected != true || isTransferActive == true)
-                Button { openFileAction?() } label: { Label("Open", systemImage: "arrow.up.forward.app") }
-                    .keyboardShortcut("o", modifiers: [.command])
-                    .disabled(isConnected != true || isTransferActive == true || isSingleItemSelected != true)
-                Button { showRenameAction?() } label: { Label("Rename", systemImage: "character.cursor.ibeam") }
-                    .disabled(isConnected != true || isTransferActive == true || isSingleItemSelected != true)
-                Button { quickLookAction?() } label: { Label("Quick Look", systemImage: "eye") }
-                    .keyboardShortcut("y", modifiers: [.command])
-                    .disabled(isConnected != true || isTransferActive == true || isSingleItemSelected != true)
-                Button { showDeleteConfirmationAction?() } label: { Label("Delete", systemImage: "trash") }
-                    .keyboardShortcut(.delete, modifiers: [.command])
-                    .disabled(isConnected != true || isTransferActive == true || isSelectedFilesEmpty == true)
-                
-                Divider()
-                
-                if isConnected == true {
-                    Button { disconnectDeviceAction?() } label: { Label("Disconnect Device", systemImage: "cable.connector.slash") }
-                        .keyboardShortcut("e", modifiers: [.command])
-                        .disabled(isTransferActive == true)
-                } else {
-                    Button { connectDeviceAction?() } label: { Label("Connect Device", systemImage: "cable.connector") }
-                        .keyboardShortcut("k", modifiers: [.command])
-                        // Also disabled before the first-run disclosure is
-                        // acknowledged, when connecting would do nothing.
-                        .disabled(isConnected == true || isStarted != true)
-                }
-                Button { showDeviceInfoAction?() } label: { Label("Device Info", systemImage: "info.circle") }
-                    .keyboardShortcut("i", modifiers: [.command])
-                    .disabled(isConnected != true || isTransferActive == true)
-                
-                Divider()
-                
-                Button { handleImportAction() } label: { Label("Import", systemImage: "iphone.and.arrow.forward.inward") }
-                    .keyboardShortcut("i", modifiers: [.command, .shift])
-                    .disabled(isConnected != true || isTransferActive == true)
-                Button { handleExportAction() } label: { Label("Export", systemImage: "iphone.and.arrow.forward.outward") }
-                    .keyboardShortcut("e", modifiers: [.command, .shift])
-                    .disabled(isConnected != true || isTransferActive == true || isSelectedFilesEmpty == true)
-                
-                Divider()
-                
-                Button(String(localized: "Export CLI Usage Guide")) {
-                    exportCLIUsageAction()
-                }
-                
-                Button(String(localized: "Clear Preview Cache")) {
-                    clearCacheAction()
-                }
+    var body: some Commands {
+        CommandGroup(after: .newItem) {
+            Button { showNewFolderAction?() } label: { Label("New Folder", systemImage: "folder.badge.plus") }
+                .keyboardShortcut("n", modifiers: [.command, .shift])
+                .disabled(isConnected != true || isTransferActive == true)
+            Button { openFileAction?() } label: { Label("Open", systemImage: "arrow.up.forward.app") }
+                .keyboardShortcut("o", modifiers: [.command])
+                .disabled(isConnected != true || isTransferActive == true || isSingleItemSelected != true)
+            Button { showRenameAction?() } label: { Label("Rename", systemImage: "character.cursor.ibeam") }
+                .disabled(isConnected != true || isTransferActive == true || isSingleItemSelected != true)
+            Button { quickLookAction?() } label: { Label("Quick Look", systemImage: "eye") }
+                .keyboardShortcut("y", modifiers: [.command])
+                .disabled(isConnected != true || isTransferActive == true || isSingleItemSelected != true)
+            Button { showDeleteConfirmationAction?() } label: { Label("Delete", systemImage: "trash") }
+                .keyboardShortcut(.delete, modifiers: [.command])
+                .disabled(isConnected != true || isTransferActive == true || isSelectedFilesEmpty == true)
+            
+            Divider()
+            
+            if isConnected == true {
+                Button { disconnectDeviceAction?() } label: { Label("Disconnect Device", systemImage: "cable.connector.slash") }
+                    .keyboardShortcut("e", modifiers: [.command])
+                    .disabled(isTransferActive == true)
+            } else {
+                Button { connectDeviceAction?() } label: { Label("Connect Device", systemImage: "cable.connector") }
+                    .keyboardShortcut("k", modifiers: [.command])
+                    // Also disabled before the first-run disclosure is
+                    // acknowledged, when connecting would do nothing.
+                    .disabled(isConnected == true || isStarted != true)
+            }
+            Button { showDeviceInfoAction?() } label: { Label("Device Info", systemImage: "info.circle") }
+                .keyboardShortcut("i", modifiers: [.command])
+                .disabled(isConnected != true || isTransferActive == true)
+            
+            Divider()
+            
+            Button { handleImportAction() } label: { Label("Import", systemImage: "iphone.and.arrow.forward.inward") }
+                .keyboardShortcut("i", modifiers: [.command, .shift])
+                .disabled(isConnected != true || isTransferActive == true)
+            Button { handleExportAction() } label: { Label("Export", systemImage: "iphone.and.arrow.forward.outward") }
+                .keyboardShortcut("e", modifiers: [.command, .shift])
+                .disabled(isConnected != true || isTransferActive == true || isSelectedFilesEmpty == true)
+            
+            Divider()
+            
+            Button(String(localized: "Export CLI Usage Guide")) {
+                exportCLIUsageAction()
             }
             
-            GoMenuCommands()
-            
-            SidebarCommands()
-        }
-        //.defaultSize(width: 900, height: 600)
-        
-        Settings {
-            SettingsView()
+            Button(String(localized: "Clear Preview Cache")) {
+                clearCacheAction()
+            }
         }
     }
 

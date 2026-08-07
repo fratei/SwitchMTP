@@ -281,7 +281,16 @@ struct MainView: View {
         .focusedSceneValue(\.quickLookAction, {
             NotificationCenter.default.post(name: NSNotification.Name("SwitchMTPToggleQuickLook"), object: nil)
         })
-        .focusedValue(\.mtpManager, manager)
+        // Scene-scoped, not focus-scoped: `focusedValue` resolves only when the
+        // view is in the key-window focus chain, which the file list steals as
+        // soon as it appears. That left `\.mtpManager` nil for the Switch menu,
+        // disabling every workflow command, and stripped the diagnostics from
+        // Help ▸ Report an Issue.
+        .focusedSceneValue(\.mtpManager, manager)
+        // Derived here rather than in the menu itself: this view observes the
+        // manager, so recomputing the snapshot is what makes connection and
+        // storage changes reach the Switch menu at all.
+        .focusedSceneValue(\.switchMenuState, SwitchMenuState(manager))
     }
 
     private var contentView: some View {
