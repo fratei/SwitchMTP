@@ -8,6 +8,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- **Cross-language drift tests.** A handful of facts exist in both Go and Swift with
+  nothing connecting them at build time: the set of installable file types, and the error
+  kind the app string-matches to detect a cancelled transfer. The second is the dangerous
+  one — that match is what triggers resetting the MTP session after a cancel, and renaming
+  the Go constant would compile, pass every other test, and leave the app wedged after the
+  first cancelled transfer. Both are now pinned by tests that read the Swift sources and
+  fail with an explanation of what will break.
 - **A cross-platform `switchmtp` command line tool.** The existing `switchmtp-cli` is
   Swift and macOS-only; this one is Go, links `backend/nxmtp` directly with no FFI, and
   runs on Linux as well as macOS. It covers `devices`, `info`, `storages`, `ls`, `get`,

@@ -1,5 +1,12 @@
 # switchmtp-cli
 
+> **Two command-line tools exist.** This document describes `switchmtp-cli`, the Swift one
+> bundled in the macOS app. There is also **`switchmtp`**, a separate Go tool that links the
+> backend directly and runs on **Linux as well as macOS** — see
+> [Command line](../README.md#command-line). They overlap but are not interchangeable:
+> this one goes through the FFI and needs the app bundle; the Go one is a single static
+> binary and is the only option on Linux.
+
 `switchmtp-cli` is the command-line interface for SwitchMTP's Go MTP backend. It targets
 a Nintendo Switch running DBI's MTP responder.
 
