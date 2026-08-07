@@ -86,7 +86,8 @@ def render(verdict: Verdict, parsed: ParsedIssue, *, dry_run: bool = False) -> s
         )
         lines.append("")
         lines.append(
-            "If it is genuinely a different problem, say so and this will be reopened."
+            "If it is genuinely a different problem, say so here and this will be "
+            "handed to a maintainer to separate."
         )
 
     elif verdict.kind == "pr-recommended":

@@ -105,6 +105,23 @@ class GitHub:
         issues = self.paginate(f"/repos/{self.repo}/issues", **params)
         return [i for i in issues if "pull_request" not in i]
 
+    def recently_closed_issues(self, *, since: str) -> list[dict[str, Any]]:
+        """Closed issues touched since `since`, newest activity first.
+
+        The daily pass needs these so that a reporter disputing an automated
+        close is heard even if the webhook that would have caught it was
+        missed. `since` filters on update time, so a new comment brings a
+        closed issue back into view.
+        """
+        issues = self.paginate(
+            f"/repos/{self.repo}/issues",
+            state="closed",
+            sort="updated",
+            direction="desc",
+            since=since,
+        )
+        return [i for i in issues if "pull_request" not in i]
+
     def comments(self, number: int) -> list[dict[str, Any]]:
         return self.paginate(f"/repos/{self.repo}/issues/{number}/comments")
 
@@ -156,6 +173,16 @@ class GitHub:
             "PATCH",
             f"/repos/{self.repo}/issues/{number}",
             {"state": "closed", "state_reason": reason},
+        )
+
+    def reopen_issue(self, number: int) -> None:
+        if self.dry_run:
+            print(f"[dry-run] would reopen #{number}")
+            return
+        self.request(
+            "PATCH",
+            f"/repos/{self.repo}/issues/{number}",
+            {"state": "open", "state_reason": "reopened"},
         )
 
     def latest_release_tag(self) -> str:

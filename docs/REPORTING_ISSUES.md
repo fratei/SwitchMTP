@@ -128,11 +128,16 @@ rather than piling up new ones. It will do one of five things:
 
 It also applies `area:*` and `severity:*` labels so issues can be found later.
 
-**Triage gets things wrong.** If it closes your issue with an answer that does
-not fit, say so in a comment — that is a useful signal, and the rules live in
-the repository where they can be corrected. Anything a maintainer has marked
-`status:confirmed`, `status:in-progress`, `status:by-design`,
-`status:wontfix` or `status:blocked-upstream` is left alone by the bot entirely.
+**Triage gets things wrong, and it is built to be told so.** Reply to its
+comment saying the answer does not fit. The next pass reopens the issue if it
+was closed, replaces its comment, labels the issue `triage:disputed` and hands
+it to a human — and then leaves it alone permanently, so it cannot talk itself
+back into the same wrong answer. The same applies to a wrong duplicate call.
+
+Anything a maintainer has marked `status:confirmed`, `status:in-progress`,
+`status:by-design`, `status:wontfix` or `status:blocked-upstream` is left alone
+by the bot entirely. It never applies those itself — they record a human's
+decision.
 
 ---
 

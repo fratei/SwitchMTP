@@ -19,6 +19,7 @@ import argparse
 import json
 import os
 import sys
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Sequence
 
@@ -55,9 +56,27 @@ HANDS_OFF = {
     "status:by-design",
     "status:blocked-upstream",
     "triage:delegated",
+    # Set when a reporter rejects a canned answer. Without it the next daily
+    # pass would match the same rule, post the same answer and quietly erase the
+    # hand-off to a human.
+    "triage:disputed",
     "help wanted",
     "good first issue",
 }
+
+#: Replaces the triage comment once its conclusion has been rejected. Leaving
+#: the original in place would keep asserting something the reporter has already
+#: said is wrong.
+DISPUTED_NOTE = """\
+{marker}
+
+You said the automated conclusion above did not fit, so this issue is now with \
+a maintainer.{reopened}
+
+Automated triage will not comment on it again — the `triage:disputed` label \
+keeps it out of the bot's way. Nothing further is needed from you unless a \
+maintainer asks.
+"""
 
 DELEGATION_INSTRUCTIONS = """\
 This issue was routed here by SwitchMTP's automated triage because the report \
@@ -127,6 +146,36 @@ def to_ref(issue: dict[str, Any]) -> IssueRef:
     )
 
 
+def disputed_answer(
+    issue: dict[str, Any], comments: Sequence[dict[str, Any]]
+) -> bool:
+    """Did a human push back on the bot's conclusion?
+
+    Both the "answered" and "duplicate" comments invite a correction, and an
+    invitation the bot ignores is worse than no invitation at all. Any human
+    comment after the bot's own counts: someone taking the trouble to reply to a
+    canned answer is not agreeing with it, and a human glancing at a wrongly
+    escalated issue is a far cheaper mistake than a real defect left buried
+    under a wrong answer.
+    """
+    labels = {l["name"] for l in issue.get("labels") or []}
+    if not labels & {"triage:answered", "duplicate"}:
+        return False
+
+    marker_seen = False
+    for comment in comments:
+        body = comment.get("body") or ""
+        if MARKER in body:
+            marker_seen = True
+            continue
+        if not marker_seen:
+            continue
+        if (comment.get("user") or {}).get("type") == "Bot":
+            continue
+        return True
+    return False
+
+
 def triage_one(
     api: GitHub,
     issue: dict[str, Any],
@@ -144,8 +193,32 @@ def triage_one(
         print(f"#{number}: skipped, carries {sorted(set(labels) & HANDS_OFF)}")
         return None
 
-    parsed = parse_issue(issue.get("body") or "", forms)
     comments = api.comments(number)
+
+    # A human replying to the bot's conclusion is disputing it. Honour that
+    # before anything else: reopen if it was closed, hand it to a person, and
+    # stop — re-running the rules would only reach the same wrong conclusion.
+    if disputed_answer(issue, comments):
+        was_closed = issue.get("state") == "closed"
+        if was_closed:
+            api.reopen_issue(number)
+        api.add_labels(number, ["triage:disputed", "triage:needs-human"])
+        for stale in ("triage:answered", "duplicate", "needs-info"):
+            if stale in labels:
+                api.remove_label(number, stale)
+        previous = existing_triage_comment(comments)
+        if previous is not None:
+            api.update_comment(
+                int(previous["id"]),
+                DISPUTED_NOTE.format(
+                    marker=MARKER,
+                    reopened=" It has been reopened." if was_closed else "",
+                ),
+            )
+        print(f"#{number}: disputed, handed to a maintainer")
+        return None
+
+    parsed = parse_issue(issue.get("body") or "", forms)
     author = ((issue.get("user") or {}).get("login")) or ""
     apply_followups(parsed, followup_bodies(comments, author))
 
@@ -244,6 +317,21 @@ def main(argv: Sequence[str] | None = None) -> int:
         targets = [i for i in open_issues if not (set(
             l["name"] for l in i.get("labels") or []
         ) & HANDS_OFF)][: args.limit]
+
+        # Closed issues the bot answered, touched in the last fortnight, so a
+        # disputed close is picked up by the daily pass even if the webhook that
+        # should have caught it was missed.
+        since = (
+            datetime.now(timezone.utc) - timedelta(days=14)
+        ).strftime("%Y-%m-%dT%H:%M:%SZ")
+        try:
+            targets += [
+                i
+                for i in api.recently_closed_issues(since=since)
+                if "triage:answered" in {l["name"] for l in i.get("labels") or []}
+            ][: args.limit]
+        except Exception as exc:  # a closed-issue sweep must never break the run
+            print(f"::warning::could not list recently closed issues: {exc}")
 
     results: list[dict[str, Any]] = []
     delegate_to_copilot: list[int] = []

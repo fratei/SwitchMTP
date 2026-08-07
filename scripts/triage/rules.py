@@ -369,6 +369,12 @@ def evaluate(
     verdict.matches = matches
     for known in matches:
         for label in known.labels:
+            # `status:*` records a maintainer's decision. The bot may route and
+            # grade an issue, but claiming a state a human never set would also
+            # lock it out of its own hands-off list — and with it the promise to
+            # reopen a disputed answer.
+            if label.startswith("status:"):
+                continue
             if label not in verdict.add_labels:
                 verdict.add_labels.append(label)
 

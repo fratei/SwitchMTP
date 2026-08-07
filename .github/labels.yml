@@ -103,6 +103,10 @@
   color: "0e8a16"
   description: "Matched a known issue and answered automatically"
 
+- name: "triage:disputed"
+  color: "b60205"
+  description: "The reporter rejected the automated answer; triage will not touch it again"
+
 - name: "triage:delegated"
   color: "6f42c1"
   description: "Handed to the Copilot cloud agent to attempt a fix"

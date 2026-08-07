@@ -11,6 +11,7 @@ hand-written, and a drift in either direction fails the tests.
 
 from __future__ import annotations
 
+import ast
 import sys
 from pathlib import Path
 
@@ -29,7 +30,14 @@ from forms import (
     split_sections,
     validate_forms,
 )
-from rules import IssueRef, evaluate, find_duplicate, load_known_issues, similarity
+from rules import (
+    MARKER,
+    IssueRef,
+    evaluate,
+    find_duplicate,
+    load_known_issues,
+    similarity,
+)
 
 ROOT = Path(__file__).resolve().parents[2]
 TEMPLATES = ROOT / ".github" / "ISSUE_TEMPLATE"
@@ -793,3 +801,163 @@ def test_evaluating_twice_gives_the_same_answer():
     assert second.kind == first.kind
     assert second.add_labels == []
     assert second.remove_labels == []
+
+
+# ------------------------------------------------- keeping the reopen promise
+
+def _comment(body: str, *, bot: bool = False, login: str = "reporter") -> dict:
+    return {
+        "body": body,
+        "user": {"login": "github-actions[bot]" if bot else login,
+                 "type": "Bot" if bot else "User"},
+    }
+
+
+def _answered_and_closed(comments: list[dict]) -> dict:
+    return {
+        "number": 7,
+        "state": "closed",
+        "labels": [{"name": "type:bug"}, {"name": "triage:answered"}],
+        "user": {"login": "reporter"},
+        "body": "",
+        "title": "",
+    }, comments
+
+
+def test_a_human_reply_after_an_automated_close_is_a_dispute():
+    issue, comments = _answered_and_closed([
+        _comment(f"{MARKER}\n\nThanks for the report.", bot=True),
+        _comment("That is not it — I was already in title mode."),
+    ])
+    assert triage.disputed_answer(issue, comments) is True
+
+
+def test_the_bots_own_comment_is_not_a_dispute():
+    issue, comments = _answered_and_closed([
+        _comment(f"{MARKER}\n\nThanks for the report.", bot=True),
+        _comment("automated follow-up", bot=True),
+    ])
+    assert triage.disputed_answer(issue, comments) is False
+
+
+def test_a_comment_before_the_answer_is_not_a_dispute():
+    issue, comments = _answered_and_closed([
+        _comment("Forgot to say: HOS 22.5.0"),
+        _comment(f"{MARKER}\n\nThanks for the report.", bot=True),
+    ])
+    assert triage.disputed_answer(issue, comments) is False
+
+
+def test_a_dispute_counts_on_an_open_issue_too():
+    """A duplicate verdict never closes anything, and can still be wrong."""
+    issue, comments = _answered_and_closed([
+        _comment(f"{MARKER}\n\nIt reads as the same problem as #3.", bot=True),
+        _comment("Different problem — mine is on a gamecard dump."),
+    ])
+    issue["state"] = "open"
+    issue["labels"] = [{"name": "type:bug"}, {"name": "duplicate"}]
+    assert triage.disputed_answer(issue, comments) is True
+
+
+def test_a_conclusion_the_bot_did_not_reach_is_not_disputable():
+    issue, comments = _answered_and_closed([
+        _comment(f"{MARKER}\n\nThanks.", bot=True),
+        _comment("still broken"),
+    ])
+    issue["labels"] = [{"name": "type:bug"}]
+    assert triage.disputed_answer(issue, comments) is False
+
+
+def test_a_reply_to_a_needs_info_comment_is_not_a_dispute():
+    """It is the reporter supplying what was asked for — the expected path."""
+    issue, comments = _answered_and_closed([
+        _comment(f"{MARKER}\n\nSome details are missing.", bot=True),
+        _comment("**macOS version**: 26.6"),
+    ])
+    issue["state"] = "open"
+    issue["labels"] = [{"name": "type:bug"}, {"name": "needs-info"}]
+    assert triage.disputed_answer(issue, comments) is False
+
+
+def test_the_bot_never_applies_a_maintainer_status_label():
+    """`status:*` is a human's decision, and every one of them is hands-off.
+
+    Applying one would lock the bot out of the issue permanently, which in turn
+    would make the "this will be reopened" promise in its own comment a lie.
+    """
+    for filename, values, title in [
+        (BUG, complete_bug(**{"what-happened": "extra buffers exceeded installing a 12 GB nsp"}),
+         "Install fails"),
+        (BUG, complete_bug(**{"what-happened": "every file shows a dash instead of a date"}),
+         "No dates"),
+    ]:
+        _, verdict = judge(render_body(filename, values), title=title)
+        # Vacuously true if nothing matched, so prove the rule fired first.
+        assert verdict.matches, f"{title} matched no known issue; the test proves nothing"
+        assert any(
+            l.startswith("status:") for k in verdict.matches for l in k.labels
+        ), f"{title} matched an entry with no status label; pick a different fixture"
+        assert not [l for l in verdict.add_labels if l.startswith("status:")], (
+            f"{title} tried to apply {verdict.add_labels}"
+        )
+
+
+def test_no_label_the_bot_applies_can_lock_it_out():
+    """Every label reachable from the knowledge base, checked against HANDS_OFF."""
+    reachable = {
+        label
+        for entry in KNOWN_ISSUES
+        for label in entry.labels
+        if not label.startswith("status:")
+    }
+    assert not reachable & triage.HANDS_OFF
+
+
+def test_a_disputed_issue_is_permanently_hands_off():
+    """Otherwise the next daily pass re-answers it and erases the hand-off."""
+    assert "triage:disputed" in triage.HANDS_OFF
+
+
+def test_every_label_the_bot_applies_exists_in_labels_yml():
+    """GitHub silently drops a label that does not exist, so this must be exact.
+
+    The label set is scraped from the engine's own source rather than listed by
+    hand: a rule that starts applying a new label cannot then slip past.
+    """
+    declared = {
+        str(e["name"])
+        for e in yaml.safe_load(
+            (ROOT / ".github" / "labels.yml").read_text(encoding="utf-8")
+        )
+    }
+
+    prefixes = ("type:", "area:", "severity:", "status:", "triage:")
+    used = set(triage.HANDS_OFF)
+    for module in ("rules.py", "triage.py", "report.py"):
+        tree = ast.parse((Path(triage.__file__).parent / module).read_text("utf-8"))
+        used |= {
+            node.value
+            for node in ast.walk(tree)
+            if isinstance(node, ast.Constant)
+            and isinstance(node.value, str)
+            and node.value.startswith(prefixes)
+        }
+    used |= {"needs-info", "needs-repro", "duplicate"}
+    for entry in KNOWN_ISSUES:
+        used |= set(entry.labels)
+
+    # Prefix probes such as "area:" are tested with str.startswith, not applied.
+    used = {label for label in used if not label.endswith(":")}
+
+    missing = sorted(used - declared)
+    assert not missing, f"labels.yml is missing {missing}; GitHub would drop them"
+
+
+@pytest.mark.parametrize("reopened", ["", " It has been reopened."])
+def test_the_disputed_note_replaces_the_conclusion_rather_than_repeating_it(reopened):
+    note = triage.DISPUTED_NOTE.format(marker=MARKER, reopened=reopened)
+    assert MARKER in note, "without the marker the bot would post a second comment"
+    assert "maintainer" in note
+    assert "triage:disputed" in note
+    # Only claim a reopen when one actually happened; a duplicate is never closed.
+    assert ("reopened" in note) == bool(reopened)
