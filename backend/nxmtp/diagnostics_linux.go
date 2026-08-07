@@ -14,14 +14,6 @@
 
 package nxmtp
 
-import (
-	"os"
-	"path/filepath"
-	"sort"
-	"strconv"
-	"strings"
-)
-
 // platformHostNoun names the host in user-facing advice.
 const platformHostNoun = "this computer"
 
@@ -72,76 +64,15 @@ var knownBlockers = map[string]string{
 //
 // Linux has no API for this, but it does not need one: every libusb handle is
 // an open file descriptor on /dev/bus/usb/<bus>/<device>, so scanning /proc/*/fd
-// finds them all. Processes owned by other users are silently skipped (their fd
-// directories are unreadable without root), which is fine -- the blockers that
-// matter, the desktop MTP backends, run as the same user we do.
+// finds them all. The scan itself lives in procscan.go, untagged, so it can be
+// tested against a fixture tree; only these two paths are Linux-specific.
 func usbClients(selfPID int) []USBClient {
-	entries, err := os.ReadDir("/proc")
-	if err != nil {
-		return nil
-	}
-
-	var out []USBClient
-	for _, entry := range entries {
-		if !entry.IsDir() {
-			continue
-		}
-		pid, err := strconv.Atoi(entry.Name())
-		if err != nil {
-			continue
-		}
-		if !holdsUSBDevice(pid) {
-			continue
-		}
-
-		name := processName(pid)
-		c := USBClient{PID: pid, Name: name, IsSelf: pid == selfPID}
-		if advice, ok := knownBlockers[strings.ToLower(name)]; ok && !c.IsSelf {
-			c.Known, c.Blocker, c.Advice = true, true, advice
-		}
-		out = append(out, c)
-	}
-
-	sort.Slice(out, func(i, j int) bool {
-		if out[i].Blocker != out[j].Blocker {
-			return out[i].Blocker
-		}
-		return out[i].PID < out[j].PID
+	return scanProc(procScan{
+		procRoot:  "/proc",
+		usbPrefix: "/dev/bus/usb/",
+		selfPID:   selfPID,
+		blockers:  knownBlockers,
 	})
-	return out
-}
-
-// holdsUSBDevice reports whether a process has any /dev/bus/usb file descriptor
-// open. Unreadable fd directories mean "another user's process", not "no".
-func holdsUSBDevice(pid int) bool {
-	fdDir := filepath.Join("/proc", strconv.Itoa(pid), "fd")
-	fds, err := os.ReadDir(fdDir)
-	if err != nil {
-		return false
-	}
-	for _, fd := range fds {
-		target, err := os.Readlink(filepath.Join(fdDir, fd.Name()))
-		if err != nil {
-			continue
-		}
-		if strings.HasPrefix(target, "/dev/bus/usb/") {
-			return true
-		}
-	}
-	return false
-}
-
-// processName reads a process's short name, preferring /proc/<pid>/comm.
-func processName(pid int) string {
-	raw, err := os.ReadFile(filepath.Join("/proc", strconv.Itoa(pid), "comm"))
-	if err != nil {
-		return "pid " + strconv.Itoa(pid)
-	}
-	name := strings.TrimSpace(string(raw))
-	if name == "" {
-		return "pid " + strconv.Itoa(pid)
-	}
-	return name
 }
 
 // interfaceHolders has no Linux equivalent: /proc tells us which processes hold

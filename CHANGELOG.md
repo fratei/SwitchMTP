@@ -8,6 +8,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- **Tests for the Linux process scanner, which had none that meant anything.** The scanner
+  that finds gvfs or kio-mtp holding the device reads `/proc`, so on a CI runner with no
+  USB devices it took no interesting branch and passed regardless of whether it worked.
+  Its logic is now separated from the two paths that are genuinely Linux-specific and runs
+  against a synthetic `/proc` fixture, so blocker matching, self-exclusion, unreadable
+  processes belonging to other users, missing `comm` files and lookalike device paths are
+  all exercised on every platform. Three latent bug classes in the blocker table are also
+  pinned: a key with any uppercase character could never match, since lookup lowercases
+  first; an entry longer than the 15 characters `/proc/<pid>/comm` reports needs a
+  truncated variant or it never fires; and an entry without advice marks a process as to
+  blame while saying nothing about what to do.
 - **Cross-language drift tests.** A handful of facts exist in both Go and Swift with
   nothing connecting them at build time: the set of installable file types, and the error
   kind the app string-matches to detect a cancelled transfer. The second is the dangerous
