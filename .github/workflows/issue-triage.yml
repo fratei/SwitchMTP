@@ -95,14 +95,16 @@ jobs:
             args+=(--dry-run)
           fi
 
-          # Delegation happens on the daily pass, or when explicitly asked for.
-          if [[ "${GITHUB_EVENT_NAME}" == "schedule" || "${DELEGATE}" == "true" ]]; then
-            if [[ "${CAN_DELEGATE}" == "true" ]]; then
+          # Delegate whenever there is something to delegate with. Waiting for
+          # the daily pass would mean telling a reporter their complete report
+          # is waiting for a maintainer and then contradicting that hours later.
+          if [[ "${CAN_DELEGATE}" == "true" ]]; then
+            if [[ "${GITHUB_EVENT_NAME}" != "workflow_dispatch" || "${DELEGATE}" == "true" ]]; then
               args+=(--delegate)
-            else
-              echo "::notice::COPILOT_AGENT_TOKEN is not set, so actionable issues" \
-                   "will be labelled but not handed to the coding agent."
             fi
+          elif [[ "${GITHUB_EVENT_NAME}" == "schedule" || "${DELEGATE}" == "true" ]]; then
+            echo "::notice::COPILOT_AGENT_TOKEN is not set, so actionable issues" \
+                 "will be labelled but not handed to the coding agent."
           fi
 
           python scripts/triage/triage.py "${args[@]}"
