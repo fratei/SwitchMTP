@@ -13226,6 +13226,46 @@
         }
       }
     },
+    "The console can only do one thing at a time over USB, so it cannot list a folder while it is copying. SwitchMTP will open this folder as soon as the transfer is done.": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "The console can only do one thing at a time over USB, so it cannot list a folder while it is copying. SwitchMTP will open this folder as soon as the transfer is done."
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "La consola solo puede hacer una cosa a la vez por USB, así que no puede mostrar una carpeta mientras copia. SwitchMTP abrirá esta carpeta en cuanto termine la transferencia."
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "本体は USB 経由で一度に 1 つの処理しか行えないため、コピー中はフォルダを一覧表示できません。転送が完了次第、SwitchMTP がこのフォルダを開きます。"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Консоль может выполнять только одну операцию по USB за раз, поэтому она не может показать папку во время копирования. SwitchMTP откроет эту папку сразу после завершения передачи."
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主机通过 USB 一次只能执行一项操作，因此在复制时无法列出文件夹。传输完成后，SwitchMTP 将立即打开此文件夹。"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "主機透過 USB 一次只能執行一項操作，因此在複製時無法列出資料夾。傳輸完成後，SwitchMTP 會立即開啟此資料夾。"
+          }
+        }
+      }
+    },
     "The folder does not exist on this device.": {
       "extractionState": "manual",
       "localizations": {
@@ -13507,6 +13547,46 @@
           "stringUnit": {
             "state": "translated",
             "value": "此資料夾為空"
+          }
+        }
+      }
+    },
+    "This folder opens when the transfer finishes": {
+      "localizations": {
+        "en": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "This folder opens when the transfer finishes"
+          }
+        },
+        "es": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Esta carpeta se abrirá cuando termine la transferencia"
+          }
+        },
+        "ja": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "転送完了後にこのフォルダを開きます"
+          }
+        },
+        "ru": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "Эта папка откроется после завершения передачи"
+          }
+        },
+        "zh-Hans": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "传输完成后将打开此文件夹"
+          }
+        },
+        "zh-Hant": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "傳輸完成後將開啟此資料夾"
           }
         }
       }

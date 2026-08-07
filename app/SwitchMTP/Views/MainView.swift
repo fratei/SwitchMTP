@@ -387,7 +387,16 @@ struct MainView: View {
 
     @ViewBuilder
     private var bannerArea: some View {
-        if let device = manager.connectionState.device, device.profile.needsModeChange {
+        if manager.pendingNavigationPath != nil && manager.isTransferActive {
+            SwitchMTPBanner(
+                title: String(localized: "This folder opens when the transfer finishes"),
+                message: String(localized: "The console can only do one thing at a time over USB, so it cannot list a folder while it is copying. SwitchMTP will open this folder as soon as the transfer is done."),
+                systemImage: "clock",
+                tint: .accentColor
+            )
+            .padding(.horizontal, 12)
+            .padding(.vertical, 8)
+        } else if let device = manager.connectionState.device, device.profile.needsModeChange {
             SwitchMTPBanner(
                 title: String(localized: "Switch is in a homebrew USB mode"),
                 message: device.advice.isEmpty

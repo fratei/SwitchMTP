@@ -35,6 +35,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- **Browsing during a transfer froze the progress bar and hung the browser.** Navigating to
+  another folder mid-copy left the progress bar stuck at whatever percentage it had reached
+  and the file list spinning on "Loading files…" — while the copy itself carried on and
+  finished perfectly well on the console. A 6.5 GB import reproduced it exactly: the bar
+  stopped at 22%, 2,539 progress callbacks were discarded, and the completed transfer's
+  result was handed to the directory-listing code, which could make no sense of it.
+
+  Two separate faults, both now fixed. First, transfers shared a single-slot state machine
+  with every other operation, so starting a directory listing overwrote the record that a
+  transfer was in flight; every subsequent progress and completion callback was then routed
+  to the wrong handler, or dropped. Transfers now own a slot of their own and report through
+  their own completion callback, so no other operation can take their place. Second, MTP is
+  a single session — the console genuinely cannot list a folder while it is copying, so the
+  listing sat waiting for the transfer to release the connection. Rather than appear hung,
+  SwitchMTP now says so and opens the folder the moment the transfer finishes.
+
 - **Pressing Connect with no console attached showed a raw parser error.** The button stays
   enabled with nothing plugged in — retrying after waking the console or starting the
   responder is the normal thing to do — but it passed an empty device id straight to the

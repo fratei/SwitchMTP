@@ -921,6 +921,20 @@
       "ru": "Вести журнал диагностики",
       "zh-Hans": "记录诊断日志",
       "zh-Hant": "記錄診斷紀錄"
+    },
+    "This folder opens when the transfer finishes": {
+      "zh-Hans": "传输完成后将打开此文件夹",
+      "zh-Hant": "傳輸完成後將開啟此資料夾",
+      "es": "Esta carpeta se abrirá cuando termine la transferencia",
+      "ru": "Эта папка откроется после завершения передачи",
+      "ja": "転送完了後にこのフォルダを開きます"
+    },
+    "The console can only do one thing at a time over USB, so it cannot list a folder while it is copying. SwitchMTP will open this folder as soon as the transfer is done.": {
+      "zh-Hans": "主机通过 USB 一次只能执行一项操作，因此在复制时无法列出文件夹。传输完成后，SwitchMTP 将立即打开此文件夹。",
+      "zh-Hant": "主機透過 USB 一次只能執行一項操作，因此在複製時無法列出資料夾。傳輸完成後，SwitchMTP 會立即開啟此資料夾。",
+      "es": "La consola solo puede hacer una cosa a la vez por USB, así que no puede mostrar una carpeta mientras copia. SwitchMTP abrirá esta carpeta en cuanto termine la transferencia.",
+      "ru": "Консоль может выполнять только одну операцию по USB за раз, поэтому она не может показать папку во время копирования. SwitchMTP откроет эту папку сразу после завершения передачи.",
+      "ja": "本体は USB 経由で一度に 1 つの処理しか行えないため、コピー中はフォルダを一覧表示できません。転送が完了次第、SwitchMTP がこのフォルダを開きます。"
     }
   }
 }

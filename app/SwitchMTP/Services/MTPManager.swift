@@ -57,11 +57,12 @@ final class MTPManager: ObservableObject {
 
     /// True when no FFI operation owns the device, so a queued install may start.
     ///
-    /// `operation` is a single-slot state machine: starting an upload while a
-    /// directory reload is still in flight would route the walk's callbacks into
-    /// the upload handler and lose the transfer's progress entirely.
+    /// Covers both slots. `operation` is single-slot, so starting an upload
+    /// while a directory reload is in flight would route the walk's callbacks
+    /// into the upload handler; and `transferKind` guards against starting a
+    /// second transfer on top of one already running.
     var isDeviceIdle: Bool {
-        operation == .none && !isTransferActive
+        operation == .none && transferKind == nil && !isTransferActive
     }
     
     // NEW: Pass "" to let Go connect to the first available device, or specific ID for exact matches.
@@ -97,13 +98,30 @@ final class MTPManager: ObservableObject {
         case deleting
         case makingDirectory
         case renaming
-        case uploading
-        case downloading
-        case silentDownloading
         case disposing
     }
 
+    /// Transfers deliberately do not live in `operation`.
+    ///
+    /// `operation` is a single slot, which is fine for the short operations
+    /// that own the device for a moment. A transfer is different: it runs for
+    /// minutes and the user is expected to keep using the app while it does.
+    /// Navigating armed a walk, the walk overwrote the transfer's claim, and
+    /// every subsequent progress callback was discarded -- the bar froze part
+    /// way while the copy carried on, and the transfer's own completion was
+    /// then misrouted into the walk handler, so it never finished on screen.
+    ///
+    /// Device enumeration, cancel and diagnostics already sidestep `operation`
+    /// for the same reason. Transfers get the same treatment: their own slot,
+    /// and their own done callback so the two can never be confused.
+    private enum TransferKind {
+        case uploading
+        case downloading
+        case silentDownloading
+    }
+
     private var operation: Operation = .none
+    private var transferKind: TransferKind?
     private var transferCompletion: ((Error?) -> Void)?
     private var scopedSourceURLs: [URL] = []
     private var scopedDestinationURL: URL?
@@ -111,7 +129,12 @@ final class MTPManager: ObservableObject {
     private var cachedProfile: DeviceProfile = .generic
     private var cachedAdvice: String = ""
     private var pendingDeviceId: String? = nil
-    private var pendingNavigationPath: String? = nil
+    /// A folder the user asked for that could not be listed yet, replayed once
+    /// the device is free. Set either by a reconnect (restore the old folder)
+    /// or by navigating during a transfer -- MTP is a single session, so a walk
+    /// issued mid-transfer would block on the Go client mutex until the copy
+    /// finished, freezing the UI on "Loading…" for the whole transfer.
+    @Published var pendingNavigationPath: String? = nil
     private var deviceScanWorkItem: DispatchWorkItem?
     
     // MARK: – Promise Downloads (for multi-select drag-drop)
@@ -191,6 +214,12 @@ final class MTPManager: ObservableObject {
         // when nothing is connected or an operation is stuck.
         static let diagnosticsDone: NxmtpOnCbResult = { jsonPtr in
             CallbackRouter.manager?.handleDiagnosticsDone(jsonPtr: jsonPtr)
+        }
+
+        // Transfers bypass `operation` too, so that a walk armed by navigating
+        // mid-transfer cannot swallow the transfer's completion.
+        static let transferDone: NxmtpOnCbResult = { jsonPtr in
+            CallbackRouter.manager?.handleTransferDone(jsonPtr: jsonPtr)
         }
     }
     
@@ -294,20 +323,22 @@ final class MTPManager: ObservableObject {
     
     private func handleProgress(jsonPtr: UnsafeMutablePointer<CChar>?) {
         guard let jsonPtr else { return }
-        guard operation == .downloading || operation == .uploading || operation == .silentDownloading else {
-            // Progress for a transfer nobody is tracking. The UI will sit on
-            // "Preparing transfer…" for the whole run, so record it.
-            DebugLog.write("WARNING: progress dropped, op=\(operation)")
+        guard let kind = transferKind else {
+            // Progress arriving with no transfer recorded means the slot was
+            // cleared while the backend was still sending bytes, which shows up
+            // as a progress bar frozen part way through a copy that is in fact
+            // still running.
+            DebugLog.write("WARNING: progress dropped, no transfer in flight (op=\(operation))")
             return
         }
         
         let jsonString = String(cString: jsonPtr)
         let (errorString, dataAny) = parseEnvelope(jsonString)
         if let errorString {
-            DebugLog.write("progress error under op=\(operation): \(errorString)")
+            DebugLog.write("progress error under transfer=\(kind): \(errorString)")
             // Cancel errors are handled by the done callback; ignore in progress.
             if ErrorStringLocalizer.isTransferCancelledError(errorString) {
-                // Don't set operation = .none here. The done callback will
+                // Don't clear the transfer slot here. The done callback will
                 // handle the full cleanup including reconnection.
                 let localizedError = ErrorStringLocalizer.localize(errorString)
                 self.errorMessage = localizedError
@@ -318,7 +349,7 @@ final class MTPManager: ObservableObject {
                 if ErrorStringLocalizer.isDeviceDisconnectedError(errorString) {
                     self.handleDeviceDisconnected()
                 } else {
-                    if self.operation != .silentDownloading {
+                    if kind != .silentDownloading {
                         self.isTransferActive = false
                         self.transferProgress = nil
                         self.transferStats = nil
@@ -330,7 +361,7 @@ final class MTPManager: ObservableObject {
                     }
                 }
             }
-            operation = .none
+            transferKind = nil
             return
         }
         guard let dataAny else {
@@ -347,10 +378,10 @@ final class MTPManager: ObservableObject {
             let total = progressData.bulkFileSize?.total ?? -1
             DebugLog.write("progress phase=\(stats.phase) \(Int(stats.progressPercentage * 100))% \(sent)/\(total) file=\(stats.currentFileName)")
         }
-                DispatchQueue.main.async { [weak self] in
+        DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.lastProgressAt = Date()
-            if self.operation == .silentDownloading {
+            if kind == .silentDownloading {
                 self.silentTransferStats = stats
             } else {
                 self.transferStats = stats
@@ -653,84 +684,6 @@ final class MTPManager: ObservableObject {
                 self.loadFiles(at: self.currentPath)
             }
             
-        case .silentDownloading:
-            if let errorString = parseEnvelopeErrorOnly(jsonString) {
-                self.finishTransferCompletion(errorString: errorString)
-                DispatchQueue.main.async { [weak self] in
-                    self?.silentTransferStats = nil
-                    if ErrorStringLocalizer.isDeviceDisconnectedError(errorString) {
-                        self?.handleDeviceDisconnected()
-                    }
-                }
-                operation = .none
-                return
-            }
-            self.finishTransferCompletion(errorString: nil)
-            DispatchQueue.main.async { [weak self] in
-                self?.silentTransferStats = nil
-            }
-            operation = .none
-            
-        case .downloading, .uploading:
-            DebugLog.write("transfer done: \(jsonString)")
-            // Data is a bool for done.
-            if let errorString = parseEnvelopeErrorOnly(jsonString) {
-                self.finishTransferCompletion(errorString: errorString)
-                DispatchQueue.main.async {
-                    if ErrorStringLocalizer.isDeviceDisconnectedError(errorString) {
-                        self.finishActiveInstall(errorString: errorString)
-                        self.handleDeviceDisconnected()
-                    } else if ErrorStringLocalizer.isTransferCancelledError(errorString) {
-                        // User-initiated cancel: the MTP session is corrupt after
-                        // cancellation (broken transaction IDs, stale USB data).
-                        // Dispose and reconnect to reset the session.
-                        self.isTransferActive = false
-                        self.transferProgress = nil
-                        self.transferStats = nil
-                        self.lastProgressAt = nil
-                        let localizedError = ErrorStringLocalizer.localize(errorString)
-                        self.errorMessage = localizedError
-                        self.finishActiveInstall(errorString: errorString)
-                        self.reconnectAndRestore(to: self.currentPath)
-                    } else {
-                        self.isTransferActive = false
-                        self.transferProgress = nil
-                        self.transferStats = nil
-                        self.lastProgressAt = nil
-                        let localizedError = ErrorStringLocalizer.localize(errorString)
-                        self.connectionState = .error(localizedError)
-                        self.errorMessage = localizedError
-                        self.finishActiveInstall(errorString: errorString)
-                    }
-                }
-                operation = .none
-                return
-            }
-            
-            let completedOp = operation
-            self.finishTransferCompletion(errorString: nil)
-            DispatchQueue.main.async { [weak self] in
-                guard let self else { return }
-                self.isTransferActive = false
-                self.transferProgress = nil
-                self.transferStats = nil
-                self.lastProgressAt = nil
-                self.finishActiveInstall(errorString: nil)
-                self.loadFiles(at: self.currentPath)
-
-                if !NSApplication.shared.isActive {
-                    let content = UNMutableNotificationContent()
-                    content.title = String(localized: "Transfer Complete")
-                    content.body = completedOp == .uploading ? String(localized: "Import completed successfully.") : String(localized: "Export completed successfully.")
-                    let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
-                    UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { granted, _ in
-                        if granted {
-                            UNUserNotificationCenter.current().add(request)
-                        }
-                    }
-                }
-            }
-            
         case .disposing:
             DispatchQueue.main.async {
                 self.connectionState = .disconnected
@@ -744,6 +697,10 @@ final class MTPManager: ObservableObject {
                 self.isLoading = false
                 self.cachedDeviceInfo = nil
             }
+            // The session is gone, so any transfer it was running is gone with
+            // it. Clearing the slot keeps `isDeviceIdle` honest for the next
+            // connection.
+            transferKind = nil
             operation = .none
             if let nextDeviceId = pendingDeviceId {
                 pendingDeviceId = nil
@@ -757,6 +714,98 @@ final class MTPManager: ObservableObject {
             // thrown away. This has been a real bug twice; make it visible.
             DebugLog.write("WARNING: done callback swallowed under .none")
             break
+        }
+    }
+
+    /// Completion for uploads and downloads, routed away from `operation` so a
+    /// walk armed mid-transfer cannot consume it. See `TransferKind`.
+    private func handleTransferDone(jsonPtr: UnsafeMutablePointer<CChar>?) {
+        guard let jsonPtr else { return }
+        let jsonString = String(cString: jsonPtr)
+
+        guard let kind = transferKind else {
+            DebugLog.write("WARNING: transfer done with no transfer in flight")
+            return
+        }
+        transferKind = nil
+
+        if kind == .silentDownloading {
+            if let errorString = parseEnvelopeErrorOnly(jsonString) {
+                self.finishTransferCompletion(errorString: errorString)
+                DispatchQueue.main.async { [weak self] in
+                    self?.silentTransferStats = nil
+                    if ErrorStringLocalizer.isDeviceDisconnectedError(errorString) {
+                        self?.handleDeviceDisconnected()
+                    }
+                }
+                return
+            }
+            self.finishTransferCompletion(errorString: nil)
+            DispatchQueue.main.async { [weak self] in
+                self?.silentTransferStats = nil
+            }
+            return
+        }
+
+        DebugLog.write("transfer done: \(jsonString)")
+        if let errorString = parseEnvelopeErrorOnly(jsonString) {
+            self.finishTransferCompletion(errorString: errorString)
+            DispatchQueue.main.async {
+                if ErrorStringLocalizer.isDeviceDisconnectedError(errorString) {
+                    self.finishActiveInstall(errorString: errorString)
+                    self.handleDeviceDisconnected()
+                } else if ErrorStringLocalizer.isTransferCancelledError(errorString) {
+                    // User-initiated cancel: the MTP session is corrupt after
+                    // cancellation (broken transaction IDs, stale USB data).
+                    // Dispose and reconnect to reset the session.
+                    self.isTransferActive = false
+                    self.transferProgress = nil
+                    self.transferStats = nil
+                    self.lastProgressAt = nil
+                    let localizedError = ErrorStringLocalizer.localize(errorString)
+                    self.errorMessage = localizedError
+                    self.finishActiveInstall(errorString: errorString)
+                    self.pendingNavigationPath = nil
+                    self.reconnectAndRestore(to: self.currentPath)
+                } else {
+                    self.isTransferActive = false
+                    self.transferProgress = nil
+                    self.transferStats = nil
+                    self.lastProgressAt = nil
+                    let localizedError = ErrorStringLocalizer.localize(errorString)
+                    self.connectionState = .error(localizedError)
+                    self.errorMessage = localizedError
+                    self.finishActiveInstall(errorString: errorString)
+                    self.runPendingNavigation()
+                }
+            }
+            return
+        }
+
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            self.isTransferActive = false
+            self.transferProgress = nil
+            self.transferStats = nil
+            self.lastProgressAt = nil
+            self.finishActiveInstall(errorString: nil)
+            // A folder the user asked for mid-transfer takes precedence over
+            // re-listing the one they were on, which they have already left.
+            if !self.runPendingNavigation() {
+                self.loadFiles(at: self.currentPath)
+            }
+
+            if !NSApplication.shared.isActive {
+                let content = UNMutableNotificationContent()
+                content.title = String(localized: "Transfer Complete")
+                content.body = kind == .uploading ? String(localized: "Import completed successfully.") : String(localized: "Export completed successfully.")
+                let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+                UNUserNotificationCenter.current().requestAuthorization(options: [.alert]) { granted, _ in
+                    if granted {
+                        UNUserNotificationCenter.current().add(request)
+                    }
+                }
+            }
         }
     }
     
@@ -892,6 +941,18 @@ final class MTPManager: ObservableObject {
     }
     
     // MARK: – Navigation
+
+    /// Replays a folder the user asked for while the device was busy.
+    /// Returns true when a navigation was pending, so callers can skip their
+    /// own reload rather than listing a folder the user has already left.
+    @discardableResult
+    func runPendingNavigation() -> Bool {
+        guard let path = pendingNavigationPath else { return false }
+        pendingNavigationPath = nil
+        loadFiles(at: path)
+        return true
+    }
+
     func navigate(to directory: MTPFile) {
         guard directory.isDirectory else { return }
         let newPath = currentPath == "/" ? "/\(directory.name)" : "\(currentPath)/\(directory.name)"
@@ -930,7 +991,22 @@ final class MTPManager: ObservableObject {
     func loadFiles(at path: String) {
         guard let storage = selectedStorage else { return }
         guard storage.id != "" else { return }
-        
+
+        // MTP is a single session: `nxmtp.Client` serialises every operation on
+        // one mutex that an upload or download holds for its entire duration.
+        // Issuing the walk now would block a background thread until the copy
+        // finished and leave the user staring at a spinner, so remember where
+        // they wanted to go and take them there once the device is free.
+        if transferKind != nil {
+            DebugLog.write("navigation deferred until transfer completes: \(path)")
+            pendingNavigationPath = path
+            DispatchQueue.main.async { [weak self] in
+                self?.isLoading = false
+                self?.files = []
+            }
+            return
+        }
+
         DispatchQueue.main.async { [weak self] in
             self?.isLoading = true
         }
@@ -1012,11 +1088,11 @@ final class MTPManager: ObservableObject {
             endSecurityScopedAccess()
             return
         }
-        operation = .downloading
+        transferKind = .downloading
         DispatchQueue.global(qos: .userInitiated).async {
             DebugLog.write("download -> NxmtpDownloadFiles \(jsonString)")
             jsonString.withCString { ptr in
-                NxmtpDownloadFiles(ptr, CallbackRouter.preprocess, CallbackRouter.progress, CallbackRouter.done)
+                NxmtpDownloadFiles(ptr, CallbackRouter.preprocess, CallbackRouter.progress, CallbackRouter.transferDone)
             }
             DebugLog.write("download <- NxmtpDownloadFiles returned")
         }
@@ -1075,24 +1151,24 @@ final class MTPManager: ObservableObject {
             return "\(url.lastPathComponent)=\(bytes.map(String.init) ?? "?")"
         }
         DebugLog.write("upload storage=\(storage.id) dest=\(destination) op=\(operation) files=[\(sizes.joined(separator: ", "))]")
-        operation = .uploading
+        transferKind = .uploading
         DispatchQueue.global(qos: .userInitiated).async {
             DebugLog.write("upload -> NxmtpUploadFiles \(jsonString)")
             jsonString.withCString { ptr in
-                NxmtpUploadFiles(ptr, CallbackRouter.preprocess, CallbackRouter.progress, CallbackRouter.done)
+                NxmtpUploadFiles(ptr, CallbackRouter.preprocess, CallbackRouter.progress, CallbackRouter.transferDone)
             }
             DebugLog.write("upload <- NxmtpUploadFiles returned")
         }
     }
     
     func downloadPromise(file: MTPFile, to destinationFolderURL: URL, completion: @escaping (Error?) -> Void) {
-        if case .downloading = operation {
+        if transferKind == .downloading {
             completion(NSError(domain: "MTPManager.Transfer", code: 1, userInfo: [
                 NSLocalizedDescriptionKey: "Another transfer is already running."
             ]))
             return
         }
-        if case .uploading = operation {
+        if transferKind == .uploading {
             completion(NSError(domain: "MTPManager.Transfer", code: 1, userInfo: [
                 NSLocalizedDescriptionKey: "Another transfer is already running."
             ]))
@@ -1133,10 +1209,10 @@ final class MTPManager: ObservableObject {
             return
         }
         
-        operation = .downloading
+        transferKind = .downloading
         DispatchQueue.global(qos: .userInitiated).async {
             jsonString.withCString { ptr in
-                NxmtpDownloadFiles(ptr, CallbackRouter.preprocess, CallbackRouter.progress, CallbackRouter.done)
+                NxmtpDownloadFiles(ptr, CallbackRouter.preprocess, CallbackRouter.progress, CallbackRouter.transferDone)
             }
         }
     }
@@ -1144,13 +1220,13 @@ final class MTPManager: ObservableObject {
     /// Download multiple files from device as a batch promise (for drag-to-Finder).
     /// Sends all file paths in a single NxmtpDownloadFiles call for proper "n of n" progress.
     func downloadPromiseBatch(files: [MTPFile], to destinationFolderURL: URL, completion: @escaping (Error?) -> Void) {
-        if case .downloading = operation {
+        if transferKind == .downloading {
             completion(NSError(domain: "MTPManager.Transfer", code: 1, userInfo: [
                 NSLocalizedDescriptionKey: "Another transfer is already running."
             ]))
             return
         }
-        if case .uploading = operation {
+        if transferKind == .uploading {
             completion(NSError(domain: "MTPManager.Transfer", code: 1, userInfo: [
                 NSLocalizedDescriptionKey: "Another transfer is already running."
             ]))
@@ -1190,10 +1266,10 @@ final class MTPManager: ObservableObject {
             return
         }
         
-        operation = .downloading
+        transferKind = .downloading
         DispatchQueue.global(qos: .userInitiated).async {
             jsonString.withCString { ptr in
-                NxmtpDownloadFiles(ptr, CallbackRouter.preprocess, CallbackRouter.progress, CallbackRouter.done)
+                NxmtpDownloadFiles(ptr, CallbackRouter.preprocess, CallbackRouter.progress, CallbackRouter.transferDone)
             }
         }
     }
@@ -1232,10 +1308,10 @@ final class MTPManager: ObservableObject {
             return
         }
         
-        operation = .silentDownloading
+        transferKind = .silentDownloading
         DispatchQueue.global(qos: .userInitiated).async {
             jsonString.withCString { ptr in
-                NxmtpDownloadFiles(ptr, CallbackRouter.preprocess, CallbackRouter.progress, CallbackRouter.done)
+                NxmtpDownloadFiles(ptr, CallbackRouter.preprocess, CallbackRouter.progress, CallbackRouter.transferDone)
             }
         }
     }
@@ -1401,6 +1477,13 @@ final class MTPManager: ObservableObject {
         isTransferActive = false
         transferProgress = nil
         transferStats = nil
+        // A disconnect can pre-empt the transfer's own done callback -- the very
+        // case the note below describes for `operation`. Leaving the slot set
+        // would keep `isDeviceIdle` false for the life of the process, so the
+        // install queue would never drain again and every navigation would be
+        // deferred forever waiting on a transfer that has already died.
+        transferKind = nil
+        pendingNavigationPath = nil
         finishTransferCompletion(errorString: "Device disconnected.")
         // The queue's only other exit is the upload's own done callback, and a
         // disconnect detected by the USB scan resets `operation` before that
