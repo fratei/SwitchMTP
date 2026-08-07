@@ -15,6 +15,8 @@ package nxmtp
 import (
 	"strings"
 	"testing"
+
+	"github.com/ganeshrvel/usb"
 )
 
 // summarise is the part of diagnostics users actually read, and it is now
@@ -194,4 +196,15 @@ func TestCollectDiagnosticsReportsHostIdentity(t *testing.T) {
 	if strings.TrimSpace(d.Summary) == "" {
 		t.Error("diagnostics produced no summary")
 	}
+}
+
+// TestEmptyDeviceListDoneDoesNotPanic guards a fix in the vendored libusb
+// wrapper. Its DeviceList.Done() freed the list via &d[0], which panics on an
+// empty list -- and libusb reports zero devices on any machine with no USB host
+// controller. A Mac always has a root hub, so this only ever fires somewhere
+// like a CI container, which is precisely where it is hardest to notice by hand.
+func TestEmptyDeviceListDoneDoesNotPanic(t *testing.T) {
+	var nilList usb.DeviceList
+	nilList.Done()
+	usb.DeviceList{}.Done()
 }

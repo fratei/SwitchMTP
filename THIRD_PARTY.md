@@ -142,7 +142,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 | File | Change notice |
 |------|---------------|
-| `third_party/usb/usb.go` | Restricts upstream's `pkg-config` libusb discovery to non-macOS platforms, and adds explicit cgo include/library paths plus a development-only rpath for the repo-local universal libusb build on macOS. |
+| `third_party/usb/usb.go` | (1) Restricts upstream's `pkg-config` libusb discovery to non-macOS platforms, and adds explicit cgo include/library paths plus a development-only rpath for the repo-local universal libusb build on macOS. (2) Fixes a panic in `DeviceList.Done()` when libusb reports zero devices. |
+
+### Modification 1 — per-platform libusb discovery
 
 Upstream declared:
 ```go
@@ -161,6 +163,29 @@ hermetic (no pkg-config, no Homebrew required). The development-only cgo rpath i
 from shipped binaries by `scripts/build-backend.sh`. Other platforms keep upstream's
 `pkg-config` behaviour unchanged, because their distributions ship libusb as a system
 package.
+
+### Modification 2 — empty device list panic
+
+Upstream's `DeviceList.Done()` frees the list by taking the address of its first element:
+
+```go
+func (d DeviceList) Done() {
+	C.libusb_free_device_list((**C.libusb_device)(unsafe.Pointer((&d[0]))), 1)
+}
+```
+
+`&d[0]` panics with *index out of range* when the list is empty, and libusb legitimately
+reports zero devices on a machine with no USB host controller — CI containers and headless
+VMs. On macOS this never fires, because there is always at least a root hub; it was found
+the first time the Go test suite ran on a Linux runner.
+
+`Done()` now returns early on an empty list, and `GetDeviceList()` frees the (still
+allocated) empty list itself, since an empty slice has no addressable element through which
+`Done()` could free it. This avoids trading a panic for a leak.
+
+Upstream go-mtpfs was evidently aware of the problem and worked around it at the call site
+(`select.go` guards with `if len(l) > 0`), but the guard belongs in `Done()`, where every
+caller benefits.
 
 ---
 

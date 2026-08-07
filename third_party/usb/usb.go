@@ -500,6 +500,15 @@ func (c *Context) Exit() {
 type DeviceList []*Device
 
 func (d DeviceList) Done() {
+	// SwitchMTP modification 2: upstream indexed d[0] unconditionally, which
+	// panics when the list is empty. libusb legitimately reports zero devices
+	// on a machine with no USB host controller -- CI containers and headless
+	// VMs -- so this is reachable, not theoretical. GetDeviceList below frees
+	// the empty list itself, because an empty slice has no addressable element
+	// through which this function could free it.
+	if len(d) == 0 {
+		return
+	}
 	C.libusb_free_device_list((**C.libusb_device)(unsafe.Pointer((&d[0]))), 1)
 }
 
@@ -508,6 +517,15 @@ func (c *Context) GetDeviceList() (DeviceList, error) {
 	count := C.libusb_get_device_list(c.me(), &devs)
 	if count < 0 {
 		return nil, Error(count)
+	}
+	// SwitchMTP modification 2, continued: libusb allocates a list even when it
+	// holds no devices (just the NULL terminator) and it still has to be freed.
+	// Do it here, since the empty DeviceList handed back cannot.
+	if count == 0 {
+		if devs != nil {
+			C.libusb_free_device_list(devs, 1)
+		}
+		return nil, nil
 	}
 	slice := &reflect.SliceHeader{uintptr(unsafe.Pointer(devs)), int(count), int(count)}
 	rdevs := *(*[]*Device)(unsafe.Pointer(slice))

@@ -61,6 +61,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- **A crash when no USB devices are present at all.** The vendored libusb wrapper frees its
+  device list by taking the address of the list's first element, which panics outright when
+  the list is empty. A Mac always has at least a root hub so this never fired here, but it
+  is reachable on any machine with no USB host controller — and it brought down the Go test
+  suite the first time that suite ran on a Linux CI runner. The guard now lives in the
+  library rather than at each call site, so every caller benefits.
+
 - **Browsing during a transfer froze the progress bar and hung the browser.** Navigating to
   another folder mid-copy left the progress bar stuck at whatever percentage it had reached
   and the file list spinning on "Loading files…" — while the copy itself carried on and
