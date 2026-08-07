@@ -17,7 +17,10 @@ struct MTPFile: Identifiable, Hashable, Sendable {
     let id: String
     let name: String
     let size: Int64
-    let dateModified: Date
+    /// Nil when the device reports no timestamp. DBI leaves ObjectInfo's date
+    /// fields empty for every entry, and defaulting to "now" made a freshly
+    /// listed SD card look like it had just been written to in its entirety.
+    let dateModified: Date?
     let isDirectory: Bool
     let path: String
     let extension_: String

@@ -81,7 +81,7 @@ struct QuickLookOverlayView: View {
                     let df = DateFormatter()
                     let _ = df.dateStyle = .medium
                     let _ = df.timeStyle = .short
-                    Text(df.string(from: file.dateModified))
+                    Text(file.dateModified.map { df.string(from: $0) } ?? String(localized: "Date not reported by the device"))
                     
                     if case .prompt = state {
                         if !file.isDirectory {

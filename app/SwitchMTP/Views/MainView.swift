@@ -28,13 +28,17 @@ struct MainView: View {
     @State private var newFileName = ""
     @State private var isShowingDeleteConfirmation = false
     @State private var isShowingDeviceInfo = false
-    @State private var isShowingReplaceAlert = false
     @State private var searchQuery: String = ""
     @State private var unfilteredFiles: [MTPFile]? = nil
-    @State private var pendingImportURLs: [URL] = []
-    @State private var isShowingExportReplaceAlert = false
-    @State private var pendingExportDestinationURL: URL?
-    @State private var pendingExportFiles: [MTPFile] = []
+    /// The single pending "replace existing items?" confirmation.
+    ///
+    /// Import and export used to own one `.alert` each, both titled
+    /// "Replace and merge the existing items?". SwiftUI could not tell two
+    /// same-titled alerts on one view apart: raising the export flag presented
+    /// the import alert, whose Replace button guarded on an empty
+    /// `pendingImportURLs` and silently did nothing. Exporting from the GUI was
+    /// therefore impossible. One alert with one piece of state cannot collide.
+    @State private var pendingReplace: PendingReplace?
     @State private var isShowingFolderNotFound = false
     @State private var selectedFavoriteID: UUID? = nil
     @State private var isShowingGoToFolderDialog = false
@@ -46,8 +50,21 @@ struct MainView: View {
     /// Set when the notice is re-opened from the Help menu after first run.
     @State private var isShowingUSBDisclosure = false
 
+    /// A queued "replace existing items?" confirmation, for either direction.
+    enum PendingReplace {
+        case importing([URL])
+        case exporting([MTPFile], URL)
+    }
+
     var selectedFiles: [MTPFile] {
         manager.sortedFiles.filter { selection.contains($0.id) }
+    }
+
+    private var isShowingReplaceConfirmation: Binding<Bool> {
+        Binding(
+            get: { pendingReplace != nil },
+            set: { if !$0 { pendingReplace = nil } }
+        )
     }
 
     private var selectedStorage: MTPStorage? { manager.selectedStorage }
@@ -170,29 +187,28 @@ struct MainView: View {
                 Text(String(format: String(localized: "Enter a new name for \"%@\"."), file.name))
             }
         }
-        .alert(String(localized: "Replace and merge the existing items?"), isPresented: $isShowingReplaceAlert) {
+        .alert(
+            String(localized: "Replace and merge the existing items?"),
+            isPresented: isShowingReplaceConfirmation,
+            presenting: pendingReplace
+        ) { pending in
+            // `presenting:` hands the action closure the value captured when the
+            // alert was raised. Reading `pendingReplace` here instead would
+            // always see nil: SwiftUI drives `isPresented` back to false (which
+            // clears the state) before it runs the button action.
             Button(String(localized: "Replace")) {
-                guard !pendingImportURLs.isEmpty else { return }
-                if canUploadToSelectedStorage {
-                    manager.upload(sourceURLs: pendingImportURLs)
+                pendingReplace = nil
+                switch pending {
+                case .importing(let urls):
+                    guard !urls.isEmpty, canUploadToSelectedStorage else { return }
+                    manager.upload(sourceURLs: urls)
+                case .exporting(let files, let destinationURL):
+                    guard !files.isEmpty else { return }
+                    manager.download(files: files, destinationURL: destinationURL)
                 }
-                pendingImportURLs.removeAll()
             }
             Button("Cancel", role: .cancel) {
-                pendingImportURLs.removeAll()
-            }
-        }
-        .alert(String(localized: "Replace and merge the existing items?"), isPresented: $isShowingExportReplaceAlert) {
-            Button(String(localized: "Replace")) {
-                guard let destinationURL = pendingExportDestinationURL else { return }
-                guard !pendingExportFiles.isEmpty else { return }
-                manager.download(files: pendingExportFiles, destinationURL: destinationURL)
-                pendingExportFiles.removeAll()
-                pendingExportDestinationURL = nil
-            }
-            Button("Cancel", role: .cancel) {
-                pendingExportFiles.removeAll()
-                pendingExportDestinationURL = nil
+                pendingReplace = nil
             }
         }
         .confirmationDialog(
@@ -643,8 +659,7 @@ struct MainView: View {
         guard !urls.isEmpty else { return }
         guard canUploadToSelectedStorage else { return }
         if manager.hasConflictingItems(for: urls) {
-            pendingImportURLs = urls
-            isShowingReplaceAlert = true
+            pendingReplace = .importing(urls)
             return
         }
 
@@ -653,10 +668,9 @@ struct MainView: View {
 
     private func handleExport(destinationURL: URL, files: [MTPFile]) {
         guard !files.isEmpty else { return }
+        DebugLog.write("handleExport dest=\(destinationURL.path) files=\(files.map(\.name))")
         if hasExportConflicts(files: files, destinationURL: destinationURL) {
-            pendingExportFiles = files
-            pendingExportDestinationURL = destinationURL
-            isShowingExportReplaceAlert = true
+            pendingReplace = .exporting(files, destinationURL)
             return
         }
         manager.download(files: files, destinationURL: destinationURL)
@@ -666,6 +680,7 @@ struct MainView: View {
         for file in files {
             let targetURL = destinationURL.appendingPathComponent(file.name)
             if FileManager.default.fileExists(atPath: targetURL.path) {
+                DebugLog.write("export conflict at \(targetURL.path)")
                 return true
             }
         }

@@ -94,6 +94,41 @@ final class MTPManager: ObservableObject {
     private var hotplugRetryCount: Int = 0
     private var retryTimer: Timer?
     private var shouldIgnoreUSBEvents: Bool = false
+
+    /// Guards against an auto-connect loop. A device that is present but
+    /// cannot be opened would otherwise be retried on every scan forever,
+    /// and every failed attempt re-enumerates the port, which produces the
+    /// hotplug events that trigger the next scan.
+    private var autoConnectFailureDeviceId: String = ""
+    private var autoConnectFailureCount: Int = 0
+    private let maxAutoConnectAttempts: Int = 3
+
+    /// Whether the device list handler may auto-connect to `id` right now.
+    private func mayAutoConnect(to id: String) -> Bool {
+        if id != autoConnectFailureDeviceId {
+            autoConnectFailureDeviceId = id
+            autoConnectFailureCount = 0
+        }
+        return autoConnectFailureCount < maxAutoConnectAttempts
+    }
+
+    /// Records the outcome of an auto-connect attempt so the guard above can
+    /// give up on a device that never succeeds, and forgive one that does.
+    func noteAutoConnectOutcome(deviceId id: String, succeeded: Bool) {
+        guard !id.isEmpty else { return }
+        if succeeded {
+            if id == autoConnectFailureDeviceId {
+                autoConnectFailureCount = 0
+            }
+            return
+        }
+        if id == autoConnectFailureDeviceId {
+            autoConnectFailureCount += 1
+        } else {
+            autoConnectFailureDeviceId = id
+            autoConnectFailureCount = 1
+        }
+    }
     
     
     private enum CallbackRouter {
@@ -299,6 +334,13 @@ final class MTPManager: ObservableObject {
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
             self.availableDevices = devices
+
+            // A device that has physically gone away gets a clean slate: the
+            // give-up counter must not survive an unplug/replug cycle.
+            if devices.isEmpty {
+                self.autoConnectFailureDeviceId = ""
+                self.autoConnectFailureCount = 0
+            }
             
             // Check if the currently connected device disappeared from the list.
             // This handles physical USB disconnection when no MTP operation is in flight.
@@ -316,7 +358,7 @@ final class MTPManager: ObservableObject {
                     self.operation = .none
                     
                     // If there are remaining devices, auto-connect to the first one.
-                    if let nextDevice = devices.first {
+                    if let nextDevice = devices.first, self.mayAutoConnect(to: nextDevice.id) {
                         print("MTPManager: Auto-connecting to remaining device \(nextDevice.id)")
                         self.switchDevice(to: nextDevice.id)
                     }
@@ -325,7 +367,8 @@ final class MTPManager: ObservableObject {
             }
             
             // Auto-connect logic: if disconnected and devices available, connect to the first one.
-            if case .disconnected = self.connectionState, self.operation != .initializing, let first = devices.first {
+            if case .disconnected = self.connectionState, self.operation != .initializing, let first = devices.first,
+               self.mayAutoConnect(to: first.id) {
                 print("MTPManager: Auto-connecting to \(first.id)")
                 self.switchDevice(to: first.id)
             }
@@ -340,7 +383,9 @@ final class MTPManager: ObservableObject {
         switch operation {
         case .initializing:
             if let errorString = parseEnvelopeErrorOnly(jsonString) {
+                let failedDeviceId = self.deviceId
                 DispatchQueue.main.async {
+                    self.noteAutoConnectOutcome(deviceId: failedDeviceId, succeeded: false)
                     if ErrorStringLocalizer.isDeviceDisconnectedError(errorString) {
                         self.handleDeviceDisconnected()
                     } else {
@@ -351,6 +396,13 @@ final class MTPManager: ObservableObject {
                 }
                 operation = .none
                 return
+            }
+
+            do {
+                let connectedDeviceId = self.deviceId
+                DispatchQueue.main.async {
+                    self.noteAutoConnectOutcome(deviceId: connectedDeviceId, succeeded: true)
+                }
             }
             
             // Extract device info from the Initialize response
@@ -489,7 +541,7 @@ final class MTPManager: ObservableObject {
                     id: String(fi.objectId),
                     name: fi.name,
                     size: fi.size,
-                    dateModified: self.parseNxmtpDate(fi.dateAdded) ?? Date(),
+                    dateModified: self.parseNxmtpDate(fi.dateAdded),
                     isDirectory: fi.isFolder,
                     path: fi.path,
                     extension_: fi.extension_,
@@ -543,6 +595,7 @@ final class MTPManager: ObservableObject {
             operation = .none
             
         case .downloading, .uploading:
+            DebugLog.write("transfer done: \(jsonString)")
             // Data is a bool for done.
             if let errorString = parseEnvelopeErrorOnly(jsonString) {
                 self.finishTransferCompletion(errorString: errorString)
@@ -626,6 +679,10 @@ final class MTPManager: ObservableObject {
         // repeated here rather than relying on that chain holding.
         guard isStarted else { return }
         DispatchQueue.main.async {
+            // An explicit connect is always honoured: clear any auto-connect
+            // give-up state so the user is never locked out by the guard.
+            self.autoConnectFailureDeviceId = ""
+            self.autoConnectFailureCount = 0
             self.connectionState = .connecting
             self.errorMessage = nil
         }
@@ -806,8 +863,15 @@ final class MTPManager: ObservableObject {
     /// silently retargeting `selectedStorage` would move the user's view out
     /// from under them.
     func download(paths: [String], destinationURL: URL, from storage: MTPStorage?) {
-        guard !paths.isEmpty else { return }
-        guard let storage = storage ?? selectedStorage else { return }
+        guard !paths.isEmpty else {
+            DebugLog.write("download aborted: no paths")
+            return
+        }
+        guard let storage = storage ?? selectedStorage else {
+            DebugLog.write("download aborted: no storage")
+            return
+        }
+        DebugLog.write("download storage=\(storage.id) paths=\(paths) dest=\(destinationURL.path) op=\(operation)")
         
         let storageId = self.uint32FromStorageId(storage.id)
         let sources = paths
@@ -839,9 +903,11 @@ final class MTPManager: ObservableObject {
         }
         operation = .downloading
         DispatchQueue.global(qos: .userInitiated).async {
+            DebugLog.write("download -> NxmtpDownloadFiles \(jsonString)")
             jsonString.withCString { ptr in
                 NxmtpDownloadFiles(ptr, CallbackRouter.preprocess, CallbackRouter.progress, CallbackRouter.done)
             }
+            DebugLog.write("download <- NxmtpDownloadFiles returned")
         }
     }
     

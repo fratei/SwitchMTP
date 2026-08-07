@@ -302,8 +302,17 @@ private extension FileListView {
         case .name:
             return lhs.name.localizedStandardCompare(rhs.name)
         case .dateModified:
-            if lhs.dateModified == rhs.dateModified { return .orderedSame }
-            return lhs.dateModified < rhs.dateModified ? .orderedAscending : .orderedDescending
+            // Entries with no reported date sort last, so a DBI listing (which
+            // reports none at all) keeps a stable, name-independent order
+            // instead of shuffling.
+            switch (lhs.dateModified, rhs.dateModified) {
+            case (nil, nil): return .orderedSame
+            case (nil, _): return .orderedDescending
+            case (_, nil): return .orderedAscending
+            case (let l?, let r?):
+                if l == r { return .orderedSame }
+                return l < r ? .orderedAscending : .orderedDescending
+            }
         case .size:
             if lhs.size == rhs.size { return .orderedSame }
             return lhs.size < rhs.size ? .orderedAscending : .orderedDescending
@@ -541,7 +550,7 @@ private struct FileListTableRepresentable: NSViewRepresentable {
             case .dateModified:
                 return makeTextCell(
                     identifier: "DateCell",
-                    text: dateFormatter.string(from: file.dateModified),
+                    text: file.dateModified.map { dateFormatter.string(from: $0) } ?? "—",
                     alignment: .left,
                     font: .systemFont(ofSize: CGFloat(parent.fontSize - 1)),
                     tableView: tableView
