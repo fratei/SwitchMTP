@@ -769,11 +769,28 @@ struct MainView: View {
         guard manager.connectionState.isConnected else { return }
         guard manager.selectedStorage != nil else { return }
 
+        // A transfer owns the USB session, so the navigation is deferred rather
+        // than attempted and nothing can have failed. Falling through would let
+        // the recovery below dispose a perfectly healthy session and abort the
+        // copy.
+        guard !manager.isTransferInFlight else {
+            manager.navigateToPath(path)
+            return
+        }
+
         let previousPath = manager.currentPath
+
+        // Only an error raised by *this* navigation should count as the folder
+        // being missing. A message the user simply had not dismissed yet used to
+        // be enough to tear down and rebuild the connection.
+        manager.errorMessage = nil
 
         manager.navigateToPath(path)
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
+            // A transfer that started in the meantime is not evidence of a bad
+            // path either, and disposing under it would kill the copy.
+            guard !manager.isTransferInFlight else { return }
             let hasError = manager.errorMessage != nil || (manager.connectionState.device == nil)
             var isErrorState = false
             if case .error = manager.connectionState {

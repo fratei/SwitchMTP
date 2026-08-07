@@ -60,6 +60,18 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
   refresh when the console is free. Every action that would change the console is already
   disabled during a transfer, so nothing can be done to a stale listing.
 
+- **Going to a folder could drop the USB connection for no reason — including
+  during a copy.** "Go to folder" and the Favourites list treat an error appearing
+  just after the jump as proof the folder is missing, and recover by disposing the
+  MTP session and reconnecting. But the check looked at whether *any* error was on
+  screen, not whether this navigation caused one, so a message the user simply had
+  not dismissed yet was enough to tear down a healthy connection. Worse, it did not
+  exclude transfers: a jump made while copying was deferred rather than attempted,
+  so nothing had failed, yet an unrelated error in the same half-second would
+  dispose the session and abort the copy. Navigation during a transfer no longer
+  runs the recovery at all, and the check now only reacts to errors this navigation
+  actually produced.
+
 - **A second transfer started mid-copy jammed the queue permanently.** The toolbar's Import
   button correctly greys itself out during a transfer, but dragging files onto the window,
   dragging a file out of it, and double-clicking a file to preview it all reached the
