@@ -122,18 +122,60 @@ API. See [`docs/FFI_PROTOCOL.md`](docs/FFI_PROTOCOL.md) for the full contract.
 
 ## Credits
 
-- **[SwiftMTP](https://github.com/Neighbor-Z/SwiftMTP)** by Neighbor_Z — the SwiftUI macOS
-  app that SwitchMTP is derived from (GPL-2.0).
-- **[go-mtpfs](https://github.com/hanwen/go-mtpfs)** by Han-Wen Nienhuys / Google — the
-  low-level MTP-over-libusb engine (New BSD).
-- **[ganeshrvel/go-mtpfs](https://github.com/ganeshrvel/go-mtpfs)** and
-  **[ganeshrvel/usb](https://github.com/ganeshrvel/usb)** by Ganesh Rathinavel — the forks
-  with macOS diagnostics and speed fixes that we vendor (New BSD).
-- **[DBI](https://github.com/rashevskyv/dbi)** by duckbill / rashevskyv — the Nintendo
-  Switch MTP server that this app is designed to talk to. SwitchMTP is an unaffiliated
-  client.
+SwitchMTP exists because of other people's work. Everything below was used in some form —
+either as code that ships in the app, or as documentation that made the protocol
+understandable.
+
+### Code that ships in SwitchMTP
+
+| Project | Author | Licence | What it does here |
+|---|---|---|---|
+| [SwiftMTP](https://github.com/Neighbor-Z/SwiftMTP) | Neighbor_Z | GPL-2.0 | The macOS app SwitchMTP is derived from. The SwiftUI interface, file browser and transfer UI all descend from it. |
+| [go-mtpfs](https://github.com/hanwen/go-mtpfs) | Han-Wen Nienhuys / Google | New BSD | The MTP protocol engine — containers, transactions, object handling. Vendored and modified. |
+| [ganeshrvel/go-mtpfs](https://github.com/ganeshrvel/go-mtpfs) | Ganesh Rathinavel | New BSD | The fork actually vendored, for its UTF-16 surrogate-pair handling and `SendObject` speed fixes. |
+| [ganeshrvel/usb](https://github.com/ganeshrvel/usb) | Ganesh Rathinavel, from [hanwen/usb](https://github.com/hanwen/usb) | New BSD | Go bindings to libusb. |
+| [libusb](https://libusb.info) | The libusb project | LGPL-2.1-or-later | All USB access. Built from source and bundled as a shared library, so it can be replaced — see [`THIRD_PARTY.md`](THIRD_PARTY.md). |
+
+### What SwitchMTP talks to
+
+- **[DBI](https://github.com/rashevskyv/dbi)** by duckbill / rashevskyv — the MTP responder
+  that runs on the Switch. SwitchMTP is an unaffiliated client and bundles no part of DBI;
+  you install it yourself.
+
+### Documentation and research sources
+
+No code from these is included, but the protocol work would have been guesswork without
+them:
+
+- **[Awoo-Installer](https://github.com/Huntereb/Awoo-Installer)** by Huntereb — the clearest
+  description of the TUL0/TUC0 USB install protocol, written up in
+  [`docs/AWOO_USB.md`](docs/AWOO_USB.md). The USB install code it inherits is originally by
+  **Adubbz** (Tinfoil).
+- **[ns-usbloader](https://github.com/developersu/ns-usbloader)** by developersu — reference
+  for the same protocol. **Not a dependency**: SwitchMTP needs no Java and no external
+  loader, and its GPL-3.0 licence would in any case be incompatible with this project's
+  GPL-2.0. The reasoning is documented in [`docs/AWOO_USB.md`](docs/AWOO_USB.md).
+- **[libnx](https://github.com/switchbrew/libnx)** and
+  **[GoldLeaf](https://github.com/XorTroll/Goldleaf)** — established that USB product ID
+  `0x3000` is libnx's *generic* homebrew `usbComms` ID, shared by several homebrew apps
+  rather than unique to any one of them. That corrected a misidentification in this app.
+- **[switchbrew](https://switchbrew.org)** — Horizon OS and USB documentation.
+- The **MTP** (Media Transfer Protocol) and **PTP** (ISO 15740) specifications — the
+  operation codes, property codes and container format the whole backend is built on, and
+  the basis for handling files larger than 4 GB, where MTP's 32-bit size field overflows.
+- **Android's MTP extensions**, which DBI advertises by default. SwitchMTP detects them for
+  diagnostics but deliberately never calls them; see `backend/nxmtp/caps.go`.
 
 See [`THIRD_PARTY.md`](THIRD_PARTY.md) for full attribution and license texts.
+
+### Considered but not used
+
+- **[go-mtpx](https://github.com/ganeshrvel/go-mtpx)** — a high-level MTP library that was an
+  obvious fit, and the original SwiftMTP backend was built on it. It is **not used here**
+  because it carries no licence at all, which makes it unsafe to vendor or redistribute. Its
+  role is filled by `backend/nxmtp/`, written from scratch against the MTP specification and
+  the vendored `go-mtpfs` engine.
+- **ns-usbloader** — see above. Not needed, and licence-incompatible.
 
 ---
 

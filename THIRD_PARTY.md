@@ -201,7 +201,32 @@ on `go-mtpfs/mtp`.
 at https://github.com/rashevskyv/dbi. SwitchMTP is an **unaffiliated MTP client** that
 speaks to DBI's standard MTP responder the same way any MTP host would. DBI is not
 bundled with SwitchMTP, no DBI code or assets are incorporated, and SwitchMTP's authors
-have no relationship with the DBI project.
+have no relationship with the DBI project. DBI's repository carries no license file, which
+is a further reason nothing from it is redistributed here; users obtain DBI themselves.
+
+---
+
+## 7. Documentation and research sources — no code incorporated
+
+The following projects and specifications were consulted while implementing SwitchMTP's
+protocol handling. **No source code from any of them is copied, vendored, linked, or
+derived from**; they are recorded here because they materially informed the implementation
+and deserve credit.
+
+| Source | Author | Licence of the source | How it was used |
+|---|---|---|---|
+| [Awoo-Installer](https://github.com/Huntereb/Awoo-Installer) | Huntereb; USB install code originally © 2017–2018 **Adubbz** (Tinfoil) | GPL-3.0 (project); the USB install sources carry MIT headers | Documentation of the TUL0/TUC0 USB install protocol, written up in `docs/AWOO_USB.md`. SwitchMTP implements no part of this protocol — it uses MTP only. |
+| [ns-usbloader](https://github.com/developersu/ns-usbloader) | developersu | GPL-3.0 | Reference for the same protocol. Deliberately **not** a dependency: it is unnecessary for MTP, and GPL-3.0 is incompatible with SwitchMTP's GPL-2.0. |
+| [libnx](https://github.com/switchbrew/libnx) | switchbrew | ISC | Established that USB product ID `0x3000` is libnx's generic homebrew `usbComms` identifier, shared across homebrew applications. |
+| [GoldLeaf](https://github.com/XorTroll/Goldleaf) | XorTroll | GPL-3.0 | Corroborated the `0x3000` finding above. |
+| [switchbrew wiki](https://switchbrew.org) | switchbrew contributors | Wiki content | Horizon OS and USB stack documentation. |
+| MTP (Media Transfer Protocol) / PTP (ISO 15740) specifications | USB-IF / ISO | Published specifications | Operation codes, property codes, container format, and the 32-bit size-field overflow behaviour handled in `backend/nxmtp/list.go`. |
+| Android MTP extensions | The Android Open Source Project | Apache-2.0 | Understanding the `android.com` extension string DBI advertises. SwitchMTP detects it for diagnostics and never invokes the Android operations (`backend/nxmtp/caps.go`). |
+
+Because no code from these sources is present in SwitchMTP, their licences impose no
+obligations on this distribution. The GPL-3.0 entries in particular are listed **only** as
+reading material; incorporating their code would be incompatible with SwitchMTP's GPL-2.0
+licence and has not been done.
 
 ---
 

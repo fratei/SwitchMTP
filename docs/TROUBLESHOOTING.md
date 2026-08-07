@@ -41,6 +41,10 @@ Two things worth knowing:
   is working, because it re-attaches at the device level. `switchmtp-cli doctor` only
   reports processes holding the *interface*, which is what actually blocks a claim.
 
+SwitchMTP explains this in the app the first time you launch it, before it touches the USB
+bus at all. You can read that notice again at any time from **Help → How SwitchMTP
+Connects to Your Switch**.
+
 ### If it still fails
 
 1. **Quit other MTP software** — Android File Transfer, OpenMTP, and any other copy of

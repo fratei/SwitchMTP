@@ -73,7 +73,10 @@ struct SwitchCommands: Commands {
                 Label("Copy Diagnostics", systemImage: "stethoscope")
             }
             // Diagnostics are most valuable when nothing is connected, so this
-            // stays enabled at all times.
+            // stays enabled whenever the app has actually started scanning.
+            // Before that, collecting them would touch USB, so it is disabled
+            // rather than failing with a misleading "try again" message.
+            .disabled(manager?.isStarted != true)
         }
     }
 

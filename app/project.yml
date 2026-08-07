@@ -32,14 +32,18 @@ targets:
           - "**/.DS_Store"
       - path: Shim/NxmtpShim.c
         type: file
-    resources:
-      - path: Resources/Info.plist
-        optional: true
+      # Resources belong in `sources`: XcodeGen has no `resources:` key and
+      # silently ignores one, which previously left the app icon, the
+      # localisations and Credits.html out of the built bundle entirely.
       - path: Resources/Assets.xcassets
       - path: Resources/Localizable.xcstrings
+      # Read by the standard macOS About panel.
+      - path: Resources/Credits.html
+        type: file
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: me.fratei.switchmtp
+        ASSETCATALOG_COMPILER_APPICON_NAME: AppIcon
         INFOPLIST_FILE: Resources/Info.plist
         CODE_SIGN_ENTITLEMENTS: Resources/SwitchMTP.entitlements
         SWIFT_OBJC_BRIDGING_HEADER: SwitchMTP/SwitchMTP-Bridging-Header.h

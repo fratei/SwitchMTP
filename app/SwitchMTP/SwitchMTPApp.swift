@@ -24,6 +24,7 @@ struct SwitchMTPApp: App {
     @FocusedValue(\.isSelectedFilesEmpty) var isSelectedFilesEmpty
     @FocusedValue(\.isSingleFileSelected) var isSingleFileSelected
     @FocusedValue(\.showDeviceInfoAction) var showDeviceInfoAction
+    @FocusedValue(\.isStarted) var isStarted
     @FocusedValue(\.showNewFolderAction) var showNewFolderAction
     @FocusedValue(\.showRenameAction) var showRenameAction
     @FocusedValue(\.showDeleteConfirmationAction) var showDeleteConfirmationAction
@@ -65,7 +66,9 @@ struct SwitchMTPApp: App {
                 } else {
                     Button { connectDeviceAction?() } label: { Label("Connect Device", systemImage: "cable.connector") }
                         .keyboardShortcut("k", modifiers: [.command])
-                        .disabled(isConnected == true)
+                        // Also disabled before the first-run disclosure is
+                        // acknowledged, when connecting would do nothing.
+                        .disabled(isConnected == true || isStarted != true)
                 }
                 Button { showDeviceInfoAction?() } label: { Label("Device Info", systemImage: "info.circle") }
                     .keyboardShortcut("i", modifiers: [.command])
@@ -184,6 +187,7 @@ struct SwitchMTPApp: App {
 
 struct GoMenuCommands: Commands {
     @FocusedValue(\.isConnected) var isConnected
+    @FocusedValue(\.showUSBDisclosureAction) var showUSBDisclosureAction
     @FocusedValue(\.canGoBack) var canGoBack
     @FocusedValue(\.navigateToPathAction) var navigateToPathAction
     @FocusedValue(\.navigateBackAction) var navigateBackAction
@@ -209,6 +213,36 @@ struct GoMenuCommands: Commands {
                 .keyboardShortcut("g", modifiers: [.command, .shift])
                 .disabled(isConnected != true)
         }
+
+        CommandGroup(replacing: .help) {
+            Button(String(localized: "How SwitchMTP Connects to Your Switch")) {
+                showUSBDisclosureAction?()
+            }
+            .disabled(showUSBDisclosureAction == nil)
+
+            Divider()
+
+            Button(String(localized: "Setting Up DBI")) {
+                Self.openDocs("docs/DBI_SETUP.md")
+            }
+            Button(String(localized: "Troubleshooting")) {
+                Self.openDocs("docs/TROUBLESHOOTING.md")
+            }
+
+            Divider()
+
+            Button(String(localized: "SwitchMTP on GitHub")) {
+                Self.openDocs("")
+            }
+        }
+    }
+
+    private static func openDocs(_ path: String) {
+        let base = "https://github.com/fratei/SwitchMTP"
+        let full = path.isEmpty ? base : "\(base)/blob/main/\(path)"
+        if let url = URL(string: full) {
+            NSWorkspace.shared.open(url)
+        }
     }
 }
 
@@ -221,6 +255,8 @@ struct NavigateToPathActionFocusedKey: FocusedValueKey { typealias Value = (Stri
 struct NavigateBackActionFocusedKey: FocusedValueKey { typealias Value = () -> Void }
 struct ShowFolderPromptActionFocusedKey: FocusedValueKey { typealias Value = () -> Void }
 struct ShowDeviceInfoActionFocusedKey: FocusedValueKey { typealias Value = () -> Void }
+struct ShowUSBDisclosureActionFocusedKey: FocusedValueKey { typealias Value = () -> Void }
+struct IsStartedFocusedKey: FocusedValueKey { typealias Value = Bool }
 struct ShowNewFolderActionFocusedKey: FocusedValueKey { typealias Value = () -> Void }
 struct ShowRenameActionFocusedKey: FocusedValueKey { typealias Value = () -> Void }
 struct ShowDeleteConfirmationActionFocusedKey: FocusedValueKey { typealias Value = () -> Void }
@@ -235,6 +271,16 @@ extension FocusedValues {
     var mtpManager: MTPManager? {
         get { self[MTPManagerFocusedKey.self] }
         set { self[MTPManagerFocusedKey.self] = newValue }
+    }
+
+    var showUSBDisclosureAction: (() -> Void)? {
+        get { self[ShowUSBDisclosureActionFocusedKey.self] }
+        set { self[ShowUSBDisclosureActionFocusedKey.self] = newValue }
+    }
+
+    var isStarted: Bool? {
+        get { self[IsStartedFocusedKey.self] }
+        set { self[IsStartedFocusedKey.self] = newValue }
     }
 
     var isConnected: Bool? {

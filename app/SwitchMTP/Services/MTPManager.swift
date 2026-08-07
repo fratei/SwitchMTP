@@ -128,16 +128,33 @@ final class MTPManager: ObservableObject {
         }
     }
     
+    /// Gates every USB scan until the user has seen the first-run disclosure.
+    ///
+    /// Enumerating devices is not passive: to read a candidate's identity we
+    /// open it, and opening it resets the USB port to take the interface back
+    /// from macOS's ptpcamerad. Scanning before the user has been told that
+    /// would mean disclosing the behaviour only after it had already happened.
+    /// False until the first-run USB disclosure has been acknowledged. Published so
+    /// the toolbar and menus can disable USB actions rather than silently ignore them.
+    @Published private(set) var isStarted = false
+
     init() {
         CallbackRouter.manager = self
-        
-        // Initialize and start USB monitor
+
+        // Initialize and start USB monitor. Monitoring itself is passive --
+        // it only listens for attach/detach notifications -- but the scans it
+        // triggers are not, so those are gated on `isStarted`.
         self.usbMonitor = USBMonitor { [weak self] attached in
             self?.handleUSBEvent(attached: attached)
         }
         self.usbMonitor?.startMonitoring()
-        
-        // Initial fetch
+    }
+
+    /// Begins scanning for devices. Called once the first-run USB disclosure
+    /// has been acknowledged.
+    func start() {
+        guard !isStarted else { return }
+        isStarted = true
         fetchAvailableDevices()
     }
     
@@ -156,6 +173,13 @@ final class MTPManager: ObservableObject {
     /// Fetches the backend troubleshooting report (USB enumeration, processes
     /// holding the PTP interface, device info) as pretty-printed JSON.
     func fetchDiagnostics(completion: @escaping (String?) -> Void) {
+        // Diagnostics enumerate (and therefore open) USB devices, so this is
+        // gated too: it is reachable from the menu bar while the first-run
+        // disclosure is still on screen.
+        guard isStarted else {
+            completion(nil)
+            return
+        }
         diagnosticsLock.lock()
         if diagnosticsCompletion != nil {
             diagnosticsLock.unlock()
@@ -597,6 +621,10 @@ final class MTPManager: ObservableObject {
     
     // MARK: – Device Connection
     func connectDevice() {
+        // Reachable only after a device scan, which is itself gated -- but the
+        // menu bar stays live behind the first-run disclosure, so the guard is
+        // repeated here rather than relying on that chain holding.
+        guard isStarted else { return }
         DispatchQueue.main.async {
             self.connectionState = .connecting
             self.errorMessage = nil
@@ -1229,6 +1257,9 @@ final class MTPManager: ObservableObject {
     }
     
     func fetchAvailableDevices() {
+        // Nothing may touch the USB bus before the user has acknowledged the
+        // disclosure explaining what touching it does.
+        guard isStarted else { return }
         // NOTE: Does NOT set `operation` - device scanning is completely independent
         // of the MTP operation state machine. This prevents clobbering in-flight
         // operations (Walk, Upload, etc.) whose callbacks would be misrouted.

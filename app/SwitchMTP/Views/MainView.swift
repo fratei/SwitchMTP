@@ -40,6 +40,11 @@ struct MainView: View {
     @State private var isShowingGoToFolderDialog = false
     @State private var customFolderPath = ""
     @AppStorage("switchDBILargeInstallTipDismissed") private var switchDBILargeInstallTipDismissed = false
+    // Shown once, before the first connection attempt, so the user learns what
+    // SwitchMTP does to the USB subsystem before it does it rather than after.
+    @AppStorage("usbAccessDisclosureAcknowledged") private var usbAccessDisclosureAcknowledged = false
+    /// Set when the notice is re-opened from the Help menu after first run.
+    @State private var isShowingUSBDisclosure = false
 
     var selectedFiles: [MTPFile] {
         manager.sortedFiles.filter { selection.contains($0.id) }
@@ -77,10 +82,31 @@ struct MainView: View {
                 )
                 .transition(.opacity)
             }
+            if !usbAccessDisclosureAcknowledged || isShowingUSBDisclosure {
+                USBAccessDisclosureView {
+                    usbAccessDisclosureAcknowledged = true
+                    isShowingUSBDisclosure = false
+                    // No-op if the app is already running; only the genuine
+                    // first run reaches an unstarted manager here.
+                    manager.start()
+                }
+                .transition(.opacity)
+            }
+        }
+        .onAppear {
+            // Scanning is deferred until the disclosure has been seen, so on
+            // every later launch this is what actually starts the app up.
+            if usbAccessDisclosureAcknowledged {
+                manager.start()
+            }
         }
         .animation(.easeInOut(duration: 0.18), value: manager.transferProgress != nil)
         .animation(.easeInOut(duration: 0.18), value: manager.isTransferActive)
         .animation(.easeInOut(duration: 0.18), value: isShowingDeviceInfo)
+        .animation(.easeInOut(duration: 0.18), value: usbAccessDisclosureAcknowledged)
+        .animation(.easeInOut(duration: 0.18), value: isShowingUSBDisclosure)
+        .focusedSceneValue(\.showUSBDisclosureAction, { isShowingUSBDisclosure = true })
+        .focusedSceneValue(\.isStarted, manager.isStarted)
         .sheet(
             isPresented: Binding(
                 get: { manager.isTransferActive },
@@ -520,6 +546,9 @@ struct MainView: View {
                     Label("Connect Device", systemImage: "cable.connector")
                 }
                 .help(String(localized: "Connect Device"))
+                // The toolbar sits in the titlebar, which the first-run
+                // disclosure overlay cannot cover, so it must disable itself.
+                .disabled(!manager.isStarted)
             }
         }
 

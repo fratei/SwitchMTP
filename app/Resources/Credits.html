@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<!--
+  Shown in the standard macOS About panel (SwitchMTP > About SwitchMTP), which
+  loads Credits.html from the bundle's Resources automatically.
+
+  Keep this in sync with the Credits section of README.md and with
+  THIRD_PARTY.md, which carries the full licence texts.
+-->
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body {
+    font-family: -apple-system, "SF Pro Text", "Helvetica Neue", sans-serif;
+    font-size: 11px;
+    line-height: 1.45;
+    margin: 0;
+    color: #1d1d1f;
+  }
+  h2 {
+    font-size: 11px;
+    font-weight: 600;
+    margin: 12px 0 4px 0;
+  }
+  h2:first-child { margin-top: 0; }
+  p { margin: 0 0 6px 0; }
+  ul { margin: 0 0 6px 0; padding-left: 16px; }
+  li { margin-bottom: 3px; }
+  .note { color: #6e6e73; }
+  a { color: #0066cc; text-decoration: none; }
+  @media (prefers-color-scheme: dark) {
+    body { color: #f5f5f7; }
+    .note { color: #98989d; }
+    a { color: #4da3ff; }
+  }
+</style>
+</head>
+<body>
+
+<p>A native macOS client for browsing and transferring files on a Nintendo Switch
+running DBI's MTP responder.</p>
+
+<h2>Built on</h2>
+<ul>
+  <li><b>SwiftMTP</b> by Neighbor_Z — the macOS app this is derived from (GPL-2.0)</li>
+  <li><b>go-mtpfs</b> by Han-Wen Nienhuys / Google, and the fork by Ganesh Rathinavel — the MTP engine (New BSD)</li>
+  <li><b>ganeshrvel/usb</b> by Ganesh Rathinavel, from hanwen/usb — libusb bindings for Go (New BSD)</li>
+  <li><b>libusb</b> by the libusb project — USB access, bundled as a shared library (LGPL-2.1-or-later)</li>
+</ul>
+
+<h2>Talks to</h2>
+<ul>
+  <li><b>DBI</b> by duckbill / rashevskyv — the Switch-side MTP responder. SwitchMTP is an unaffiliated client and bundles no part of DBI.</li>
+</ul>
+
+<h2>Learned from</h2>
+<p class="note">Consulted while building this, but no code from them is included:</p>
+<ul>
+  <li><b>Awoo-Installer</b> by Huntereb, whose USB install code originates with <b>Adubbz</b> (Tinfoil) — documentation of the TUL0/TUC0 USB install protocol</li>
+  <li><b>ns-usbloader</b> by developersu — reference for the same protocol</li>
+  <li><b>libnx</b> and <b>GoldLeaf</b> — identifying the shared homebrew USB product ID</li>
+  <li><b>switchbrew</b> — Horizon OS and USB documentation</li>
+  <li><b>MTP</b> (Media Transfer Protocol) and <b>PTP</b> (ISO 15740) specifications — the operation and property codes the backend is built on</li>
+</ul>
+
+<h2>Licence</h2>
+<p>SwitchMTP is free software under the <b>GNU General Public License v2.0</b>.
+Source code and full third-party licence texts:<br>
+<a href="https://github.com/fratei/SwitchMTP">github.com/fratei/SwitchMTP</a></p>
+
+<p class="note">Not affiliated with or endorsed by Nintendo. Nintendo Switch is a
+trademark of Nintendo.</p>
+
+</body>
+</html>

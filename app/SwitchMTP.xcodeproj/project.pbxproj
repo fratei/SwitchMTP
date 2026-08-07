@@ -13,13 +13,16 @@
 		1A0A7BE771E515374590986A /* FavoritesManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4936046E5E7E68686C27E783 /* FavoritesManager.swift */; };
 		1F3DD1E2D9C72369E23A31B5 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26A92744C999113D6E7F9C7D /* IOKit.framework */; };
 		217DD0A6D8B31F9696936039 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4373EF5A89504A97D5793A /* SettingsView.swift */; };
+		325723A670EA9A0340EF4FA3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C38017300B24920ABB994662 /* Assets.xcassets */; };
 		4737AE99FC48BC5797C04E8C /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A140936EE8A1A839D01528F /* SidebarView.swift */; };
 		517CE9AEFEAF15C42914A294 /* TransferStatistics.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD524D34D245A300DF4593C7 /* TransferStatistics.swift */; };
 		535C2E37649BF3C50DB6C210 /* MainView.swift in Sources */ = {isa = PBXBuildFile; fileRef = DBCD2FCE6F65E8915A7CF9F2 /* MainView.swift */; };
 		5BEDAFCBF8182F98F506D484 /* CLIUSBMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B634737FDBB20F302CDF4E0 /* CLIUSBMonitor.swift */; };
 		5D87749C528AF24788931CA1 /* IOKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 26A92744C999113D6E7F9C7D /* IOKit.framework */; };
 		66F8A4BA72B2792D3DE19000 /* MTPFile.swift in Sources */ = {isa = PBXBuildFile; fileRef = FCF2C72B0F65B6EB1F745A86 /* MTPFile.swift */; };
+		6B8D63CACFF1F008C9384174 /* USBAccessDisclosureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88E89262C9983FEBD0462760 /* USBAccessDisclosureView.swift */; };
 		78E3EA485D8FB268F2B41D5D /* FileListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13C2A09A0625FE592D509881 /* FileListView.swift */; };
+		7CC8265AB9B63C839FF93E31 /* Credits.html in Resources */ = {isa = PBXBuildFile; fileRef = 97FB31C9D5740874B8723F67 /* Credits.html */; };
 		83DFBA162ADFDA532DF79ECE /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1010571A1AE5E64BFEFF5AC /* main.swift */; };
 		840FB11022ED53CBCC5845FC /* ErrorStringLocalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F07DFC7CDFDDD1E0F8DFF1D /* ErrorStringLocalizer.swift */; };
 		9483FBE3C0493A9D3E31D9F7 /* MTPDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8715E9B2CC3A98C5AA4195C6 /* MTPDevice.swift */; };
@@ -30,6 +33,7 @@
 		B43CC6E8D9F8B5F67E221290 /* USBProtocol.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0C5DA10F50F4C5C173B9A4AA /* USBProtocol.swift */; };
 		C11E427790C3578D85D9711A /* MTPManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3051FF9C052DABB4EC1E56BD /* MTPManager.swift */; };
 		C96855B82759F81486D72760 /* FavoriteItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F68C48A28420D78DE5DC47B1 /* FavoriteItem.swift */; };
+		D723A935DA156AB1CE01048D /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 4135D868BD2E8F3455F57AAF /* Localizable.xcstrings */; };
 		EEF18013CC6F63FE55ECC482 /* NxmtpShim.c in Sources */ = {isa = PBXBuildFile; fileRef = 701BF5F657D42358BFAC7B3C /* NxmtpShim.c */; };
 		F68521963CD14FA67FC6B78D /* NxmtpShim.c in Sources */ = {isa = PBXBuildFile; fileRef = 701BF5F657D42358BFAC7B3C /* NxmtpShim.c */; };
 		F6F8AB0DF6235783B100C7F9 /* QuickLookOverlayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E111088EA00DA0878AC5DAB0 /* QuickLookOverlayView.swift */; };
@@ -43,6 +47,7 @@
 		3051FF9C052DABB4EC1E56BD /* MTPManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MTPManager.swift; sourceTree = "<group>"; };
 		3B634737FDBB20F302CDF4E0 /* CLIUSBMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CLIUSBMonitor.swift; sourceTree = "<group>"; };
 		3F07DFC7CDFDDD1E0F8DFF1D /* ErrorStringLocalizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ErrorStringLocalizer.swift; sourceTree = "<group>"; };
+		4135D868BD2E8F3455F57AAF /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		44C29D0E17F4077D4B41073B /* switchmtp-cli */ = {isa = PBXFileReference; includeInIndex = 0; path = "switchmtp-cli"; sourceTree = BUILT_PRODUCTS_DIR; };
 		4936046E5E7E68686C27E783 /* FavoritesManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FavoritesManager.swift; sourceTree = "<group>"; };
 		4E4373EF5A89504A97D5793A /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
@@ -51,12 +56,15 @@
 		708041D095FAF8924567EBF1 /* SwitchMTP-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SwitchMTP-Bridging-Header.h"; sourceTree = "<group>"; };
 		840B566A4A6E112A7C160C10 /* SwitchMTPApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SwitchMTPApp.swift; sourceTree = "<group>"; };
 		8715E9B2CC3A98C5AA4195C6 /* MTPDevice.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MTPDevice.swift; sourceTree = "<group>"; };
+		88E89262C9983FEBD0462760 /* USBAccessDisclosureView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = USBAccessDisclosureView.swift; sourceTree = "<group>"; };
 		971D7F798ABFF49B26755778 /* SwitchMTP.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SwitchMTP.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		97FB31C9D5740874B8723F67 /* Credits.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; path = Credits.html; sourceTree = "<group>"; };
 		997F6CD6F72EF1888CF7A1F8 /* USBMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = USBMonitor.swift; sourceTree = "<group>"; };
 		9A140936EE8A1A839D01528F /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
 		A444B55D923FC7FA8B8152EA /* UpdateChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UpdateChecker.swift; sourceTree = "<group>"; };
 		B97E346DF39FD2E0D945E9E0 /* ToolbarViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ToolbarViews.swift; sourceTree = "<group>"; };
 		BD524D34D245A300DF4593C7 /* TransferStatistics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferStatistics.swift; sourceTree = "<group>"; };
+		C38017300B24920ABB994662 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D1010571A1AE5E64BFEFF5AC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
 		DB0ECBFDCACA59C65A0FDF03 /* SwitchMTP-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SwitchMTP-Bridging-Header.h"; sourceTree = "<group>"; };
 		DBCD2FCE6F65E8915A7CF9F2 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
@@ -116,8 +124,19 @@
 				4E4373EF5A89504A97D5793A /* SettingsView.swift */,
 				9A140936EE8A1A839D01528F /* SidebarView.swift */,
 				B97E346DF39FD2E0D945E9E0 /* ToolbarViews.swift */,
+				88E89262C9983FEBD0462760 /* USBAccessDisclosureView.swift */,
 			);
 			path = Views;
+			sourceTree = "<group>";
+		};
+		67BB8877A45F6AC2C37971F2 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				C38017300B24920ABB994662 /* Assets.xcassets */,
+				97FB31C9D5740874B8723F67 /* Credits.html */,
+				4135D868BD2E8F3455F57AAF /* Localizable.xcstrings */,
+			);
+			path = Resources;
 			sourceTree = "<group>";
 		};
 		74AF8869E903E69598B1D003 /* Products */ = {
@@ -132,6 +151,7 @@
 		CF58C4E827A0BDFF0BEC2428 = {
 			isa = PBXGroup;
 			children = (
+				67BB8877A45F6AC2C37971F2 /* Resources */,
 				43953ACD7960499CDD97A09C /* Shim */,
 				4C7DC7C57055FC86FE6EA3ED /* SwitchMTP */,
 				FEE75F8688C0D4E579A70F58 /* switchmtp-cli */,
@@ -192,6 +212,7 @@
 			buildConfigurationList = D9F3AA630EDB8C5B57AC1752 /* Build configuration list for PBXNativeTarget "SwitchMTP" */;
 			buildPhases = (
 				A7F55E9D3FFC8E91DDD8DD03 /* Sources */,
+				C5C4AE1B4C4AFD3F82F9D14E /* Resources */,
 				BA9813AE54DEA7895046F0D2 /* Frameworks */,
 			);
 			buildRules = (
@@ -261,6 +282,19 @@
 		};
 /* End PBXProject section */
 
+/* Begin PBXResourcesBuildPhase section */
+		C5C4AE1B4C4AFD3F82F9D14E /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				325723A670EA9A0340EF4FA3 /* Assets.xcassets in Resources */,
+				7CC8265AB9B63C839FF93E31 /* Credits.html in Resources */,
+				D723A935DA156AB1CE01048D /* Localizable.xcstrings in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
 /* Begin PBXShellScriptBuildPhase section */
 		DEBD727E1F8980C7F5756760 /* Copy backend dylibs */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -317,6 +351,7 @@
 				1527B82F0FABD1021DCD4552 /* SwitchWorkflows.swift in Sources */,
 				A2208263BA0C6E2B2B334EE5 /* ToolbarViews.swift in Sources */,
 				517CE9AEFEAF15C42914A294 /* TransferStatistics.swift in Sources */,
+				6B8D63CACFF1F008C9384174 /* USBAccessDisclosureView.swift in Sources */,
 				0371ED4A5A6427A8D43B4325 /* USBMonitor.swift in Sources */,
 				B43CC6E8D9F8B5F67E221290 /* USBProtocol.swift in Sources */,
 				1466B26CC3E94AA2990FB533 /* UpdateChecker.swift in Sources */,
