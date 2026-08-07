@@ -128,11 +128,34 @@ rather than piling up new ones. It will do one of five things:
 
 It also applies `area:*` and `severity:*` labels so issues can be found later.
 
+### Answering a request for more information
+
+Reply in a comment on the same issue; there is no need to open a new one. The
+parser is looking for the field label, so keep it visible — any of these work:
+
+```
+macOS version: 26.6
+
+**Steps to reproduce**:
+1. Launch DBI in title mode and pick MTP responder
+2. Open SwitchMTP and wait for the console to appear
+3. Select every file on the SD card and press Download
+```
+
+A one-line answer written next to the label is read as-is; a longer answer
+written *underneath* the label is read down to the next field. If triage said an
+answer you already gave was too thin, the new text is added to it — nothing you
+wrote is replaced or thrown away.
+
 **Triage gets things wrong, and it is built to be told so.** Reply to its
-comment saying the answer does not fit. The next pass reopens the issue if it
-was closed, replaces its comment, labels the issue `triage:disputed` and hands
-it to a human — and then leaves it alone permanently, so it cannot talk itself
-back into the same wrong answer. The same applies to a wrong duplicate call.
+comment saying the answer does not fit. The next pass replaces its comment,
+labels the issue `triage:disputed` and hands it to a human — and then leaves it
+alone permanently, so it cannot talk itself back into the same wrong answer. The
+same applies to a wrong duplicate call.
+
+If the bot closed the issue, disputing it reopens it. If a *maintainer* closed
+it, it stays closed: the objection is still flagged for a human, but the bot
+does not overrule a person's decision.
 
 Anything a maintainer has marked `status:confirmed`, `status:in-progress`,
 `status:by-design`, `status:wontfix` or `status:blocked-upstream` is left alone
