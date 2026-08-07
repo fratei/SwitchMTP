@@ -51,6 +51,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
   listing sat waiting for the transfer to release the connection. Rather than appear hung,
   SwitchMTP now says so and opens the folder the moment the transfer finishes.
 
+- **Browsing was effectively dead for the length of an install queue.** Deferring a folder
+  listing until the transfer finished was right for a single copy, but a queue of 22 games
+  runs for hours and only leaves a third of a second between items, so in practice the file
+  list stayed empty the whole time and refreshed only as one install handed over to the
+  next. SwitchMTP now remembers the listing of every folder it has visited and shows it
+  immediately, saying plainly that this is the folder as it was last seen and that it will
+  refresh when the console is free. Every action that would change the console is already
+  disabled during a transfer, so nothing can be done to a stale listing.
+
+- **A second transfer started mid-copy jammed the queue permanently.** The toolbar's Import
+  button correctly greys itself out during a transfer, but dragging files onto the window,
+  dragging a file out of it, and double-clicking a file to preview it all reached the
+  transfer code directly and bypassed that. Because MTP has only one session, the second
+  copy overwrote the record of the first; whichever finished last found no record of itself
+  and was discarded, so the app believed a transfer was still running forever and every
+  remaining item in the install queue silently stopped. All five entry points now decline
+  politely and explain why. Double-click preview in particular had stopped checking for
+  transfers at all when transfers moved to their own state slot in the fix above — the most
+  likely way to hit this, since it takes one stray double-click while browsing.
+
 - **Pressing Connect with no console attached showed a raw parser error.** The button stays
   enabled with nothing plugged in — retrying after waking the console or starting the
   responder is the normal thing to do — but it passed an empty device id straight to the

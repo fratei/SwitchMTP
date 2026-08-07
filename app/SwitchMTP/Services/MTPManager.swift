@@ -64,6 +64,17 @@ final class MTPManager: ObservableObject {
     var isDeviceIdle: Bool {
         operation == .none && transferKind == nil && !isTransferActive
     }
+
+    /// True while a copy owns the USB session, whoever started it.
+    ///
+    /// Every entry point that begins a transfer must check this. MTP is a single
+    /// session, so a second transfer cannot run alongside the first; it would
+    /// overwrite `transferKind`, and whichever finished last would find an empty
+    /// slot and be discarded, leaving `isTransferActive` true for the life of
+    /// the process and the install queue jammed.
+    var isTransferInFlight: Bool {
+        transferKind != nil || isTransferActive
+    }
     
     // NEW: Pass "" to let Go connect to the first available device, or specific ID for exact matches.
     var deviceId: String = ""
@@ -135,6 +146,22 @@ final class MTPManager: ObservableObject {
     /// issued mid-transfer would block on the Go client mutex until the copy
     /// finished, freezing the UI on "Loading…" for the whole transfer.
     @Published var pendingNavigationPath: String? = nil
+    /// Directory listings from the last successful walk, keyed by storage and
+    /// path. The console cannot answer a listing request while it is copying,
+    /// and an install queue can run for hours, so a folder the user has already
+    /// visited is shown from here immediately rather than leaving the browser
+    /// dead for the whole run. It is replaced by a real listing the moment the
+    /// device is free.
+    private var listingCache: [String: [MTPFile]] = [:]
+    /// The path the in-flight walk was asked for, so its result can be cached
+    /// against the right folder.
+    private var walkingPath: String? = nil
+    /// True while `files` came from `listingCache` rather than the console.
+    @Published var showingCachedListing: Bool = false
+    /// Folder an in-flight upload is writing into. Its cached listing is
+    /// discarded on completion, since the new files would otherwise be missing
+    /// from it the next time it is shown from cache.
+    private var uploadDestinationCacheKey: String? = nil
     private var deviceScanWorkItem: DispatchWorkItem?
     
     // MARK: – Promise Downloads (for multi-select drag-drop)
@@ -627,7 +654,12 @@ final class MTPManager: ObservableObject {
                 DispatchQueue.main.async {
                     self.files = []
                     self.isLoading = false
+                    self.showingCachedListing = false
                 }
+                if let walked = walkingPath, let storage = selectedStorage {
+                    listingCache[listingCacheKey(storage: storage, path: walked)] = []
+                }
+                walkingPath = nil
                 operation = .none
                 return
             }
@@ -653,7 +685,12 @@ final class MTPManager: ObservableObject {
             DispatchQueue.main.async {
                 self.files = mappedFiles
                 self.isLoading = false
+                self.showingCachedListing = false
             }
+            if let walked = walkingPath, let storage = selectedStorage {
+                listingCache[listingCacheKey(storage: storage, path: walked)] = mappedFiles
+            }
+            walkingPath = nil
             operation = .none
             
         case .deleting, .makingDirectory, .renaming:
@@ -728,6 +765,10 @@ final class MTPManager: ObservableObject {
             return
         }
         transferKind = nil
+        if kind == .uploading, let key = uploadDestinationCacheKey {
+            listingCache[key] = nil
+            uploadDestinationCacheKey = nil
+        }
 
         if kind == .silentDownloading {
             if let errorString = parseEnvelopeErrorOnly(jsonString) {
@@ -942,6 +983,10 @@ final class MTPManager: ObservableObject {
     
     // MARK: – Navigation
 
+    private func listingCacheKey(storage: MTPStorage, path: String) -> String {
+        "\(storage.id)|\(path)"
+    }
+
     /// Replays a folder the user asked for while the device was busy.
     /// Returns true when a navigation was pending, so callers can skip their
     /// own reload rather than listing a folder the user has already left.
@@ -996,17 +1041,25 @@ final class MTPManager: ObservableObject {
         // one mutex that an upload or download holds for its entire duration.
         // Issuing the walk now would block a background thread until the copy
         // finished and leave the user staring at a spinner, so remember where
-        // they wanted to go and take them there once the device is free.
+        // they wanted to go and take them there once the device is free. A
+        // folder already visited is shown from cache meanwhile -- an install
+        // queue can run for hours, and browsing should not be dead for all of
+        // it just because the console cannot answer right now.
         if transferKind != nil {
-            DebugLog.write("navigation deferred until transfer completes: \(path)")
+            let key = listingCacheKey(storage: storage, path: path)
+            let cached = listingCache[key]
+            DebugLog.write("navigation deferred until transfer completes: \(path)\(cached == nil ? "" : " (showing cached listing)")")
             pendingNavigationPath = path
             DispatchQueue.main.async { [weak self] in
-                self?.isLoading = false
-                self?.files = []
+                guard let self else { return }
+                self.isLoading = false
+                self.files = cached ?? []
+                self.showingCachedListing = cached != nil
             }
             return
         }
 
+        walkingPath = path
         DispatchQueue.main.async { [weak self] in
             self?.isLoading = true
         }
@@ -1056,6 +1109,13 @@ final class MTPManager: ObservableObject {
         }
         guard let storage = storage ?? selectedStorage else {
             DebugLog.write("download aborted: no storage")
+            return
+        }
+        guard !isTransferInFlight else {
+            DebugLog.write("download refused: a transfer is already running")
+            DispatchQueue.main.async { [weak self] in
+                self?.errorMessage = String(localized: "The console is already busy with a transfer. Wait for it to finish, then try again.")
+            }
             return
         }
         DebugLog.write("download storage=\(storage.id) paths=\(paths) dest=\(destinationURL.path) op=\(operation)")
@@ -1117,7 +1177,20 @@ final class MTPManager: ObservableObject {
             DebugLog.write("upload aborted: no storage")
             return
         }
-        
+        // The toolbar's Import button disables itself during a transfer, but
+        // drag-and-drop reaches here directly and used to start a second upload
+        // on top of the first. MTP is a single session, so the two serialised on
+        // the Go mutex rather than corrupting anything on the card -- but the
+        // second claim overwrote the first, and whichever finished last found an
+        // empty slot and was discarded. `isTransferActive` then stayed true for
+        // the life of the process, so the install queue never drained again.
+        guard transferKind == nil, !isTransferActive else {
+            DebugLog.write("upload refused: a transfer is already running")
+            DispatchQueue.main.async { [weak self] in
+                self?.errorMessage = String(localized: "The console is already busy with a transfer. Wait for it to finish, then copy these files again.")
+            }
+            return
+        }
         DispatchQueue.main.async { [weak self] in
             self?.isTransferActive = true
             self?.transferProgress = 0
@@ -1152,6 +1225,7 @@ final class MTPManager: ObservableObject {
         }
         DebugLog.write("upload storage=\(storage.id) dest=\(destination) op=\(operation) files=[\(sizes.joined(separator: ", "))]")
         transferKind = .uploading
+        uploadDestinationCacheKey = listingCacheKey(storage: storage, path: destination)
         DispatchQueue.global(qos: .userInitiated).async {
             DebugLog.write("upload -> NxmtpUploadFiles \(jsonString)")
             jsonString.withCString { ptr in
@@ -1162,13 +1236,7 @@ final class MTPManager: ObservableObject {
     }
     
     func downloadPromise(file: MTPFile, to destinationFolderURL: URL, completion: @escaping (Error?) -> Void) {
-        if transferKind == .downloading {
-            completion(NSError(domain: "MTPManager.Transfer", code: 1, userInfo: [
-                NSLocalizedDescriptionKey: "Another transfer is already running."
-            ]))
-            return
-        }
-        if transferKind == .uploading {
+        if isTransferInFlight {
             completion(NSError(domain: "MTPManager.Transfer", code: 1, userInfo: [
                 NSLocalizedDescriptionKey: "Another transfer is already running."
             ]))
@@ -1220,13 +1288,7 @@ final class MTPManager: ObservableObject {
     /// Download multiple files from device as a batch promise (for drag-to-Finder).
     /// Sends all file paths in a single NxmtpDownloadFiles call for proper "n of n" progress.
     func downloadPromiseBatch(files: [MTPFile], to destinationFolderURL: URL, completion: @escaping (Error?) -> Void) {
-        if transferKind == .downloading {
-            completion(NSError(domain: "MTPManager.Transfer", code: 1, userInfo: [
-                NSLocalizedDescriptionKey: "Another transfer is already running."
-            ]))
-            return
-        }
-        if transferKind == .uploading {
+        if isTransferInFlight {
             completion(NSError(domain: "MTPManager.Transfer", code: 1, userInfo: [
                 NSLocalizedDescriptionKey: "Another transfer is already running."
             ]))
@@ -1275,7 +1337,10 @@ final class MTPManager: ObservableObject {
     }
     
     func downloadAndPreview(file: MTPFile, to destinationFolderURL: URL, completion: @escaping (Error?) -> Void) {
-        if operation != .none && operation != .walking {
+        // `operation` alone is not enough: transfers deliberately live in
+        // `transferKind`, so during an upload `operation` reads `.none` and a
+        // double-click here would start a preview download on top of it.
+        if isTransferInFlight || (operation != .none && operation != .walking) {
             completion(NSError(domain: "MTPManager.Transfer", code: 1, userInfo: [
                 NSLocalizedDescriptionKey: "Another operation is running."
             ]))
@@ -1484,6 +1549,12 @@ final class MTPManager: ObservableObject {
         // deferred forever waiting on a transfer that has already died.
         transferKind = nil
         pendingNavigationPath = nil
+        // A different card could be behind the next connection, so nothing kept
+        // from this one can be trusted.
+        listingCache.removeAll()
+        walkingPath = nil
+        showingCachedListing = false
+        uploadDestinationCacheKey = nil
         finishTransferCompletion(errorString: "Device disconnected.")
         // The queue's only other exit is the upload's own done callback, and a
         // disconnect detected by the USB scan resets `operation` before that

@@ -387,10 +387,14 @@ struct MainView: View {
 
     @ViewBuilder
     private var bannerArea: some View {
-        if manager.pendingNavigationPath != nil && manager.isTransferActive {
+        if manager.pendingNavigationPath != nil && showsTransferBar {
             SwitchMTPBanner(
-                title: String(localized: "This folder opens when the transfer finishes"),
-                message: String(localized: "The console can only do one thing at a time over USB, so it cannot list a folder while it is copying. SwitchMTP will open this folder as soon as the transfer is done."),
+                title: manager.showingCachedListing
+                    ? String(localized: "Showing this folder as it was last seen")
+                    : String(localized: "This folder opens when the transfer finishes"),
+                message: manager.showingCachedListing
+                    ? String(localized: "The console can only do one thing at a time over USB, so it cannot check this folder while it is copying. This is the last view SwitchMTP has of it, and it refreshes as soon as the transfer finishes.")
+                    : String(localized: "The console can only do one thing at a time over USB, so it cannot list a folder while it is copying. SwitchMTP will open this folder as soon as the transfer is done."),
                 systemImage: "clock",
                 tint: .accentColor
             )

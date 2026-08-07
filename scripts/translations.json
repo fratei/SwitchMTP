@@ -935,6 +935,34 @@
       "es": "La consola solo puede hacer una cosa a la vez por USB, así que no puede mostrar una carpeta mientras copia. SwitchMTP abrirá esta carpeta en cuanto termine la transferencia.",
       "ru": "Консоль может выполнять только одну операцию по USB за раз, поэтому она не может показать папку во время копирования. SwitchMTP откроет эту папку сразу после завершения передачи.",
       "ja": "本体は USB 経由で一度に 1 つの処理しか行えないため、コピー中はフォルダを一覧表示できません。転送が完了次第、SwitchMTP がこのフォルダを開きます。"
+    },
+    "The console is already busy with a transfer. Wait for it to finish, then copy these files again.": {
+      "zh-Hans": "主机正在进行传输。请等待其完成，然后再次复制这些文件。",
+      "zh-Hant": "主機正在進行傳輸。請等待其完成，然後再次複製這些檔案。",
+      "es": "La consola ya está ocupada con una transferencia. Espera a que termine y vuelve a copiar estos archivos.",
+      "ru": "Консоль уже занята передачей. Дождитесь её завершения и скопируйте эти файлы снова.",
+      "ja": "本体は現在転送中です。完了するまで待ってから、これらのファイルをもう一度コピーしてください。"
+    },
+    "The console is already busy with a transfer. Wait for it to finish, then try again.": {
+      "zh-Hans": "主机正在进行传输。请等待其完成后重试。",
+      "zh-Hant": "主機正在進行傳輸。請等待其完成後重試。",
+      "es": "La consola ya está ocupada con una transferencia. Espera a que termine e inténtalo de nuevo.",
+      "ru": "Консоль уже занята передачей. Дождитесь её завершения и повторите попытку.",
+      "ja": "本体は現在転送中です。完了するまで待ってから、もう一度お試しください。"
+    },
+    "Showing this folder as it was last seen": {
+      "zh-Hans": "显示此文件夹上次查看时的内容",
+      "zh-Hant": "顯示此資料夾上次檢視時的內容",
+      "es": "Mostrando esta carpeta tal como se vio por última vez",
+      "ru": "Показана эта папка в том виде, в каком она была в последний раз",
+      "ja": "このフォルダを前回表示したときの状態で表示しています"
+    },
+    "The console can only do one thing at a time over USB, so it cannot check this folder while it is copying. This is the last view SwitchMTP has of it, and it refreshes as soon as the transfer finishes.": {
+      "zh-Hans": "主机通过 USB 一次只能执行一项操作，因此在复制时无法检查此文件夹。这是 SwitchMTP 最后看到的内容，传输完成后会立即刷新。",
+      "zh-Hant": "主機透過 USB 一次只能執行一項操作，因此在複製時無法檢查此資料夾。這是 SwitchMTP 最後看到的內容，傳輸完成後會立即重新整理。",
+      "es": "La consola solo puede hacer una cosa a la vez por USB, así que no puede consultar esta carpeta mientras copia. Esta es la última vista que SwitchMTP tiene de ella y se actualizará en cuanto termine la transferencia.",
+      "ru": "Консоль может выполнять только одну операцию по USB за раз, поэтому она не может проверить эту папку во время копирования. Это последнее, что SwitchMTP видел в ней; папка обновится сразу после завершения передачи.",
+      "ja": "本体は USB 経由で一度に 1 つの処理しか行えないため、コピー中はこのフォルダを確認できません。これは SwitchMTP が最後に取得した内容で、転送が完了するとすぐに更新されます。"
     }
   }
 }
