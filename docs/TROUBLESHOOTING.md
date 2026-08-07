@@ -159,6 +159,54 @@ of double-clicking them.
 
 ---
 
+## Exported files are not in ~/Downloads
+
+**Cause:** When **iCloud Drive → Desktop & Documents Folders** is enabled, the
+**Downloads** shortcut in the macOS save panel's sidebar points at *iCloud Drive's*
+Downloads folder, not your home `~/Downloads`. This is macOS behaviour, not something
+SwitchMTP controls — the app writes exactly where the panel told it to.
+
+**Fix:** Look in
+
+```sh
+~/Library/Mobile\ Documents/com~apple~CloudDocs/Downloads
+```
+
+To avoid the ambiguity, pick the destination explicitly in the export panel (press
+**⇧⌘G** inside the panel and type an absolute path) rather than using the sidebar
+shortcut. The transfer summary in the app also shows the resolved destination path.
+
+> Note: **⇧⌘G** in the *main window* is SwitchMTP's own **Go to Folder**, which navigates
+> to an absolute path **on the Switch**. Inside a macOS open/save panel the same shortcut
+> is the system's Go to Folder for local paths.
+
+---
+
+## Dates all show "—"
+
+**Cause:** DBI's MTP responder does not report creation or modification dates for any
+object — every `ObjectInfo` comes back with empty date fields. SwitchMTP shows `—` rather
+than inventing a timestamp, because filling in "now" would make an entire SD card look
+like it had just been rewritten.
+
+This is a limitation of the responder, not a bug. Sorting by **Date Modified** still works;
+undated entries sort last.
+
+---
+
+## A USB device that is not a Switch appears in the sidebar
+
+**Cause:** MTP devices are found by their USB endpoint layout (one bulk-in, one bulk-out,
+one interrupt-in). Some unrelated devices — USB Ethernet adapters especially — use the
+same layout.
+
+SwitchMTP filters these out by USB interface class: it accepts still-image (class 6, which
+is what DBI reports) and vendor-specific interfaces that name themselves "MTP". If a
+device still slips through, include the output of `switchmtp-cli --json doctor` in a bug
+report.
+
+---
+
 ## Gatekeeper: "SwitchMTP is damaged and can't be opened" or "cannot be verified"
 
 **Cause:** The app is ad-hoc signed, not notarized. macOS quarantines it.
@@ -193,3 +241,23 @@ source as an alternative.
 The diagnostics include: USB device enumeration, any process holding the USB interface
 that the backend can identify, and connected-device capabilities. No personal files or
 save data are included.
+
+### Verbose transfer log
+
+For problems that only reproduce in the GUI, enable the app's file log:
+
+```sh
+defaults write me.fratei.switchmtp debugLogEnabled -bool YES
+```
+
+Relaunch the app, reproduce the problem, then read:
+
+```sh
+cat ~/Library/Containers/me.fratei.switchmtp/Data/tmp/switchmtp-debug.log
+```
+
+Turn it off again with `defaults delete me.fratei.switchmtp debugLogEnabled`. The log
+records transfer requests, resolved destination paths and backend result envelopes. It
+contains file and folder names from your device, so review it before attaching it to a
+public issue.
+
