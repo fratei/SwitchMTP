@@ -11,6 +11,30 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  triage-engine:
+    # Runs on Linux and finishes in under a minute, so a broken issue form or a
+    # broken triage rule fails fast instead of waiting on the macOS build.
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: pip install --quiet pyyaml pytest
+
+      - name: Validate issue forms and labels
+        run: python scripts/triage/triage.py --check-templates
+
+      - name: Test triage engine
+        run: pytest scripts/triage/test_triage.py -q
+
   build:
     runs-on: macos-latest
     timeout-minutes: 45

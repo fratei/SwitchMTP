@@ -1,0 +1,116 @@
+name: Issue triage
+
+# Runs the deterministic triage engine in scripts/triage.
+#
+# It needs no secrets: with only the default GITHUB_TOKEN it reads issues,
+# labels them, and posts (or edits) a single explanatory comment. Delegating an
+# actionable issue to the Copilot coding agent additionally requires a
+# user-to-server token in the COPILOT_AGENT_TOKEN secret; without it the job
+# labels the issue and says so, rather than failing.
+
+on:
+  schedule:
+    # 07:15 UTC daily, off the top of the hour where the scheduler is busiest.
+    - cron: '15 7 * * *'
+  issues:
+    types: [opened, edited, reopened]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      issue:
+        description: A single issue number (blank triages every open issue)
+        type: string
+      dry_run:
+        description: Report what would happen without changing anything
+        type: boolean
+        default: true
+      delegate:
+        description: Hand actionable issues to the Copilot coding agent
+        type: boolean
+        default: false
+
+concurrency:
+  group: issue-triage-${{ github.event.issue.number || 'all' }}
+  cancel-in-progress: false
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  triage:
+    # Never triage a pull request, never react to the bot's own comment (which
+    # would otherwise cost a wasted run every time delegation uses a PAT), and
+    # never run on a fork.
+    if: >-
+      github.repository == 'fratei/SwitchMTP' &&
+      github.event.issue.pull_request == null &&
+      github.actor != 'github-actions[bot]' &&
+      (github.event_name != 'issue_comment' ||
+       !contains(github.event.comment.body, 'switchmtp-triage:v1'))
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: python -m pip install --quiet --disable-pip-version-check pyyaml pytest
+
+      - name: Test the triage engine
+        # A broken engine must never be let loose on real issues.
+        run: python -m pytest scripts/triage/test_triage.py -q
+
+      - name: Triage
+        env:
+          # COPILOT_AGENT_TOKEN, when present, is a PAT that can assign the
+          # coding agent. GITHUB_TOKEN alone cannot, so delegation is optional.
+          TRIAGE_TOKEN: ${{ secrets.COPILOT_AGENT_TOKEN || secrets.GITHUB_TOKEN }}
+          # Only the emptiness of the secret crosses into the shell, never the
+          # secret itself.
+          CAN_DELEGATE: ${{ secrets.COPILOT_AGENT_TOKEN != '' }}
+          SINGLE_ISSUE: ${{ github.event.issue.number || inputs.issue }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          DELEGATE: ${{ inputs.delegate }}
+        run: |
+          set -euo pipefail
+          args=(--repo "${GITHUB_REPOSITORY}" --output "${GITHUB_WORKSPACE}/triage.json")
+
+          if [[ -n "${SINGLE_ISSUE}" ]]; then
+            args+=(--issue "${SINGLE_ISSUE}")
+          else
+            args+=(--all)
+          fi
+
+          # workflow_dispatch defaults dry-run to true so a manual poke is safe;
+          # the schedule and the issue events act for real.
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" && "${DRY_RUN}" == "true" ]]; then
+            args+=(--dry-run)
+          fi
+
+          # Delegation happens on the daily pass, or when explicitly asked for.
+          if [[ "${GITHUB_EVENT_NAME}" == "schedule" || "${DELEGATE}" == "true" ]]; then
+            if [[ "${CAN_DELEGATE}" == "true" ]]; then
+              args+=(--delegate)
+            else
+              echo "::notice::COPILOT_AGENT_TOKEN is not set, so actionable issues" \
+                   "will be labelled but not handed to the coding agent."
+            fi
+          fi
+
+          python scripts/triage/triage.py "${args[@]}"
+
+      - name: Upload the triage record
+        if: always() && hashFiles('triage.json') != ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: triage-${{ github.run_id }}
+          path: triage.json
+          retention-days: 30

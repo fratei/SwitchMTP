@@ -1,0 +1,93 @@
+name: Sync labels
+
+# The issue forms and the triage script both apply labels by name, and GitHub
+# silently drops a label that does not exist yet. This keeps the repository's
+# labels in step with .github/labels.yml so that never happens.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/labels.yml
+      - .github/workflows/sync-labels.yml
+  workflow_dispatch:
+    inputs:
+      prune:
+        description: Delete labels that are not in labels.yml
+        type: boolean
+        default: false
+
+concurrency:
+  group: sync-labels
+  cancel-in-progress: false
+
+permissions:
+  issues: write
+  contents: read
+
+jobs:
+  sync:
+    # Forks have their own labels; syncing ours onto them would be rude.
+    if: github.repository == 'fratei/SwitchMTP'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Apply labels.yml
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PRUNE: ${{ inputs.prune }}
+        run: |
+          set -euo pipefail
+          python3 -m pip install --quiet --disable-pip-version-check pyyaml
+
+          python3 - <<'PY' > /tmp/wanted.tsv
+          import sys, yaml
+          entries = yaml.safe_load(open(".github/labels.yml")) or []
+          seen = set()
+          for entry in entries:
+              name = str(entry["name"])
+              if name in seen:
+                  sys.exit(f"::error::duplicate label in labels.yml: {name}")
+              seen.add(name)
+              colour = str(entry.get("color", "ededed")).lstrip("#")
+              if len(colour) != 6 or any(c not in "0123456789abcdefABCDEF" for c in colour):
+                  sys.exit(f"::error::{name}: '{colour}' is not a six-digit hex colour")
+              description = str(entry.get("description", "")).replace("\t", " ")
+              if len(description) > 100:
+                  sys.exit(f"::error::{name}: description exceeds GitHub's 100-character limit")
+              print(f"{name}\t{colour}\t{description}")
+          PY
+
+          gh label list --limit 200 --json name --jq '.[].name' > /tmp/existing.txt || true
+
+          created=0; updated=0
+          while IFS=$'\t' read -r name colour description; do
+            # </dev/null so gh cannot swallow the rest of the label list.
+            if grep -Fxq "$name" /tmp/existing.txt; then
+              gh label edit "$name" --color "$colour" --description "$description" </dev/null
+              updated=$((updated + 1))
+            else
+              gh label create "$name" --color "$colour" --description "$description" </dev/null
+              created=$((created + 1))
+            fi
+          done < /tmp/wanted.tsv
+
+          echo "## Label sync" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Created $created, updated $updated." >> "$GITHUB_STEP_SUMMARY"
+
+          if [[ "${PRUNE:-false}" == "true" ]]; then
+            cut -f1 /tmp/wanted.tsv | sort > /tmp/wanted-names.txt
+            sort /tmp/existing.txt > /tmp/existing-sorted.txt
+            comm -13 /tmp/wanted-names.txt /tmp/existing-sorted.txt > /tmp/extra.txt
+            while read -r name; do
+              [[ -z "$name" ]] && continue
+              echo "Deleting $name"
+              gh label delete "$name" --yes </dev/null
+            done < /tmp/extra.txt
+            echo "Pruned $(wc -l < /tmp/extra.txt | tr -d ' ') label(s)." >> "$GITHUB_STEP_SUMMARY"
+          fi
