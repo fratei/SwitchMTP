@@ -14,19 +14,27 @@
 import Foundation
 
 /// Complete transfer progress data structure, corresponding to Go layer
+///
+/// The field types here are load-bearing: `JSONDecoder` fails the *whole*
+/// payload if a single one mismatches, and a dropped progress payload leaves
+/// the UI stuck on "Preparing transfer…" for the entire transfer. `elapsedTime`
+/// and `speed` in particular are fractional in the Go layer, not integers.
 struct TransferProgressData: Decodable {
     let fullPath: String?
     let name: String?
-    let elapsedTime: Int64?              // milliseconds
-    let speed: Double?                   // MB/s
+    let elapsedTime: Double?             // seconds, fractional
+    let speed: Double?                   // bytes per second
     let totalFiles: Int64?
     let totalDirectories: Int64?
     let filesSent: Int64?
-    let filesSentProgress: Float?
+    let filesSentProgress: Double?       // percent, 0-100
     let activeFileSize: TransferSizeInfo?
     let bulkFileSize: TransferSizeInfo?
     let status: String?                  // transfer status
-    
+    let note: String?                    // human-readable phase detail
+    let indefinite: Bool?                // total size not known in advance
+    let currentFile: Int64?              // 1-based index of the active file
+
     enum CodingKeys: String, CodingKey {
         case fullPath
         case name
@@ -39,6 +47,9 @@ struct TransferProgressData: Decodable {
         case activeFileSize
         case bulkFileSize
         case status
+        case note
+        case indefinite
+        case currentFile
     }
 }
 
@@ -46,7 +57,26 @@ struct TransferProgressData: Decodable {
 struct TransferSizeInfo: Decodable {
     let total: Int64?
     let sent: Int64?
-    let progress: Float?
+    let progress: Double?                // percent, 0-100
+}
+
+/// The phase a transfer is in, as reported by the Go layer.
+///
+/// `installing` is the one that matters on a Switch: DBI keeps working after
+/// the last byte arrives and MTP has no completion event for it, so the UI has
+/// to stop pretending a byte counter is meaningful.
+enum TransferPhase: String {
+    case preprocessing
+    case transferring
+    case installing
+    case completed
+    case cancelled
+    case failed
+
+    /// True when no meaningful byte progress can be reported.
+    var isIndeterminate: Bool {
+        self == .preprocessing || self == .installing
+    }
 }
 
 /// Transfer statistics calculation and formatting
@@ -58,22 +88,35 @@ class TransferStatistics {
     }
     
     // MARK: - Base Computed Properties
-    
+
+    /// The reported phase of the transfer.
+    var phase: TransferPhase {
+        TransferPhase(rawValue: progressData.status ?? "") ?? .transferring
+    }
+
+    /// Extra detail about the current phase, when the backend supplied any.
+    var note: String? {
+        guard let note = progressData.note, !note.isEmpty else { return nil }
+        return note
+    }
+
     /// Elapsed time in seconds
     var elapsedTime: TimeInterval {
-        TimeInterval((progressData.elapsedTime ?? 0) / 1000)
+        progressData.elapsedTime ?? 0
     }
-    
+
     /// Transfer speed in MB/s
     var speed: Double {
-        progressData.speed ?? 0.0
+        (progressData.speed ?? 0.0) / (1024 * 1024)
     }
     
     /// Remaining time in seconds
     var remainingTime: TimeInterval {
-        guard speed > 0,
+        guard phase == .transferring,
+              speed > 0,
               let totalSize = progressData.bulkFileSize?.total,
-              let sentSize = progressData.bulkFileSize?.sent else {
+              let sentSize = progressData.bulkFileSize?.sent,
+              totalSize > sentSize else {
             return -1
         }
         let remainingBytes = Double(totalSize - sentSize)
@@ -86,7 +129,7 @@ class TransferStatistics {
         guard let progress = progressData.bulkFileSize?.progress else {
             return 0
         }
-        return Double(progress) / 100.0
+        return min(max(progress / 100.0, 0), 1)
     }
     
     /// Current file progress percentage (0-1)
@@ -94,14 +137,14 @@ class TransferStatistics {
         guard let progress = progressData.activeFileSize?.progress else {
             return 0
         }
-        return Double(progress) / 100.0
+        return min(max(progress / 100.0, 0), 1)
     }
     
     // MARK: - Formatted Strings
     
     /// Formatted transfer speed string
     var speedString: String {
-        if speed <= 0 {
+        if phase.isIndeterminate || speed <= 0 {
             return "— MB/s"
         }
         return String(format: "%.2f MB/s", speed)
@@ -114,6 +157,9 @@ class TransferStatistics {
     
     /// Formatted remaining time string
     var remainingTimeString: String {
+        if phase == .installing {
+            return String(localized: "Installing on the console…")
+        }
         let time = remainingTime
         guard time >= 0 else { 
             return String(localized: "Calculating...")
@@ -166,15 +212,18 @@ class TransferStatistics {
         return "—"
     }
     
-    /// File transfer progress description (e.g., "120 of 500 files")
+    /// File transfer progress description (e.g., "3 of 12 files")
+    ///
+    /// Counts the file being sent, not the ones already finished — a single-file
+    /// transfer otherwise reads "0 of 1 files" for its entire duration.
     var filesProgressString: String {
-        let sent = progressData.filesSent ?? 0
         let total = progressData.totalFiles ?? 0
-        if total > 0 {
-            let format = String(localized: "%d of %d files")
-            return String(format: format, sent, total)
-        }
-        return String(localized: "—")
+        guard total > 0 else { return String(localized: "—") }
+        let sent = progressData.filesSent ?? 0
+        let current = min(progressData.currentFile ?? (sent + 1), total)
+        let shown = phase == .completed ? total : max(current, 1)
+        let format = String(localized: "%d of %d files")
+        return String(format: format, shown, total)
     }
     
     /// Complete progress summary for notifications or logs

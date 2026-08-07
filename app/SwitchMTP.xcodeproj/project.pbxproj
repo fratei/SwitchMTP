@@ -15,6 +15,7 @@
 		217DD0A6D8B31F9696936039 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4E4373EF5A89504A97D5793A /* SettingsView.swift */; };
 		23ADC54AC9EE5742BCDC75A3 /* DebugLog.swift in Sources */ = {isa = PBXBuildFile; fileRef = F69B6EF54C094852E0BF22B1 /* DebugLog.swift */; };
 		325723A670EA9A0340EF4FA3 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = C38017300B24920ABB994662 /* Assets.xcassets */; };
+		369745A929C3E0A77184041B /* TransferBar.swift in Sources */ = {isa = PBXBuildFile; fileRef = D86D26E226BB3AB9955A86F8 /* TransferBar.swift */; };
 		3C106287252D77EA5A983CE5 /* IssueReporter.swift in Sources */ = {isa = PBXBuildFile; fileRef = A767E2C304BC3D9E9CF9F90C /* IssueReporter.swift */; };
 		4737AE99FC48BC5797C04E8C /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9A140936EE8A1A839D01528F /* SidebarView.swift */; };
 		517CE9AEFEAF15C42914A294 /* TransferStatistics.swift in Sources */ = {isa = PBXBuildFile; fileRef = BD524D34D245A300DF4593C7 /* TransferStatistics.swift */; };
@@ -25,6 +26,7 @@
 		6B8D63CACFF1F008C9384174 /* USBAccessDisclosureView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 88E89262C9983FEBD0462760 /* USBAccessDisclosureView.swift */; };
 		78E3EA485D8FB268F2B41D5D /* FileListView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 13C2A09A0625FE592D509881 /* FileListView.swift */; };
 		7CC8265AB9B63C839FF93E31 /* Credits.html in Resources */ = {isa = PBXBuildFile; fileRef = 97FB31C9D5740874B8723F67 /* Credits.html */; };
+		7E0C5622B94C9B6E18665398 /* InstallQueue.swift in Sources */ = {isa = PBXBuildFile; fileRef = 044A2996A19BE003AEC44C42 /* InstallQueue.swift */; };
 		83DFBA162ADFDA532DF79ECE /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = D1010571A1AE5E64BFEFF5AC /* main.swift */; };
 		840FB11022ED53CBCC5845FC /* ErrorStringLocalizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3F07DFC7CDFDDD1E0F8DFF1D /* ErrorStringLocalizer.swift */; };
 		9483FBE3C0493A9D3E31D9F7 /* MTPDevice.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8715E9B2CC3A98C5AA4195C6 /* MTPDevice.swift */; };
@@ -42,6 +44,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		044A2996A19BE003AEC44C42 /* InstallQueue.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstallQueue.swift; sourceTree = "<group>"; };
 		0C5DA10F50F4C5C173B9A4AA /* USBProtocol.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = USBProtocol.swift; sourceTree = "<group>"; };
 		13C2A09A0625FE592D509881 /* FileListView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileListView.swift; sourceTree = "<group>"; };
 		1F4ABA3916D194D43A134669 /* MTPDeviceInfo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MTPDeviceInfo.swift; sourceTree = "<group>"; };
@@ -69,6 +72,7 @@
 		BD524D34D245A300DF4593C7 /* TransferStatistics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferStatistics.swift; sourceTree = "<group>"; };
 		C38017300B24920ABB994662 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		D1010571A1AE5E64BFEFF5AC /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = main.swift; sourceTree = "<group>"; };
+		D86D26E226BB3AB9955A86F8 /* TransferBar.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TransferBar.swift; sourceTree = "<group>"; };
 		DB0ECBFDCACA59C65A0FDF03 /* SwitchMTP-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = "SwitchMTP-Bridging-Header.h"; sourceTree = "<group>"; };
 		DBCD2FCE6F65E8915A7CF9F2 /* MainView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainView.swift; sourceTree = "<group>"; };
 		E111088EA00DA0878AC5DAB0 /* QuickLookOverlayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = QuickLookOverlayView.swift; sourceTree = "<group>"; };
@@ -128,6 +132,7 @@
 				4E4373EF5A89504A97D5793A /* SettingsView.swift */,
 				9A140936EE8A1A839D01528F /* SidebarView.swift */,
 				B97E346DF39FD2E0D945E9E0 /* ToolbarViews.swift */,
+				D86D26E226BB3AB9955A86F8 /* TransferBar.swift */,
 				88E89262C9983FEBD0462760 /* USBAccessDisclosureView.swift */,
 			);
 			path = Views;
@@ -170,6 +175,7 @@
 				F69B6EF54C094852E0BF22B1 /* DebugLog.swift */,
 				3F07DFC7CDFDDD1E0F8DFF1D /* ErrorStringLocalizer.swift */,
 				4936046E5E7E68686C27E783 /* FavoritesManager.swift */,
+				044A2996A19BE003AEC44C42 /* InstallQueue.swift */,
 				A767E2C304BC3D9E9CF9F90C /* IssueReporter.swift */,
 				3051FF9C052DABB4EC1E56BD /* MTPManager.swift */,
 				5B47ADE9115C983E0A3932D3 /* SwitchWorkflows.swift */,
@@ -344,6 +350,7 @@
 				C96855B82759F81486D72760 /* FavoriteItem.swift in Sources */,
 				1A0A7BE771E515374590986A /* FavoritesManager.swift in Sources */,
 				78E3EA485D8FB268F2B41D5D /* FileListView.swift in Sources */,
+				7E0C5622B94C9B6E18665398 /* InstallQueue.swift in Sources */,
 				3C106287252D77EA5A983CE5 /* IssueReporter.swift in Sources */,
 				9483FBE3C0493A9D3E31D9F7 /* MTPDevice.swift in Sources */,
 				A1E79A91FF7D49D0BF9B41C8 /* MTPDeviceInfo.swift in Sources */,
@@ -358,6 +365,7 @@
 				977BAFFCA38CD88F13E081BB /* SwitchMTPApp.swift in Sources */,
 				1527B82F0FABD1021DCD4552 /* SwitchWorkflows.swift in Sources */,
 				A2208263BA0C6E2B2B334EE5 /* ToolbarViews.swift in Sources */,
+				369745A929C3E0A77184041B /* TransferBar.swift in Sources */,
 				517CE9AEFEAF15C42914A294 /* TransferStatistics.swift in Sources */,
 				6B8D63CACFF1F008C9384174 /* USBAccessDisclosureView.swift in Sources */,
 				0371ED4A5A6427A8D43B4325 /* USBMonitor.swift in Sources */,

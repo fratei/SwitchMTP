@@ -97,7 +97,7 @@ func (c *Client) Upload(req UploadRequest, onPreprocess func(PreprocessResult), 
 			tracker.setStatus(StatusCancelled, "")
 			return nil, err
 		}
-		n, err := c.uploadOne(req.StorageID, it, tracker)
+		n, err := c.uploadOne(req.StorageID, it, tracker, "")
 		if err != nil {
 			tracker.setStatus(StatusFailed, "")
 			return nil, err
@@ -151,7 +151,7 @@ func (c *Client) uploadInstall(st *Storage, items []uploadItem, totalBytes int64
 
 	summary := &TransferSummary{TotalFiles: int64(len(accepted)), Skipped: skipped}
 
-	for i, it := range accepted {
+	for _, it := range accepted {
 		if err := c.checkCancelled(); err != nil {
 			tracker.setStatus(StatusCancelled, "")
 			return nil, err
@@ -160,7 +160,14 @@ func (c *Client) uploadInstall(st *Storage, items []uploadItem, totalBytes int64
 		// Install storages are flat: force the destination to the root.
 		it.devicePath = "/" + sanitizeLocalName(filepath.Base(it.localPath))
 
-		n, err := c.uploadOne(st.Sid, it, tracker)
+		base := filepath.Base(it.localPath)
+		// DBI keeps reading the object while it installs, so the last byte we
+		// hand to libusb is not the end of the work -- the console still has to
+		// commit before it answers the MTP response. Announce that transition
+		// as it happens, otherwise the UI sits on a full progress bar for
+		// minutes and looks wedged.
+		n, err := c.uploadOne(st.Sid, it, tracker,
+			"The Switch is installing "+base+". Progress is shown on the console.")
 		if err != nil {
 			tracker.setStatus(StatusFailed, "")
 			return nil, annotateInstallError(err, st)
@@ -168,15 +175,21 @@ func (c *Client) uploadInstall(st *Storage, items []uploadItem, totalBytes int64
 		summary.TotalBytes += n
 
 		tracker.setStatus(StatusInstalling,
-			"The Switch is installing "+filepath.Base(it.localPath)+". Progress is shown on the console.")
+			"The Switch is installing "+base+". Progress is shown on the console.")
 
-		// Wait for the console to become responsive again before sending the
-		// next title. There is no completion event, so the proxy for "the
-		// install finished" is the device answering a cheap query again.
-		if i < len(accepted)-1 {
-			if err := c.waitForDeviceReady(); err != nil {
-				return nil, err
-			}
+		// Wait for the console to become responsive again. There is no
+		// completion event, so the proxy for "the install finished" is the
+		// device answering a cheap query again.
+		//
+		// This deliberately runs after the *last* item too. The app installs
+		// one file per call so it can queue titles across calls, which means
+		// returning early here would hand the next title to a console that is
+		// still committing this one -- the exact thing this serialisation
+		// exists to prevent. When the console is already idle this costs a
+		// single cheap round-trip.
+		if err := c.waitForDeviceReady(tracker); err != nil {
+			tracker.setStatus(StatusFailed, "")
+			return nil, err
 		}
 	}
 
@@ -190,7 +203,11 @@ func (c *Client) uploadInstall(st *Storage, items []uploadItem, totalBytes int64
 
 // waitForDeviceReady polls a cheap operation until the responder answers,
 // which indicates it has finished committing the previous install.
-func (c *Client) waitForDeviceReady() error {
+//
+// This can legitimately block for minutes. It therefore keeps emitting
+// progress while it waits: a UI that receives nothing for two minutes is
+// indistinguishable from one that has hung.
+func (c *Client) waitForDeviceReady(tracker *progressTracker) error {
 	const (
 		attempts = 120
 		delay    = time.Second
@@ -208,6 +225,9 @@ func (c *Client) waitForDeviceReady() error {
 			if IsDisconnected(err) {
 				return classify("install", err)
 			}
+		}
+		if tracker != nil {
+			tracker.heartbeat()
 		}
 		time.Sleep(delay)
 	}
@@ -301,7 +321,12 @@ func planUpload(req UploadRequest) ([]uploadItem, int, error) {
 }
 
 // uploadOne sends a single file, creating parent directories as needed.
-func (c *Client) uploadOne(storageID uint32, it uploadItem, tracker *progressTracker) (int64, error) {
+//
+// finalizeNote, when non-empty, marks this upload as one whose real work
+// continues on the device after the last byte is handed over. The status flips
+// to "installing" the moment the byte stream completes, so the caller can stop
+// showing a stalled transfer bar while the console commits.
+func (c *Client) uploadOne(storageID uint32, it uploadItem, tracker *progressTracker, finalizeNote string) (int64, error) {
 	name := filepath.Base(it.localPath)
 	tracker.beginFile(name, it.devicePath, it.size)
 
@@ -347,12 +372,17 @@ func (c *Client) uploadOne(storageID uint32, it uploadItem, tracker *progressTra
 	}
 
 	var sent int64
+	finalized := false
 	progress := func(n int64) error {
 		sent = n
 		if err := c.checkCancelled(); err != nil {
 			return err
 		}
 		tracker.advance(n)
+		if !finalized && finalizeNote != "" && it.size > 0 && n >= it.size {
+			finalized = true
+			tracker.setStatus(StatusInstalling, finalizeNote)
+		}
 		return nil
 	}
 

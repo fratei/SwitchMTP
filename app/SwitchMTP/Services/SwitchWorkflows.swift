@@ -126,17 +126,12 @@ extension MTPManager {
     /// There is no MTP-level completion event for an install: DBI starts as soon
     /// as the object lands and reports progress on the console screen only. The
     /// caller must therefore never claim the install succeeded.
+    ///
+    /// Everything goes through the queue, including the very first file, so that
+    /// dropping more titles mid-install extends the run instead of colliding
+    /// with it.
     func install(fileURLs: [URL], to storage: MTPStorage) -> WorkflowOutcome {
-        let rejected = fileURLs.filter {
-            !Self.installableExtensions.contains($0.pathExtension.lowercased())
-        }
-        guard rejected.isEmpty else {
-            let names = rejected.map(\.lastPathComponent).joined(separator: ", ")
-            return .unavailable(String(localized: "Only .nsp, .nsz, .xci and .xcz files can be installed. Skipped: \(names)"))
-        }
-        guard !fileURLs.isEmpty else { return .unavailable(String(localized: "No files to install.")) }
-        upload(sourceURLs: fileURLs, to: storage, destination: "/")
-        return .started(String(localized: "Sending \(fileURLs.count) file(s) to \(storage.name). Installation continues on the Switch — watch the console screen for progress."))
+        enqueueInstall(fileURLs: fileURLs, to: storage)
     }
 
     // MARK: - Diagnostics

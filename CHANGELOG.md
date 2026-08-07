@@ -6,8 +6,50 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Transfers were stuck on "Preparing transfer…" and never showed progress.** The Go
+  backend reports `elapsedTime` as fractional seconds, but the Swift model declared it as
+  `Int64`. `JSONDecoder` refuses to coerce `0.4231234` into an integer and rejects the
+  *whole* payload, so every single progress update was discarded and the transfer
+  statistics stayed empty for the entire transfer — even while DBI on the console visibly
+  showed bytes arriving. Verified against a real console: 0 of 15 captured progress
+  payloads decoded before this fix, 15 of 15 after.
+- Progress decoding failures are now logged instead of being silently swallowed, so a
+  future schema drift is visible rather than invisible.
+- **Transfer speed was reported roughly a million times too high.** The backend emits
+  bytes per second; the app labelled that figure "MB/s" without converting it.
+- The file counter read "0 of 1 files" for the whole of a single-file transfer. It now
+  counts the file being sent rather than the files already finished.
+- An install that failed while waiting for the console to become ready left the transfer
+  state marked as still running. It is now correctly reported as failed.
+- A failed or cancelled file in a multi-file batch could leave the next file in the batch
+  reporting the previous file's status.
+- Installs are once again serialised against the console's readiness. The backend only
+  waited for the Switch to answer again *between* files of one batch, so sending titles
+  one at a time — which is what the queue does — skipped the wait entirely and could hand
+  DBI a new title while it was still committing the previous one.
+- A console unplugged mid-install no longer wedges the queue. The USB scan that detects
+  the unplug resets the transfer state before the transfer's own callback arrives, so the
+  running item could stay marked active forever with no way to clear it; every disconnect
+  route now releases the queue, and reconnecting resumes anything still waiting.
+
 ### Added
 
+- **An install queue.** Drop several NSP/NSZ/XCI/XCZ files — in one go or while an install
+  is already running — and they are installed one after another, each starting
+  automatically when the previous one finishes. The queue is visible, reorderable by
+  removal, and individually cancellable.
+- **The transfer UI is no longer a modal sheet.** It is now a bar at the bottom of the
+  window, so the rest of the app — including the install drop targets — stays usable
+  during a transfer. Queueing another install while one is running was previously
+  impossible for exactly this reason.
+- The app now reports the **install phase** distinctly from the transfer phase. DBI
+  installs the title only after the last byte arrives and sends no completion event, so a
+  transfer that reached 100% used to look wedged for minutes. The bar now says the console
+  is installing, and keeps a live elapsed counter while it waits.
+- A **stall notice** appears if no progress has been reported for 15 seconds, alongside a
+  Cancel button that is always available.
 - **Help ▸ Report an Issue…** opens a GitHub bug report with the app version and macOS
   version already filled in, and offers to copy a diagnostics report to the clipboard
   first.

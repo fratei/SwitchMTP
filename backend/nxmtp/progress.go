@@ -124,7 +124,19 @@ func (p *progressTracker) setTotals(files, dirs, bytes int64, indefinite bool) {
 func (p *progressTracker) beginFile(name, path string, size int64) {
 	p.mu.Lock()
 	p.activeName, p.activePath, p.activeTotal, p.activeSent = name, path, size, 0
+	// A previous file in the same batch may have left the tracker in the
+	// "installing" state. Bytes are moving again, so say so.
+	p.status, p.note = StatusTransferring, ""
 	p.mu.Unlock()
+	p.emit(true)
+}
+
+// heartbeat re-emits the current state without changing it.
+//
+// It exists for the phases where the app is genuinely waiting on the console
+// rather than moving bytes. Silence during those windows is indistinguishable
+// from a hang, so the elapsed-time counter keeps ticking instead.
+func (p *progressTracker) heartbeat() {
 	p.emit(true)
 }
 

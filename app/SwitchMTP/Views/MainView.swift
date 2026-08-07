@@ -124,19 +124,6 @@ struct MainView: View {
         .animation(.easeInOut(duration: 0.18), value: isShowingUSBDisclosure)
         .focusedSceneValue(\.showUSBDisclosureAction, { isShowingUSBDisclosure = true })
         .focusedSceneValue(\.isStarted, manager.isStarted)
-        .sheet(
-            isPresented: Binding(
-                get: { manager.isTransferActive },
-                set: { _ in }
-            )
-        ) {
-            TransferOverlay(
-                stats: manager.transferStats,
-                isPreparing: manager.isTransferActive && manager.transferStats == nil,
-                onCancel: { manager.cancelTransfer() }
-            )
-            .interactiveDismissDisabled(true)
-        }
         .toolbar { toolbarContent }
         .onChange(of: manager.connectionState) { newState in
             if case .disconnected = newState {
@@ -320,7 +307,12 @@ struct MainView: View {
                             }
                         }
                         .safeAreaInset(edge: .bottom, spacing: 0) {
-                            statusBar
+                            VStack(spacing: 0) {
+                                if showsTransferBar {
+                                    TransferBar(manager: manager)
+                                }
+                                statusBar
+                            }
                         }
                 }
             } else {
@@ -342,11 +334,21 @@ struct MainView: View {
                         }
                         fileBrowserView
                             .searchable(text: $searchQuery, placement: .toolbar, prompt: Text("Search"))
+                        if showsTransferBar {
+                            TransferBar(manager: manager)
+                        }
                         statusBar
                     }
                 }
             }
         }
+    }
+
+    /// The transfer bar stays up while the install queue still has work, so the
+    /// gap between one title finishing and the next starting does not flicker
+    /// the whole panel out of existence.
+    private var showsTransferBar: Bool {
+        manager.isTransferActive || !manager.installQueue.isEmpty
     }
 
     @ViewBuilder
@@ -839,88 +841,3 @@ private struct InfoRow: View {
     }
 }
 
-private struct TransferOverlay: View {
-    let stats: TransferStatistics?
-    let isPreparing: Bool
-    var onCancel: (() -> Void)? = nil
-
-    private var currentFileName: String {
-        if isPreparing {
-            return String(localized: "Preparing transfer…")
-        }
-        return stats?.currentFileName ?? ""
-    }
-
-    private var filesProgressText: String {
-        isPreparing ? " " : (stats?.filesProgressString ?? "")
-    }
-
-    private var speedText: String {
-        isPreparing ? " " : (stats?.speedString ?? "")
-    }
-
-    private var totalSentText: String {
-        isPreparing ? "" : "\(stats?.totalSentSizeString ?? "")/\(stats?.totalSizeString ?? "") - "
-    }
-
-    private var remainingTimeText: String {
-        if isPreparing {
-            return " \(String(localized: "--"))"
-        }
-        return " \(stats?.remainingTimeString ?? "")"
-    }
-
-    private var progressText: String {
-        if isPreparing {
-            return "\(0.formatted(.percent))"
-        }
-        return (stats?.progressPercentage ?? 0).formatted(.percent.precision(.fractionLength(0)))
-    }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text(currentFileName)
-                .font(.system(size: 13, weight: .medium))
-
-            HStack(spacing: 8) {
-                Group {
-                    if isPreparing {
-                        ProgressView()
-                            .progressViewStyle(.linear)
-                    } else {
-                        ProgressView(value: stats?.progressPercentage ?? 0)
-                            .progressViewStyle(.linear)
-                    }
-                }
-                .frame(width: 336)
-
-                if let onCancel {
-                    Button {
-                        onCancel()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .help(String(localized: "Cancel Transfer"))
-                }
-            }
-
-            HStack {
-                Text(totalSentText + progressText + remainingTimeText)
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(.secondary)
-                Spacer()
-                Text(filesProgressText)
-                    .font(.system(size: 11))
-                    .foregroundStyle(.secondary)
-                Text(speedText)
-                    .font(.system(size: 11, design: .monospaced))
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(20)
-        .frame(width: 400)
-    }
-}

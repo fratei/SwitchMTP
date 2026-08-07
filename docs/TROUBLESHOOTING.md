@@ -115,6 +115,24 @@ See [`DBI_SETUP.md`](DBI_SETUP.md) for the full explanation.
 - If transferring many small files to a normal browsable storage, try fewer files at a
   time to isolate the failing item.
 
+SwitchMTP shows a **"No progress reported for N seconds"** notice when the console has gone
+quiet, and the Cancel button in the transfer bar is always available. Cancelling asks the
+backend to stop, but a USB transfer that is already blocked inside the kernel cannot be
+interrupted; it has to time out first, which can take up to two minutes. If the app still
+appears busy after that, unplug the cable — SwitchMTP detects the disconnection and
+recovers.
+
+---
+
+## The bar reaches 100% and then sits at "Installing on the console…"
+
+**This is expected, and it is not a stall.** DBI writes the title to storage only after the
+final byte has arrived, and that step produces no MTP traffic at all — there is no protocol
+event for "installation finished". SwitchMTP therefore cannot show a percentage for it. The
+elapsed counter keeps running so you can see the app is still connected and waiting.
+
+The real progress is on the Switch screen. Large titles can take several minutes here.
+
 ---
 
 ## Files over 4 GB: size shown as "—"

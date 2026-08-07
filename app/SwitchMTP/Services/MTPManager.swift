@@ -32,6 +32,33 @@ final class MTPManager: ObservableObject {
     @Published var availableDevices: [MTPDeviceInfo] = []
     @Published private(set) var isTransferActive: Bool = false
     @Published var isShowingNameConflictAlert: Bool = false
+
+    /// Files waiting to be sent to an install storage, plus the one in flight.
+    ///
+    /// DBI installs strictly one title at a time — sending a second while the
+    /// console is still committing the first is the reliable way to wedge it —
+    /// so this is a real queue, drained one item per `Upload` call.
+    /// Mutate it through the queue API in `InstallQueue.swift`, never directly.
+    @Published var installQueue: [InstallQueueItem] = []
+
+    /// Timestamp of the most recent progress payload, used to notice stalls.
+    @Published private(set) var lastProgressAt: Date? = nil
+
+    /// The queue entry currently being uploaded, if the running transfer is one.
+    var activeInstallItemID: UUID? = nil
+
+    /// Set while a queue-drain retry is already pending, so repeated triggers
+    /// do not pile up timers.
+    var installQueueDrainScheduled: Bool = false
+
+    /// True when no FFI operation owns the device, so a queued install may start.
+    ///
+    /// `operation` is a single-slot state machine: starting an upload while a
+    /// directory reload is still in flight would route the walk's callbacks into
+    /// the upload handler and lose the transfer's progress entirely.
+    var isDeviceIdle: Bool {
+        operation == .none && !isTransferActive
+    }
     
     // NEW: Pass "" to let Go connect to the first available device, or specific ID for exact matches.
     var deviceId: String = ""
@@ -299,6 +326,7 @@ final class MTPManager: ObservableObject {
         
         DispatchQueue.main.async { [weak self] in
             guard let self else { return }
+            self.lastProgressAt = Date()
             if self.operation == .silentDownloading {
                 self.silentTransferStats = stats
             } else {
@@ -488,8 +516,19 @@ final class MTPManager: ObservableObject {
                     self.navigationStack = ["/"]
                     self.loadFiles(at: "/")
                 }
+                // `operation` must be cleared on the main queue, in the same
+                // block that arms the follow-up walk. Clearing it on the
+                // callback thread opens a window in which `isDeviceIdle` is
+                // true but a walk is about to claim the state machine, and an
+                // install-queue drain that slipped into that window would have
+                // its `operation` overwritten -- silently dropping every
+                // progress callback for the upload it just started.
+                self.operation = .none // will be overwritten by loadFiles(_:).
+                // A queue can outlive a disconnect: items stay `.waiting` while
+                // the drain loop deliberately stops itself. Re-arm it now that
+                // the console is back, or they would wait forever.
+                self.scheduleInstallQueueDrain()
             }
-            operation = .none // will be overwritten by loadFiles(_:).
             
         case .walking:
             // Check if this walk was superseded by a newer directory request.
@@ -573,8 +612,13 @@ final class MTPManager: ObservableObject {
             DispatchQueue.main.async { [weak self] in
                 guard let self else { return }
                 self.loadFiles(at: self.currentPath)
+                // Cleared here, not on the callback thread: see the note in
+                // `.fetchingStorages`. Between clearing `operation` and
+                // `loadFiles` claiming it, `isDeviceIdle` reports true, and an
+                // install-queue drain landing in that window would lose every
+                // progress callback for the upload it started.
+                self.operation = .none
             }
-            operation = .none
             
         case .silentDownloading:
             if let errorString = parseEnvelopeErrorOnly(jsonString) {
@@ -601,6 +645,7 @@ final class MTPManager: ObservableObject {
                 self.finishTransferCompletion(errorString: errorString)
                 DispatchQueue.main.async {
                     if ErrorStringLocalizer.isDeviceDisconnectedError(errorString) {
+                        self.finishActiveInstall(errorString: errorString)
                         self.handleDeviceDisconnected()
                     } else if ErrorStringLocalizer.isTransferCancelledError(errorString) {
                         // User-initiated cancel: the MTP session is corrupt after
@@ -609,16 +654,20 @@ final class MTPManager: ObservableObject {
                         self.isTransferActive = false
                         self.transferProgress = nil
                         self.transferStats = nil
+                        self.lastProgressAt = nil
                         let localizedError = ErrorStringLocalizer.localize(errorString)
                         self.errorMessage = localizedError
+                        self.finishActiveInstall(errorString: errorString)
                         self.reconnectAndRestore(to: self.currentPath)
                     } else {
                         self.isTransferActive = false
                         self.transferProgress = nil
                         self.transferStats = nil
+                        self.lastProgressAt = nil
                         let localizedError = ErrorStringLocalizer.localize(errorString)
                         self.connectionState = .error(localizedError)
                         self.errorMessage = localizedError
+                        self.finishActiveInstall(errorString: errorString)
                     }
                 }
                 operation = .none
@@ -632,8 +681,10 @@ final class MTPManager: ObservableObject {
                 self.isTransferActive = false
                 self.transferProgress = nil
                 self.transferStats = nil
+                self.lastProgressAt = nil
+                self.finishActiveInstall(errorString: nil)
                 self.loadFiles(at: self.currentPath)
-                
+
                 if !NSApplication.shared.isActive {
                     let content = UNMutableNotificationContent()
                     content.title = String(localized: "Transfer Complete")
@@ -1277,6 +1328,13 @@ final class MTPManager: ObservableObject {
         transferProgress = nil
         transferStats = nil
         finishTransferCompletion(errorString: "Device disconnected.")
+        // The queue's only other exit is the upload's own done callback, and a
+        // disconnect detected by the USB scan resets `operation` before that
+        // callback arrives -- so it lands in `case .none` and is swallowed.
+        // Reconciling here makes every disconnect route release the queue,
+        // rather than leaving the running item `.active` for the lifetime of
+        // the process with no UI affordance to clear it.
+        finishActiveInstall(errorString: "Device disconnected.")
         errorMessage = nil
     }
     
@@ -1532,12 +1590,31 @@ final class MTPManager: ObservableObject {
         let progress: Float?
     }
     // MARK: - Transfer Progress Decoding
-    
+
+    /// Decodes a progress payload, complaining loudly when it cannot.
+    ///
+    /// A silent `try?` here once cost an entire release: `elapsedTime` was typed
+    /// as an integer while the Go layer sent fractional seconds, so *every*
+    /// progress update was discarded and the UI sat on "Preparing transfer…"
+    /// from the first byte to the last. A decode failure is a bug in the
+    /// Swift↔Go contract and must be visible in the log.
     private func decodeFullTransferProgress(from dataAny: Any) -> TransferProgressData? {
         let d = dataFromAny(dataAny)
         guard !d.isEmpty else { return nil }
-        return try? JSONDecoder().decode(TransferProgressData.self, from: d)
+        do {
+            return try JSONDecoder().decode(TransferProgressData.self, from: d)
+        } catch {
+            if !Self.loggedProgressDecodeFailure {
+                Self.loggedProgressDecodeFailure = true
+                let raw = String(data: d, encoding: .utf8) ?? "<non-utf8>"
+                DebugLog.write("progress decode FAILED: \(error) payload=\(raw)")
+            }
+            return nil
+        }
     }
+
+    /// Logged once per launch: a broken contract repeats thousands of times.
+    private static var loggedProgressDecodeFailure = false
     
     private func mapUSBProtocol(from name: String) -> USBProtocol {
         switch name {

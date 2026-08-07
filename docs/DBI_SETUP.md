@@ -142,6 +142,34 @@ SwitchMTP's menu bar includes a top-level **Switch** menu:
 4. There is **no MTP-level completion event** for installation. SwitchMTP can report only
    that the file was sent; it cannot report "installed" or verify final install success.
 
+### The install queue
+
+Installs are deliberately sent **one at a time** — DBI installs a title as it arrives, and
+sending a second title into the same install target while the first is still being written
+is not safe.
+
+You do not have to wait, though. Drop as many files as you like, whenever you like:
+
+- Dropping several files at once queues all of them.
+- Dropping more files **while an install is already running** adds them to the queue rather
+  than being rejected.
+- Each queued file starts automatically as soon as the previous one has been sent and the
+  console has answered again.
+
+The transfer bar at the bottom of the window lists the queue. Each entry shows whether it
+is waiting, sending, sent or failed, and can be removed individually; **Clear Queue**
+drops everything still waiting. Cancelling the running transfer also cancels the files
+still queued behind it, so a bad drop does not run away from you.
+
+Because the transfer UI is a bar rather than a modal sheet, the sidebar drop targets stay
+live throughout — that is what makes queueing mid-install possible.
+
+> **Progress during installation.** When the bar reaches 100% it switches to *"Installing
+> on the console…"*. This is not a stall: DBI only begins writing the title to storage once
+> the last byte has arrived, and that step reports nothing over MTP. Watch the Switch
+> screen for the real installation progress. Large titles can sit in this state for several
+> minutes.
+
 ---
 
 ## Unknown sizes shown as `—`
