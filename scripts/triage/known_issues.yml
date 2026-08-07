@@ -1,0 +1,311 @@
+# Known issues the triage bot can answer on its own.
+#
+# Each entry is matched against the issue's title and the free-text fields of
+# the report. A match produces an automatic answer with a link into the docs, so
+# every entry here must correspond to something that is genuinely already
+# documented and genuinely already understood. When in doubt, leave it out and
+# let a human answer — a confidently wrong bot is worse than a silent one.
+#
+# match:
+#   any_of   at least one of these regexes must match   (required)
+#   all_of   every one of these regexes must match      (optional)
+#   none_of  none of these may match                    (optional)
+#   fields   exact-ish constraints on parsed form fields (optional)
+#            e.g.  dbi-mode: "applet"   matches case-insensitively as substring
+#
+# confidence: high   -> answered automatically as the explanation
+#             medium -> raised as a likely cause, but a human still decides
+#             low    -> mentioned as a possibility only, verdict unaffected
+#
+# close: true closes the issue after answering. Reserve it for entries that
+# cannot plausibly match a real defect, because closing a stranger's genuine bug
+# report with a canned answer is the worst thing this script could do.
+
+- id: icloud-downloads
+  title: Exported files land in iCloud's Downloads folder
+  confidence: high
+  close: true
+  labels: ["area:app"]
+  match:
+    any_of:
+      - "export(ed|s|ing)?\\s+(files?\\s+)?(are|is|were|went)?\\s*(no(t| )where|missing|gone|disappear)"
+      - "can'?t find (the )?(exported|downloaded|transferred) files?"
+      - "(files?|folder) (is |are )?not in (my )?~?/?downloads"
+      - "nothing (appears|shows up|was written) in downloads"
+    none_of:
+      - "transfer (failed|error)"
+      - "\\b(error|failed|crash\\w*|stall\\w*|hang\\w*)\\b"
+  answer: |
+    This is almost certainly the iCloud Downloads trap rather than a failed
+    transfer.
+
+    If **Desktop & Documents** syncing is enabled in iCloud Drive, the
+    **Downloads** shortcut in macOS save panels resolves to
+    `~/Library/Mobile Documents/com~apple~CloudDocs/Downloads`, **not** to
+    `~/Downloads`. The files were written; they are simply in the other
+    Downloads folder. Open the destination shown at the top of the save panel,
+    or paste this into Terminal to look in both places:
+
+    ```shell
+    ls -la ~/Downloads "$HOME/Library/Mobile Documents/com~apple~CloudDocs/Downloads"
+    ```
+  doc: docs/TROUBLESHOOTING.md#exported-files-are-not-in-downloads
+
+- id: applet-mode-buffers
+  title: '"Extra buffers exceeded" during a large transfer'
+  confidence: high
+  close: true
+  labels: ["area:transfer", "status:blocked-upstream"]
+  match:
+    any_of:
+      - "extra buffers exceeded"
+      - "media write speed is too low"
+  answer: |
+    That message comes from DBI, not from SwitchMTP, and it means DBI is running
+    in **applet mode** — the album shortcut. Applet mode gives homebrew only a
+    small slice of memory, so large writes run out of buffers.
+
+    Launch DBI in **title mode** instead: hold **R** while starting any
+    installed game, and pick DBI from the homebrew menu that appears. The same
+    transfer will then complete.
+  doc: docs/TROUBLESHOOTING.md#extra-buffers-exceeded-media-write-speed-is-too-low-on-the-switch
+
+- id: applet-mode-suspected
+  title: Report came from applet mode
+  confidence: medium
+  labels: ["area:transfer"]
+  match:
+    any_of:
+      - "(transfer|upload|download|install)\\w*\\s+(fail|stall|stop|hang|freeze|abort)"
+      - "stops? (at|around) \\d+ ?%"
+      - "install(ation)? (fail|never finish|hang)"
+    fields:
+      dbi-mode: "applet"
+  answer: |
+    The report says DBI was launched in **applet mode** (from the album). Applet
+    mode restricts homebrew to a small memory allocation and is the usual cause
+    of large transfers stalling or failing part-way.
+
+    Before anything else, please retry in **title mode**: hold **R** while
+    starting an installed game, then pick DBI. If it still fails in title mode,
+    say so here and this will be looked at properly.
+  doc: docs/TROUBLESHOOTING.md#extra-buffers-exceeded-media-write-speed-is-too-low-on-the-switch
+
+- id: image-capture-claiming
+  title: macOS is holding the USB interface
+  confidence: high
+  close: false
+  labels: ["area:usb"]
+  match:
+    any_of:
+      - "ptpcamerad?"
+      - "image ?capture"
+      - "android file transfer"
+      - "could ?n.?t claim (the )?interface"
+      - "libusb_claim_interface"
+      - "(device|interface) (is )?busy"
+      - "LIBUSB_ERROR_(ACCESS|BUSY)"
+  answer: |
+    macOS auto-launches its own PTP handlers the moment the console enumerates,
+    and whichever process gets there first owns the interface. SwitchMTP does a
+    USB port reset to take it back, which works in the normal case.
+
+    Two things to check:
+
+    1. Quit **Image Capture**, **Photos**, and **Android File Transfer** if any
+       are running, then unplug and replug the console.
+    2. Run the built-in doctor and paste the output here — it names the exact
+       process holding the interface, which turns this from guesswork into a
+       fact:
+
+       ```shell
+       /Applications/SwitchMTP.app/Contents/MacOS/switchmtp-cli --json doctor
+       ```
+
+    SwitchMTP never quits anything on your Mac by itself; see
+    **Help ▸ How SwitchMTP connects** in the app for exactly what it does do.
+  doc: docs/TROUBLESHOOTING.md#device-not-detected
+
+- id: wrong-usb-mode
+  title: Console is in a homebrew USB mode that is not MTP
+  confidence: high
+  close: false
+  labels: ["area:usb"]
+  match:
+    any_of:
+      - "0x_?3000"
+      - "057e[: _]?3000"
+      - "dbibackend"
+      - "(shows?|showed|appears?|appeared|detected|enumerates?|listed)\\s+(up\\s+)?as[^.\\n]{0,40}(3000|dbibackend|goldleaf|awoo|usbloader)"
+      - "(running|using|launch\\w*|start\\w*|selected)\\s+(ns-?usbloader|awoo[- ]?installer|goldleaf)"
+      - "(homebrew|custom|different|wrong) (usb )?(mode|protocol)"
+    none_of:
+      - "201d"
+  answer: |
+    That is a different USB protocol, not MTP. DBI's own "DBIbackend" mode
+    (`0x057E:0x3000`), Goldleaf's USB mode and Awoo/ns-usbloader all speak
+    protocols SwitchMTP deliberately does not implement.
+
+    On the DBI main menu press **X**, then choose **Run MTP responder**. The
+    console will re-enumerate as `0x057E:0x201D` and SwitchMTP will pick it up.
+    The app shows a banner when it detects this situation.
+  doc: docs/TROUBLESHOOTING.md#switch-appears-in-a-homebrew-usb-mode
+
+- id: no-dates
+  title: All dates render as an em dash
+  confidence: high
+  close: true
+  labels: ["area:app", "status:by-design"]
+  match:
+    any_of:
+      - "date(s)?( column| field)? (are |is |all )?(show|shown|display|render)\\w*\\s+(as )?(-|—|–|blank|empty|nothing)"
+      - "no (modification |modified |creation )?dates?"
+      - "date (column|field) (is )?(empty|blank)"
+  answer: |
+    This is expected. DBI's MTP responder does not report `ObjectInfo`
+    timestamps at all — it sends no date fields for any object.
+
+    SwitchMTP shows `—` rather than inventing a value, because earlier versions
+    substituted "now" and that made every file look freshly modified. Nothing
+    can be done about this on the Mac side; it needs a change in DBI.
+  doc: docs/TROUBLESHOOTING.md#dates-all-show-
+
+- id: size-unknown
+  title: A file over 4 GB shows an unknown size
+  confidence: high
+  close: false
+  labels: ["area:transfer", "status:by-design"]
+  match:
+    any_of:
+      - "(file )?size (column )?(is |shows |shown as |displays )?(unknown|—|blank|empty|zero)"
+      - "(size|sizes) (are |is )?(not |never )?(shown|displayed|reported)"
+      - "shows 4\\.?\\d* ?gb (for|instead)"
+      - "0xf{8}"
+    none_of:
+      - "\\b(crash\\w*|corrupt\\w*|truncat\\w*|deleted)\\b"
+  answer: |
+    MTP's `ObjectInfo` carries a 32-bit size, so anything at or above 4 GiB
+    overflows to `0xFFFFFFFF`. The correct size has to come from
+    `GetObjectPropValue(ObjectSize)`, which DBI does not implement for every
+    storage.
+
+    Rather than display a confidently wrong "4 GB", SwitchMTP marks the size as
+    unknown and shows `—`. Transfers of those files still work: the byte count
+    is taken from what actually arrives, not from the declared size.
+  doc: docs/TROUBLESHOOTING.md#files-over-4-gb-size-shown-as-
+
+- id: readonly-storage
+  title: Rename, delete or New Folder is greyed out
+  confidence: high
+  close: false
+  labels: ["area:app", "status:by-design"]
+  match:
+    any_of:
+      - "(rename|delete|new folder|mkdir|create folder)\\w*\\s+(is |are )?(grey|gray|disabled|not available|does ?n.?t work)"
+      - "can'?t (rename|delete|create a folder)"
+      - "(storage|album|nand|installed games) (is |are )?read.?only"
+  answer: |
+    SwitchMTP disables an operation when the console says it is not available,
+    rather than letting it fail half-way.
+
+    Two separate things cause this:
+
+    * **The storage is read-only.** `Installed games`, `Album` and the NAND
+      storages are read-only in DBI. The install storages are write-only drop
+      targets, so they cannot be browsed or renamed either.
+    * **The operation is not advertised.** Rename needs
+      `SetObjectPropValue`, which DBI does not implement, so rename is disabled
+      everywhere rather than failing on use.
+
+    If it is greyed out on the SD card for something other than rename, that is
+    a real bug — please say which storage and which operation.
+  doc: docs/TROUBLESHOOTING.md#rename--delete--new-folder-greyed-out
+
+- id: install-storage-not-browsable
+  title: Install storages will not open
+  confidence: high
+  close: false
+  labels: ["area:app", "status:by-design"]
+  match:
+    any_of:
+      - "install (to )?(sd|nand|internal)\\w* (is |are )?(empty|won'?t open|does ?n.?t open|not browsable|has nothing)"
+      - "install (storage|target|folder) (is )?(empty|won'?t open|does ?n.?t open|not browsable)"
+      - "can'?t (open|browse|enter) (the )?install"
+  answer: |
+    "Install to SD" and "Install to Internal" are not folders. DBI exposes them
+    as write-only storages: dropping an `.nsp`, `.nsz`, `.xci` or `.xcz` onto
+    one starts an installation on the console. There is nothing to list inside
+    them, so SwitchMTP renders them as drop targets rather than as browsable
+    folders.
+
+    Installation progress is shown on the Switch screen. MTP has no completion
+    event for this, so the app cannot report when it has finished.
+  doc: docs/TROUBLESHOOTING.md#install-target-does-not-open-as-a-folder
+
+- id: gatekeeper
+  title: Gatekeeper refuses to open the app
+  confidence: high
+  close: true
+  labels: ["area:build"]
+  match:
+    any_of:
+      - "is damaged and can.?t be opened"
+      - "cannot be opened because the developer cannot be verified"
+      - "unidentified developer"
+      - "gatekeeper"
+      - "\\bquarantine\\b"
+      - "apple could not verify"
+      - "contains malware"
+  answer: |
+    Release builds are signed ad-hoc, not with a paid Developer ID, so macOS
+    quarantines the download. The binary is not damaged.
+
+    ```shell
+    xattr -dr com.apple.quarantine /Applications/SwitchMTP.app
+    ```
+
+    Then open it normally. Every release is built in public by GitHub Actions,
+    so you can check the workflow run that produced the file you downloaded.
+  doc: docs/TROUBLESHOOTING.md#gatekeeper-switchmtp-is-damaged-and-cant-be-opened-or-cannot-be-verified
+
+- id: lookalike-device
+  title: A non-Switch device appears in the sidebar
+  confidence: high
+  close: false
+  labels: ["area:usb"]
+  match:
+    any_of:
+      - "(ethernet|network) adapt(er|or)"
+      - "wrong device (appears|shows|listed)"
+      - "device that is ?n.?t (a|my) switch"
+      - "rtl8\\d{3}"
+      - "0x?0bda"
+  answer: |
+    Older builds matched candidate devices purely on USB endpoint shape — one
+    bulk-in, one bulk-out, one interrupt-in — and some USB Ethernet adapters
+    have exactly that layout. Version 1.0.0 and later also check the interface
+    class, so they no longer appear.
+
+    If you are on 1.0.0 or later and still see something that is not a console,
+    that is a bug worth having: please paste the doctor output, which includes
+    the vendor and product IDs and the interface class of everything on the bus.
+  doc: docs/TROUBLESHOOTING.md#a-usb-device-that-is-not-a-switch-appears-in-the-sidebar
+
+- id: single-session
+  title: The app and the CLI cannot both be connected
+  confidence: high
+  close: false
+  labels: ["area:cli"]
+  match:
+    any_of:
+      - "cli (and|&) (the )?app"
+      - "both (the )?app and (the )?(cli|command line)"
+      - "already (in use|claimed|connected)"
+    all_of:
+      - "(cli|command.?line|terminal)"
+  answer: |
+    MTP is a single-session protocol: one process at a time owns the device. If
+    the app is connected, the CLI cannot connect, and the other way round.
+
+    Disconnect in the app first (or quit it), then run the CLI command.
+  doc: docs/TROUBLESHOOTING.md#transfers-stall-or-time-out

@@ -1,0 +1,331 @@
+#!/usr/bin/env python3
+"""Triage SwitchMTP issues.
+
+Run against one issue:
+
+    python scripts/triage/triage.py --repo fratei/SwitchMTP --issue 12 --dry-run
+
+Run against everything that needs a look (what the daily workflow does):
+
+    python scripts/triage/triage.py --repo fratei/SwitchMTP --all
+
+Nothing here needs a secret beyond a token that can read and label issues, and
+`--dry-run` prints exactly what would happen without touching the repository.
+"""
+
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import sys
+from pathlib import Path
+from typing import Any, Sequence
+
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import yaml  # noqa: E402
+
+import report  # noqa: E402
+from forms import (  # noqa: E402
+    IssueForm,
+    apply_followups,
+    load_forms,
+    parse_issue,
+    validate_forms,
+)
+from gh import GitHub, token_from_env  # noqa: E402
+from rules import (  # noqa: E402
+    MARKER,
+    IssueRef,
+    Verdict,
+    evaluate,
+    load_known_issues,
+)
+
+ROOT = Path(__file__).resolve().parents[2]
+TEMPLATE_DIR = ROOT / ".github" / "ISSUE_TEMPLATE"
+KNOWN_ISSUES = Path(__file__).resolve().parent / "known_issues.yml"
+
+#: Issues carrying any of these are considered settled; the bot leaves them be.
+HANDS_OFF = {
+    "status:confirmed",
+    "status:in-progress",
+    "status:wontfix",
+    "status:by-design",
+    "status:blocked-upstream",
+    "triage:delegated",
+    "help wanted",
+    "good first issue",
+}
+
+DELEGATION_INSTRUCTIONS = """\
+This issue was routed here by SwitchMTP's automated triage because the report \
+is complete and reproducible.
+
+Before changing anything, read `docs/TROUBLESHOOTING.md` and \
+`docs/HARDWARE_VALIDATION.md`. Several behaviours that look like bugs are \
+deliberate: DBI reports no timestamps, sizes at or above 4 GiB are genuinely \
+unknown, install storages are write-only, and rename is disabled because DBI \
+does not implement `SetObjectPropValue`.
+
+Two rules that are easy to break by accident:
+
+* `claimWithRetry()` in `third_party/go-mtpfs/mtp/mtp.go` resets the device and \
+claims it immediately. Do not add a delay there — it was measured, and waiting \
+makes the claim fail.
+* Device discovery must never open or claim a candidate just to describe it. \
+Doing so triggers a reset storm.
+
+There is no console attached to CI, so every change must be covered by unit \
+tests against `backend/fake`. If the fix cannot be verified without hardware, \
+say so in the pull request rather than guessing.
+"""
+
+
+def load_known(path: Path) -> list[Any]:
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or []
+    return load_known_issues(data)
+
+
+def existing_triage_comment(comments: Sequence[dict[str, Any]]) -> dict[str, Any] | None:
+    for comment in comments:
+        if MARKER in (comment.get("body") or ""):
+            return comment
+    return None
+
+
+def followup_bodies(
+    comments: Sequence[dict[str, Any]], author: str
+) -> list[str]:
+    """Comments that may legitimately complete the report.
+
+    Restricted to the person who opened the issue. Anything the bot wrote is
+    excluded outright: its needs-info list quotes the field labels back, and
+    reading that as an answer would let the bot satisfy itself.
+    """
+    out: list[str] = []
+    for comment in comments:
+        body = comment.get("body") or ""
+        if MARKER in body:
+            continue
+        user = comment.get("user") or {}
+        if user.get("type") == "Bot":
+            continue
+        if author and user.get("login") != author:
+            continue
+        out.append(body)
+    return out
+
+
+def to_ref(issue: dict[str, Any]) -> IssueRef:
+    return IssueRef(
+        number=int(issue["number"]),
+        title=str(issue.get("title") or ""),
+        body=str(issue.get("body") or "")[:4000],
+        labels=tuple(l["name"] for l in issue.get("labels") or []),
+    )
+
+
+def triage_one(
+    api: GitHub,
+    issue: dict[str, Any],
+    *,
+    forms: Sequence[IssueForm],
+    known: Sequence[Any],
+    others: Sequence[IssueRef],
+    current_version: str,
+    force: bool = False,
+) -> Verdict | None:
+    number = int(issue["number"])
+    labels = [l["name"] for l in issue.get("labels") or []]
+
+    if not force and set(labels) & HANDS_OFF:
+        print(f"#{number}: skipped, carries {sorted(set(labels) & HANDS_OFF)}")
+        return None
+
+    parsed = parse_issue(issue.get("body") or "", forms)
+    comments = api.comments(number)
+    author = ((issue.get("user") or {}).get("login")) or ""
+    apply_followups(parsed, followup_bodies(comments, author))
+
+    verdict = evaluate(
+        title=issue.get("title") or "",
+        body=issue.get("body") or "",
+        parsed=parsed,
+        existing_labels=labels,
+        known_issues=known,
+        open_issues=[o for o in others if o.number != number],
+        current_version=current_version,
+    )
+
+    body = report.render(verdict, parsed, dry_run=api.dry_run)
+    previous = existing_triage_comment(comments)
+
+    if previous is None:
+        api.create_comment(number, body)
+    elif (previous.get("body") or "").strip() != body.strip():
+        api.update_comment(int(previous["id"]), body)
+    else:
+        print(f"#{number}: comment unchanged")
+
+    api.add_labels(number, verdict.add_labels)
+    for label in verdict.remove_labels:
+        api.remove_label(number, label)
+
+    # Only close on the first pass. If a human reopened it, leave it alone.
+    if verdict.should_close and previous is None and issue.get("state") == "open":
+        api.close_issue(number, "completed")
+
+    print(
+        f"#{number}: {verdict.kind}"
+        + (f" (duplicate of #{verdict.duplicate_of})" if verdict.duplicate_of else "")
+        + f" +{verdict.add_labels or '[]'}"
+        + (f" -{verdict.remove_labels}" if verdict.remove_labels else "")
+    )
+    return verdict
+
+
+def main(argv: Sequence[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--repo", default=os.environ.get("GITHUB_REPOSITORY", ""))
+    parser.add_argument("--issue", type=int, help="triage a single issue number")
+    parser.add_argument("--all", action="store_true", help="triage every open issue")
+    parser.add_argument(
+        "--limit", type=int, default=40, help="cap on issues handled in one run"
+    )
+    parser.add_argument("--dry-run", action="store_true")
+    parser.add_argument(
+        "--force", action="store_true", help="ignore the hands-off labels"
+    )
+    parser.add_argument(
+        "--check-templates",
+        action="store_true",
+        help="validate the issue forms and exit",
+    )
+    parser.add_argument(
+        "--delegate",
+        action="store_true",
+        help="hand pr-recommended issues to the Copilot coding agent",
+    )
+    parser.add_argument("--output", help="write a JSON summary here")
+    args = parser.parse_args(argv)
+
+    problems = validate_forms(TEMPLATE_DIR)
+    if problems:
+        for problem in problems:
+            print(f"::error::{problem}")
+        return 1
+    if args.check_templates:
+        print(f"issue forms in {TEMPLATE_DIR.relative_to(ROOT)}: OK")
+        return 0
+
+    if not args.repo:
+        parser.error("--repo is required (or set GITHUB_REPOSITORY)")
+    if not args.issue and not args.all:
+        parser.error("pass --issue N or --all")
+
+    token = token_from_env()
+    if not token:
+        print("::error::no token in TRIAGE_TOKEN, GITHUB_TOKEN or GH_TOKEN")
+        return 1
+
+    api = GitHub(token, args.repo, dry_run=args.dry_run)
+    forms = load_forms(TEMPLATE_DIR)
+    known = load_known(KNOWN_ISSUES)
+    current_version = api.latest_release_tag().lstrip("v")
+
+    open_issues = api.open_issues()
+    refs = [to_ref(i) for i in open_issues]
+
+    if args.issue:
+        targets = [api.issue(args.issue)]
+    else:
+        targets = [i for i in open_issues if not (set(
+            l["name"] for l in i.get("labels") or []
+        ) & HANDS_OFF)][: args.limit]
+
+    results: list[dict[str, Any]] = []
+    delegate_to_copilot: list[int] = []
+
+    for issue in targets:
+        try:
+            verdict = triage_one(
+                api,
+                issue,
+                forms=forms,
+                known=known,
+                others=refs,
+                current_version=current_version,
+                force=args.force or bool(args.issue),
+            )
+        except Exception as exc:  # keep going; one bad issue must not stop the run
+            print(f"::warning::#{issue.get('number')} failed: {exc}")
+            continue
+        if verdict is None:
+            continue
+        results.append(
+            {
+                "number": int(issue["number"]),
+                "title": issue.get("title"),
+                "verdict": verdict.kind,
+                "labels": verdict.add_labels,
+                "duplicate_of": verdict.duplicate_of,
+                "reasons": verdict.reasons,
+            }
+        )
+        if verdict.kind == "pr-recommended":
+            delegate_to_copilot.append(int(issue["number"]))
+
+    if args.delegate and delegate_to_copilot:
+        if api.copilot_can_be_assigned():
+            for number in delegate_to_copilot:
+                if api.assign_copilot(number, DELEGATION_INSTRUCTIONS):
+                    api.add_labels(number, ["triage:delegated"])
+        else:
+            print(
+                "::notice::the Copilot coding agent is not available to this token, "
+                "so issues were labelled but not delegated"
+            )
+
+    summary = {
+        "repo": args.repo,
+        "current_version": current_version,
+        "considered": len(targets),
+        "acted_on": len(results),
+        "results": results,
+        "delegated": delegate_to_copilot if args.delegate else [],
+    }
+    if args.output:
+        Path(args.output).write_text(json.dumps(summary, indent=2), encoding="utf-8")
+
+    step_summary = os.environ.get("GITHUB_STEP_SUMMARY")
+    if step_summary:
+        with open(step_summary, "a", encoding="utf-8") as handle:
+            handle.write(_markdown_summary(summary))
+
+    print(json.dumps({k: v for k, v in summary.items() if k != "results"}, indent=2))
+    return 0
+
+
+def _markdown_summary(summary: dict[str, Any]) -> str:
+    lines = ["## Issue triage", ""]
+    if not summary["results"]:
+        lines.append("Nothing needed attention.")
+        return "\n".join(lines) + "\n"
+    lines.append("| Issue | Verdict | Labels |")
+    lines.append("| --- | --- | --- |")
+    for row in summary["results"]:
+        labels = ", ".join(f"`{l}`" for l in row["labels"]) or "—"
+        lines.append(f"| #{row['number']} | {row['verdict']} | {labels} |")
+    if summary["delegated"]:
+        lines.append("")
+        lines.append(
+            "Delegated to the coding agent: "
+            + ", ".join(f"#{n}" for n in summary["delegated"])
+        )
+    return "\n".join(lines) + "\n"
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
