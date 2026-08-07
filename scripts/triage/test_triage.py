@@ -32,6 +32,7 @@ from forms import (
 )
 from rules import (
     MARKER,
+    searchable_text,
     IssueRef,
     evaluate,
     find_duplicate,
@@ -961,3 +962,67 @@ def test_the_disputed_note_replaces_the_conclusion_rather_than_repeating_it(reop
     assert "triage:disputed" in note
     # Only claim a reopen when one actually happened; a duplicate is never closed.
     assert ("reopened" in note) == bool(reopened)
+
+
+# ---------------------------------------- routing sees only what was written
+
+def test_dropdown_values_never_reach_the_keyword_router():
+    """A real misroute: "DMG from the Releases page" put a crash in area:build."""
+    body = render_body(BUG, complete_bug(**{
+        "what-happened": "The app quits when I open a folder with a lot of files in it.",
+        "steps": "1. Connect the console\n2. Open /Nintendo/Contents/registered\n3. It quits",
+        "install-source": "DMG from the Releases page",
+    }))
+    _, verdict = judge(body, title="Crash opening a folder with many files")
+    assert "area:build" not in verdict.add_labels, verdict.add_labels
+
+
+@pytest.mark.parametrize("field_id,value,forbidden", [
+    ("install-source", "DMG from the Releases page", "area:build"),
+    ("install-source", "Built from source", "area:build"),
+    ("connection", "Direct USB-C cable to the Mac", "area:usb"),
+    ("dbi-mode", "Applet mode (launched from the album)", "area:app"),
+])
+def test_no_metadata_field_can_route_an_issue(field_id, value, forbidden):
+    body = render_body(BUG, complete_bug(**{
+        field_id: value,
+        "what-happened": "The window is blank after launching.",
+        "steps": "1. Launch the app\n2. The window is blank\n3. Quit and relaunch, same",
+        "area": "The window, menus or general behaviour",
+    }))
+    _, verdict = judge(body, title="Blank window")
+    assert verdict.add_labels.count("area:app") <= 1
+    if forbidden != "area:app":
+        assert forbidden not in verdict.add_labels, (
+            f"{field_id}={value!r} leaked {forbidden}: {verdict.add_labels}"
+        )
+
+
+def test_prose_still_routes():
+    """The allowlist must not have thrown the baby out with the bathwater.
+
+    The area dropdown is left blank on purpose: when it is set it wins outright
+    and the keyword router never runs, which would make this test vacuous.
+    """
+    values = complete_bug(**{
+        "what-happened": "libusb fails to claim the interface and the console is never detected.",
+        "steps": "1. Plug in the console\n2. Open SwitchMTP\n3. Nothing appears in the sidebar",
+    })
+    values.pop("area", None)
+    body = render_body(BUG, values)
+    _, verdict = judge(body, title="Console not detected")
+    assert "area:usb" in verdict.add_labels, verdict.add_labels
+
+
+def test_searchable_text_contains_prose_and_nothing_else():
+    values = complete_bug(**{
+        "what-happened": "UNIQUEPROSE the app quits",
+        "diagnostics": "UNIQUEDIAG",
+        "install-source": "DMG from the Releases page",
+    })
+    parsed = parse_issue(render_body(BUG, values), FORMS)
+    text = searchable_text("A title", parsed, "")
+    assert "UNIQUEPROSE" in text
+    assert "UNIQUEDIAG" not in text
+    assert "DMG" not in text
+    assert "Apple Silicon" not in text

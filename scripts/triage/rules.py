@@ -195,18 +195,34 @@ class Verdict:
 def searchable_text(title: str, parsed: ParsedIssue, body: str) -> str:
     """The text known-issue rules and keyword routing run against.
 
-    Deliberately excludes the pasted diagnostics and log fields: they are full
-    of device names and paths that trip keyword rules constantly, and matching
-    on them produces confident nonsense.
+    The title plus the reporter's own prose, and nothing else.
+
+    This is an allowlist rather than a denylist, because a denylist is only ever
+    one new form field away from being wrong. Dropdowns hold a controlled
+    vocabulary that reads like prose and matches keyword rules by accident — an
+    install source of "DMG from the Releases page" routed a crash report to
+    `area:build`. They already have precise routing of their own through
+    `AREA_BY_OPTION` and the `fields:` constraints in the knowledge base, so
+    they have no business here. Short inputs are version numbers.
+
+    The pasted diagnostics and logs are excluded for the same reason at greater
+    volume: they are full of device names and paths, and matching on them
+    produces confident nonsense.
     """
     if parsed.form is None:
         return f"{title}\n{body}"
+
+    # Dumps the reporter pasted rather than wrote.
     skip = {"diagnostics", "logs", "screenshots", "checks"}
+    prose = {
+        f.id
+        for f in parsed.form.fields
+        if f.type == "textarea" and f.id not in skip
+    }
     parts = [title]
     for field_id, value in parsed.values.items():
-        if field_id in skip:
-            continue
-        parts.append(value)
+        if field_id in prose:
+            parts.append(value)
     return "\n".join(p for p in parts if p)
 
 
