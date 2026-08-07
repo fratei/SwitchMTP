@@ -45,12 +45,19 @@ type USBClient struct {
 // USBDeviceSummary is one raw USB device, used to show what the host can see
 // even when we cannot claim it.
 type USBDeviceSummary struct {
-	VendorID    uint16 `json:"vendorId"`
-	ProductID   uint16 `json:"productId"`
-	Class       uint8  `json:"deviceClass"`
-	IsNintendo  bool   `json:"isNintendo"`
+	VendorID   uint16 `json:"vendorId"`
+	ProductID  uint16 `json:"productId"`
+	Class      uint8  `json:"deviceClass"`
+	IsNintendo bool   `json:"isNintendo"`
+	// Description is populated only for Nintendo hardware; callers that show
+	// every device should fall back to the USB base class rather than render
+	// an empty cell.
 	Description string `json:"description"`
-	MTPCapable  bool   `json:"mtpCapable"`
+	// MTPCapable means the device has the endpoint layout MTP uses, matching
+	// the candidate filter in the underlying MTP library. It is a structural
+	// hint, not an identification: USB ethernet adapters and other hardware
+	// share that layout. Do not present it to users as "this is an MTP device".
+	MTPCapable bool `json:"mtpCapable"`
 }
 
 // Diagnostics is the report shown in the troubleshooting UI and attached to

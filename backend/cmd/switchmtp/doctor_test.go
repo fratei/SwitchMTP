@@ -109,3 +109,27 @@ func TestUdevInstructionsDoNotDriftFromThePackagedFile(t *testing.T) {
 	}
 	t.Logf("checked %d rule lines against the doctor advice", rules)
 }
+
+// The MTP-capable flag is a structural endpoint test, so ordinary hardware —
+// USB ethernet adapters especially — trips it. Labelling that column "MTP?"
+// tells a user reading their own bug report that their network adapter is a
+// Switch. The wording must stay hedged.
+func TestDeviceTableDoesNotClaimNonSwitchHardwareIsMTP(t *testing.T) {
+	t.Helper()
+
+	if strings.Contains(doctorDeviceTableHeading, "MTP?") {
+		t.Errorf("device table column is headed %q, which overclaims: the flag only "+
+			"reports an endpoint layout, not an identification",
+			doctorDeviceTableHeading)
+	}
+	if !strings.Contains(strings.ToLower(doctorDeviceTableHeading), "candidate") {
+		t.Errorf("device table column %q should describe the flag as a candidate",
+			doctorDeviceTableHeading)
+	}
+	for _, want := range []string{"endpoint layout", "not a Switch"} {
+		if !strings.Contains(doctorDeviceTableNote, want) {
+			t.Errorf("explanatory note is missing %q; note was:\n%s",
+				want, doctorDeviceTableNote)
+		}
+	}
+}

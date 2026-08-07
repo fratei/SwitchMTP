@@ -22,6 +22,17 @@ import (
 	"github.com/fratei/SwitchMTP/backend/nxmtp"
 )
 
+// The MTP-capable flag is a structural test for the bulk-in/bulk-out/
+// interrupt-in endpoint trio, mirroring the candidate filter in the underlying
+// MTP library. Plenty of non-MTP hardware has that layout — USB ethernet
+// adapters especially — so the column must say what it actually measures
+// rather than assert the device is MTP. Pinned by a test.
+const (
+	doctorDeviceTableHeading = "MTP CANDIDATE"
+	doctorDeviceTableNote    = `"MTP candidate" means the device has the USB endpoint layout MTP uses.
+Other hardware shares that layout, so a "yes" here is not a Switch.`
+)
+
 // cmdDoctor explains why the device cannot be reached.
 //
 // This is the command that earns its keep on Linux. macOS has exactly one
@@ -67,7 +78,7 @@ func cmdDoctor(opts options, args []string) error {
 
 	if len(d.Devices) > 0 {
 		fmt.Println("\nUSB devices seen:")
-		t := newTable("VID:PID", "CLASS", "MTP?", "DESCRIPTION")
+		t := newTable("VID:PID", "CLASS", doctorDeviceTableHeading, "DESCRIPTION")
 		// Nintendo hardware first: in a bug report attached to a list of two
 		// dozen hubs and webcams, the one device that matters should not need
 		// hunting for.
@@ -95,6 +106,7 @@ func cmdDoctor(opts options, args []string) error {
 				fmt.Sprintf("%02x", dev.Class), mtpFlag, desc)
 		}
 		t.render(os.Stdout)
+		fmt.Println("\n" + doctorDeviceTableNote)
 	}
 
 	if len(d.Blockers) > 0 {
