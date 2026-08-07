@@ -35,6 +35,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- **Pressing Connect with no console attached showed a raw parser error.** The button stays
+  enabled with nothing plugged in — retrying after waking the console or starting the
+  responder is the normal thing to do — but it passed an empty device id straight to the
+  backend, which failed to parse it and put its own diagnostics on screen:
+  `invalidInput: parseDeviceId: malformed device id ""`. That is not an answer to "why
+  can't it see my Switch", and it was the first thing anyone opening the app before
+  launching DBI would have seen. Connect now adopts a discovered console if one turned up
+  after the last scan, and otherwise says what to check.
 - **The file browser hung on "Loading files…" after connecting.** Clearing the operation
   state machine was moved into the same main-queue block as the follow-up directory walk,
   but it landed *after* the call that arms it. `loadFiles(at:)` claims the state machine by

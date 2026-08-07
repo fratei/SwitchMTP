@@ -488,6 +488,13 @@
       "zh-Hans": "在 Switch 上启动 DBI。",
       "zh-Hant": "在 Switch 上啟動 DBI。"
     },
+    "No console found. Check the cable, then launch DBI and choose \"Run MTP responder\".": {
+      "es": "No se ha encontrado ninguna consola. Comprueba el cable y luego abre DBI y elige \"Run MTP responder\".",
+      "ja": "本体が見つかりません。ケーブルを確認してから DBI を起動し、「Run MTP responder」を選んでください。",
+      "ru": "Консоль не найдена. Проверьте кабель, затем запустите DBI и выберите «Run MTP responder».",
+      "zh-Hans": "未找到主机。请检查数据线，然后启动 DBI 并选择“Run MTP responder”。",
+      "zh-Hant": "找不到主機。請檢查傳輸線，然後啟動 DBI 並選擇「Run MTP responder」。"
+    },
     "No files to install.": {
       "es": "No hay archivos para instalar.",
       "ja": "インストールするファイルがありません。",

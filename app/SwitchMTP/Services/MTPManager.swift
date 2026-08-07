@@ -766,6 +766,29 @@ final class MTPManager: ObservableObject {
         // menu bar stays live behind the first-run disclosure, so the guard is
         // repeated here rather than relying on that chain holding.
         guard isStarted else { return }
+
+        // Connect stays enabled with nothing attached, because retrying after
+        // waking the console or starting the responder is the normal thing to
+        // do. Without this the empty id reached ParseDeviceID, which failed and
+        // put its own diagnostics on screen -- "malformed device id" is not an
+        // answer to "why can't it see my Switch", and it is the first thing
+        // anyone who opens the app before launching DBI would have seen.
+        var target = deviceId
+        if target.isEmpty {
+            guard let candidate = availableDevices.first else {
+                DispatchQueue.main.async {
+                    self.connectionState = .disconnected
+                    self.errorMessage = String(
+                        localized: "No console found. Check the cable, then launch DBI and choose \"Run MTP responder\".",
+                        comment: "Shown when Connect is pressed with no device attached"
+                    )
+                }
+                return
+            }
+            target = candidate.id
+            deviceId = target
+        }
+
         DispatchQueue.main.async {
             // An explicit connect is always honoured: clear any auto-connect
             // give-up state so the user is never locked out by the guard.
@@ -776,7 +799,7 @@ final class MTPManager: ObservableObject {
         }
         
         operation = .initializing
-        let input: [String: Any] = ["deviceId": self.deviceId]
+        let input: [String: Any] = ["deviceId": target]
         if let jsonString = toJsonString(input) {
             DispatchQueue.global(qos: .userInitiated).async {
                 jsonString.withCString { ptr in
