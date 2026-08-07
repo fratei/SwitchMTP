@@ -16,7 +16,7 @@ standard MTP mechanism.
 ## Requirements
 
 - **macOS 12 (Monterey) or later**
-- A Nintendo Switch (original / Lite / OLED) with **[DBI](https://github.com/rashevskyv/dbi)
+- A Nintendo Switch (original / Mariko / Lite / OLED) with **[DBI](https://github.com/rashevskyv/dbi)
   installed**
 - A **USB-C data cable** — charge-only cables do not carry USB data and will not work
 
