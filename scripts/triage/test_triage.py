@@ -683,10 +683,119 @@ def test_a_followup_using_the_heading_form_also_works():
     assert parsed.get("macos") == "26.4"
 
 
+def test_a_thin_answer_can_be_expanded_in_a_comment():
+    """Triage rejects a one-line "steps to reproduce" and asks for more.
+
+    If a follow-up could only fill fields that were completely blank, that
+    request would be unanswerable and the issue would sit on `needs-info`
+    forever — which is exactly what happened on the first real report.
+    """
+    values = complete_bug() | {"steps": "It just crashes."}
+    parsed = parse_issue(render_body(BUG, values), FORMS)
+    _, verdict = judge(render_body(BUG, values), title="Crash on open")
+    assert verdict.kind == "needs-info"
+
+    apply_followups(parsed, [
+        "Sorry, missed that.\n"
+        "\n"
+        "**Steps to reproduce**:\n"
+        "1. Launch DBI in title mode and pick MTP responder\n"
+        "2. Open SwitchMTP and wait for the console\n"
+        "3. Open /Nintendo/Contents/registered\n"
+        "4. The app quits within a second, every time\n"
+    ])
+
+    steps = parsed.get("steps")
+    assert "It just crashes." in steps, "the original words must survive"
+    assert "1. Launch DBI in title mode" in steps
+
+    verdict = evaluate(
+        title="Crash on open",
+        body=render_body(BUG, values),
+        parsed=parsed,
+        existing_labels=["type:bug", "needs-info"],
+        known_issues=KNOWN_ISSUES,
+        current_version="",
+    )
+    assert verdict.kind != "needs-info"
+    assert "needs-info" in verdict.remove_labels
+
+
+def test_folding_the_same_followup_in_twice_changes_nothing():
+    """Triage re-runs daily over the same comments; it must not accumulate."""
+    values = complete_bug() | {"steps": "It just crashes."}
+    body = render_body(BUG, values)
+    comment = "Steps to reproduce:\n1. Open the app\n2. It dies\n"
+
+    once = apply_followups(parse_issue(body, FORMS), [comment]).get("steps")
+    twice = apply_followups(parse_issue(body, FORMS), [comment, comment]).get("steps")
+    assert once == twice
+
+
 def test_a_followup_never_overwrites_the_original_answer():
     parsed = parse_issue(render_body(BUG, complete_bug()), FORMS)
     apply_followups(parsed, ["macOS version: 15.0"])
     assert parsed.get("macos") == "26.6"
+
+
+def test_steps_written_underneath_their_label_are_understood():
+    """Triage asks for numbered steps; nobody writes numbered steps on one line.
+
+    The reporter is answering exactly as instructed, so failing to read this
+    would leave the issue stuck on `needs-info` forever with no way out.
+    """
+    body = render_body(BUG, {k: v for k, v in complete_bug().items() if k != "steps"})
+    parsed = parse_issue(body, FORMS)
+    assert not parsed.has("steps")
+
+    apply_followups(parsed, [
+        "Sorry, here they are.\n"
+        "\n"
+        "**Steps to reproduce**:\n"
+        "1. Launch DBI in title mode\n"
+        "2. Select every file on the SD card\n"
+        "3. Press Download: it dies partway through\n"
+        "\n"
+        "Happens every time.\n"
+    ])
+
+    steps = parsed.get("steps")
+    assert "1. Launch DBI in title mode" in steps
+    # A numbered step containing a colon is a step, not a new field label.
+    assert "3. Press Download: it dies partway through" in steps
+
+
+def test_a_block_answer_stops_at_the_next_field():
+    body = render_body(
+        BUG,
+        {k: v for k, v in complete_bug().items() if k not in ("steps", "macos")},
+    )
+    parsed = parse_issue(body, FORMS)
+
+    apply_followups(parsed, [
+        "Steps to reproduce:\n"
+        "1. Plug the Switch in\n"
+        "2. Wait\n"
+        "macOS version: 26.5\n"
+    ])
+
+    assert parsed.get("macos") == "26.5"
+    assert "macOS version" not in parsed.get("steps")
+    assert "2. Wait" in parsed.get("steps")
+
+
+def test_a_single_line_field_never_swallows_the_paragraph_below_it():
+    """Absorbing lines is only safe for fields that can hold them."""
+    body = render_body(BUG, {k: v for k, v in complete_bug().items() if k != "macos"})
+    parsed = parse_issue(body, FORMS)
+
+    apply_followups(parsed, [
+        "macOS version:\n"
+        "I honestly do not remember, it is whatever shipped on the machine.\n"
+    ])
+
+    # Better to still be missing the field than to record a paragraph as one.
+    assert not parsed.has("macos")
 
 
 def test_the_bots_own_comment_cannot_satisfy_the_request():

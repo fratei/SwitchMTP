@@ -22,3 +22,8 @@ app/*.xcodeproj/xcuserdata/
 
 # macOS
 .DS_Store
+
+# Python bytecode from scripts/triage
+__pycache__/
+*.py[cod]
+.pytest_cache/

@@ -20,7 +20,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Iterable, Mapping, Sequence
 
 import yaml
 
@@ -347,6 +347,9 @@ def parse_issue(body: str, forms: Iterable[IssueForm]) -> ParsedIssue:
 
 
 _INLINE_FIELD = re.compile(r"^(?P<label>[^:\n]{3,120}?)[ \t]*[:：][ \t]*(?P<value>\S.*)$")
+_BLOCK_FIELD = re.compile(r"^(?P<label>[^:\n]{3,120}?)[ \t]*[:：][ \t]*$")
+_ANY_HEADING = re.compile(r"^#{1,6}[ \t]")
+_RULE = re.compile(r"^([-*_])(?:[ \t]*\1){2,}[ \t]*$")
 _LEADING_NOISE = re.compile(r"^[ \t>*\-+\d.)]+")
 
 
@@ -363,6 +366,76 @@ def _label_candidates(prefix: str) -> list[str]:
     return [" ".join(words[i:]) for i in range(max(0, len(words) - 6), len(words))]
 
 
+def _resolve_label(
+    prefix: str, lookup: Mapping[str, FieldSpec], parsed: ParsedIssue
+) -> FieldSpec | None:
+    """The field a `Label:` prefix refers to, if any."""
+    for candidate in _label_candidates(prefix):
+        spec = lookup.get(normalise_label(candidate))
+        if spec is None or spec.type == "checkboxes":
+            continue
+        # A single-line answer that is already recorded is settled; only prose
+        # fields stay open, because those are the ones triage asks people to
+        # expand on.
+        if parsed.has(spec.id) and spec.type != "textarea":
+            continue
+        return spec
+    return None
+
+
+def _augment(parsed: ParsedIssue, spec: FieldSpec, value: str) -> None:
+    """Record a follow-up answer without ever discarding the original one.
+
+    Triage can reject an answer as too thin — a one-line "it crashes" where
+    steps to reproduce belong — and then asks for more in a comment. If a
+    follow-up could only fill fields that were entirely blank, that request
+    would be impossible to satisfy and the issue would sit on `needs-info`
+    forever. So a prose field grows: the later text is appended, the original
+    stays put, and nobody's words are rewritten behind their back.
+    """
+    value = value.strip()
+    if not value:
+        return
+    existing = parsed.get(spec.id)
+    if not existing:
+        parsed.values[spec.id] = value
+        return
+    if spec.type != "textarea" or value in existing:
+        return
+    parsed.values[spec.id] = f"{existing}\n\n{value}"
+
+
+def _starts_another_field(line: str, lookup: Mapping[str, FieldSpec]) -> bool:
+    """Whether a line hands the answer over to a different form field.
+
+    Used only to decide where a multi-line answer ends, so it deliberately
+    ignores whether the field is already filled — a second mention of a field
+    still terminates the block above it. A numbered step that happens to
+    contain a colon ("3. Click Download: it crashes") is not a field, which is
+    why this resolves against the real form rather than pattern-matching.
+    """
+    match = _INLINE_FIELD.match(line) or _BLOCK_FIELD.match(line)
+    if match is None:
+        return False
+    return any(
+        normalise_label(candidate) in lookup
+        for candidate in _label_candidates(match.group("label"))
+    )
+
+
+def _consume_block(lines: Sequence[str], start: int, lookup: Mapping[str, FieldSpec]) -> tuple[str, int]:
+    """The lines belonging to a `Label:` answer written underneath its label."""
+    body: list[str] = []
+    index = start
+    while index < len(lines):
+        line = lines[index].rstrip()
+        if _ANY_HEADING.match(line) or _RULE.match(line) or _starts_another_field(line, lookup):
+            break
+        body.append(line)
+        index += 1
+    return "\n".join(body).strip(), index
+
+
 def apply_followups(parsed: ParsedIssue, comments: Sequence[str]) -> ParsedIssue:
     """Fold details supplied in later comments into an incomplete report.
 
@@ -371,8 +444,11 @@ def apply_followups(parsed: ParsedIssue, comments: Sequence[str]) -> ParsedIssue
     empty get filled: a comment can complete a report but never overwrite what
     the reporter originally wrote.
 
-    Two shapes are understood — a repeat of the `### Label` heading, and the far
-    more likely `Label: value` on a single line.
+    Three shapes are understood — a repeat of the `### Label` heading, the far
+    more likely `Label: value` on a single line, and `Label:` with the answer
+    written underneath it. That last one matters more than it looks: triage asks
+    for numbered steps to reproduce, and nobody writes numbered steps on one
+    line.
     """
     if parsed.form is None:
         return parsed
@@ -385,23 +461,40 @@ def apply_followups(parsed: ParsedIssue, comments: Sequence[str]) -> ParsedIssue
 
         for heading, raw in split_sections(comment):
             spec = lookup.get(normalise_label(heading))
-            if spec is None or spec.type == "checkboxes" or parsed.has(spec.id):
+            if spec is None or spec.type == "checkboxes":
+                continue
+            if parsed.has(spec.id) and spec.type != "textarea":
                 continue
             value = raw.strip()
             if value and value != NO_RESPONSE:
-                parsed.values[spec.id] = (
-                    strip_fence(value) if spec.type == "textarea" else value
+                _augment(
+                    parsed, spec, strip_fence(value) if spec.type == "textarea" else value
                 )
 
-        for line in comment.split("\n"):
-            match = _INLINE_FIELD.match(line.rstrip())
-            if not match:
+        lines = comment.split("\n")
+        index = 0
+        while index < len(lines):
+            line = lines[index].rstrip()
+            index += 1
+
+            inline = _INLINE_FIELD.match(line)
+            if inline is not None:
+                spec = _resolve_label(inline.group("label"), lookup, parsed)
+                if spec is not None:
+                    _augment(parsed, spec, inline.group("value"))
                 continue
-            for candidate in _label_candidates(match.group("label")):
-                spec = lookup.get(normalise_label(candidate))
-                if spec is None or spec.type == "checkboxes" or parsed.has(spec.id):
-                    continue
-                parsed.values[spec.id] = match.group("value").strip()
-                break
+
+            block = _BLOCK_FIELD.match(line)
+            if block is None:
+                continue
+            spec = _resolve_label(block.group("label"), lookup, parsed)
+            # Only multi-line fields may swallow the lines beneath them; a
+            # dropdown or a version number never spans lines, and letting one
+            # absorb a paragraph would corrupt the answer rather than find it.
+            if spec is None or spec.type != "textarea":
+                continue
+            body, index = _consume_block(lines, index, lookup)
+            if body:
+                _augment(parsed, spec, strip_fence(body))
 
     return parsed
