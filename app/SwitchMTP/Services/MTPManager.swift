@@ -1238,13 +1238,13 @@ final class MTPManager: ObservableObject {
     func downloadPromise(file: MTPFile, to destinationFolderURL: URL, completion: @escaping (Error?) -> Void) {
         if isTransferInFlight {
             completion(NSError(domain: "MTPManager.Transfer", code: 1, userInfo: [
-                NSLocalizedDescriptionKey: "Another transfer is already running."
+                NSLocalizedDescriptionKey: String(localized: "The console is already busy with a transfer. Wait for it to finish, then try again.")
             ]))
             return
         }
         guard let storage = selectedStorage else {
             completion(NSError(domain: "MTPManager.Transfer", code: 2, userInfo: [
-                NSLocalizedDescriptionKey: "No storage selected."
+                NSLocalizedDescriptionKey: String(localized: "No storage is selected. Choose a storage in the sidebar, then try again.")
             ]))
             return
         }
@@ -1290,13 +1290,13 @@ final class MTPManager: ObservableObject {
     func downloadPromiseBatch(files: [MTPFile], to destinationFolderURL: URL, completion: @escaping (Error?) -> Void) {
         if isTransferInFlight {
             completion(NSError(domain: "MTPManager.Transfer", code: 1, userInfo: [
-                NSLocalizedDescriptionKey: "Another transfer is already running."
+                NSLocalizedDescriptionKey: String(localized: "The console is already busy with a transfer. Wait for it to finish, then try again.")
             ]))
             return
         }
         guard let storage = selectedStorage else {
             completion(NSError(domain: "MTPManager.Transfer", code: 2, userInfo: [
-                NSLocalizedDescriptionKey: "No storage selected."
+                NSLocalizedDescriptionKey: String(localized: "No storage is selected. Choose a storage in the sidebar, then try again.")
             ]))
             return
         }
@@ -1341,14 +1341,23 @@ final class MTPManager: ObservableObject {
         // `transferKind`, so during an upload `operation` reads `.none` and a
         // double-click here would start a preview download on top of it.
         if isTransferInFlight || (operation != .none && operation != .walking) {
+            // Both call sites discard this error, so without a message on screen
+            // a double-click during a transfer would simply do nothing and look
+            // like the app had hung.
+            if isTransferInFlight {
+                DebugLog.write("preview refused: a transfer is already running")
+                DispatchQueue.main.async { [weak self] in
+                    self?.errorMessage = String(localized: "The console is already busy with a transfer, so this file can't be opened yet. Wait for it to finish, then try again.")
+                }
+            }
             completion(NSError(domain: "MTPManager.Transfer", code: 1, userInfo: [
-                NSLocalizedDescriptionKey: "Another operation is running."
+                NSLocalizedDescriptionKey: String(localized: "The console is already busy with a transfer. Wait for it to finish, then try again.")
             ]))
             return
         }
         guard let storage = selectedStorage else {
             completion(NSError(domain: "MTPManager.Transfer", code: 2, userInfo: [
-                NSLocalizedDescriptionKey: "No storage selected."
+                NSLocalizedDescriptionKey: String(localized: "No storage is selected. Choose a storage in the sidebar, then try again.")
             ]))
             return
         }

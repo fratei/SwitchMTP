@@ -963,6 +963,20 @@
       "es": "La consola solo puede hacer una cosa a la vez por USB, así que no puede consultar esta carpeta mientras copia. Esta es la última vista que SwitchMTP tiene de ella y se actualizará en cuanto termine la transferencia.",
       "ru": "Консоль может выполнять только одну операцию по USB за раз, поэтому она не может проверить эту папку во время копирования. Это последнее, что SwitchMTP видел в ней; папка обновится сразу после завершения передачи.",
       "ja": "本体は USB 経由で一度に 1 つの処理しか行えないため、コピー中はこのフォルダを確認できません。これは SwitchMTP が最後に取得した内容で、転送が完了するとすぐに更新されます。"
+    },
+    "The console is already busy with a transfer, so this file can't be opened yet. Wait for it to finish, then try again.": {
+      "zh-Hans": "主机正在进行传输，因此暂时无法打开此文件。请等待传输完成后重试。",
+      "zh-Hant": "主機正在進行傳輸，因此暫時無法開啟此檔案。請等待傳輸完成後重試。",
+      "es": "La consola está ocupada con una transferencia, así que aún no se puede abrir este archivo. Espera a que termine e inténtalo de nuevo.",
+      "ru": "Консоль занята передачей, поэтому этот файл пока нельзя открыть. Дождитесь завершения и повторите попытку.",
+      "ja": "本体が転送中のため、このファイルはまだ開けません。転送が完了するまで待ってから、もう一度お試しください。"
+    },
+    "No storage is selected. Choose a storage in the sidebar, then try again.": {
+      "zh-Hans": "未选择存储设备。请在侧边栏中选择一个存储设备后重试。",
+      "zh-Hant": "未選擇儲存裝置。請在側邊欄中選擇一個儲存裝置後重試。",
+      "es": "No hay ningún almacenamiento seleccionado. Elige uno en la barra lateral e inténtalo de nuevo.",
+      "ru": "Хранилище не выбрано. Выберите хранилище на боковой панели и повторите попытку.",
+      "ja": "ストレージが選択されていません。サイドバーでストレージを選択してから、もう一度お試しください。"
     }
   }
 }
