@@ -99,6 +99,13 @@ func KindOf(err error) ErrorKind {
 func kindOfRC(rc uint16) ErrorKind {
 	switch rc {
 	case mtp.RC_OperationNotSupported,
+		// DBI advertises GetObjectPropList but rejects the parameter
+		// combination we send, answering ParameterNotSupported rather than
+		// OperationNotSupported. Semantically that is still "you cannot use
+		// this call", so it has to demote the capability too -- otherwise the
+		// fast path is retried forever and every listing fails outright.
+		mtp.RC_ParameterNotSupported,
+		mtp.RC_InvalidParameter,
 		mtp.RC_MTP_Invalid_ObjectPropCode,
 		mtp.RC_MTP_Specification_By_Group_Unsupported,
 		mtp.RC_MTP_Specification_By_Depth_Unsupported,

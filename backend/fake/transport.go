@@ -85,6 +85,19 @@ func (d *Device) OpenSession() error {
 	return nil
 }
 
+// EnsureSession mirrors the real transport: opening a session that is already
+// open is an error, so callers that cannot know whether a lower layer opened
+// one ask for this instead.
+func (d *Device) EnsureSession() error {
+	d.mu.Lock()
+	alreadyOpen := d.sessionOpen
+	d.mu.Unlock()
+	if alreadyOpen {
+		return nil
+	}
+	return d.OpenSession()
+}
+
 func (d *Device) CloseSession() error {
 	d.mu.Lock()
 	defer d.mu.Unlock()

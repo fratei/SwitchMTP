@@ -108,7 +108,12 @@ func Open(deviceID string) (*Client, error) {
 	dev.Timeout = timeoutFor(ref.Profile)
 	c.t = NewTransport(dev)
 
-	if err := c.t.OpenSession(); err != nil {
+	// Configure() has already opened the session, including recovering from a
+	// stale one left behind by a client that died mid-transaction. Opening a
+	// second session here is not just redundant, it is an error the MTP layer
+	// rejects outright -- only ever reached once Configure() starts succeeding,
+	// which is why it hid behind connection failures for so long.
+	if err := c.t.EnsureSession(); err != nil {
 		c.hardClose()
 		return nil, &Error{Kind: KindDeviceBusy, Op: "openSession",
 			Msg: "the device refused to open an MTP session",

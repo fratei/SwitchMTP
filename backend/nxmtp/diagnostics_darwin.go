@@ -90,6 +90,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/ganeshrvel/go-mtpfs/mtp"
 	"github.com/ganeshrvel/usb"
 )
 
@@ -107,6 +108,12 @@ type USBClient struct {
 // interface before we can, which makes libusb_claim_interface fail. This is by
 // far the most common reason a Switch "is not detected" on a Mac.
 var knownBlockers = map[string]string{
+	// The daemon is "ptpcamerad" -- note the trailing d. macOS relaunches it
+	// on demand for any still-image class interface, which is exactly what
+	// DBI's MTP responder presents, so it is nearly always holding the Switch.
+	// SwitchMTP takes the interface back automatically by re-enumerating the
+	// port, so this is only reported when that recovery has already failed.
+	"ptpcamerad":                  "macOS's PTP daemon has claimed the Switch. SwitchMTP normally takes it back automatically; if this persists, unplug the Switch, quit Image Capture and Photos, then reconnect.",
 	"ptpcamera":                   "macOS's built-in camera driver has claimed the Switch. Quit Image Capture, Photos and Preview, then reconnect.",
 	"imagecaptureextension":       "Image Capture Extension has claimed the Switch. Quit Image Capture and any photo import prompt, then reconnect.",
 	"imagecaptureextension2":      "Image Capture Extension has claimed the Switch. Quit Image Capture and any photo import prompt, then reconnect.",
@@ -165,6 +172,12 @@ func CollectDiagnostics() *Diagnostics {
 	}
 
 	d.Devices, d.NintendoSeen = enumerateUSB()
+
+	// A machine-wide scan cannot tell whether a process is holding *our*
+	// device, so anything it flags is a guess. Now that we know which Nintendo
+	// devices are attached, ask IOKit precisely who holds each one's interface
+	// and let that override the guesswork.
+	d.Blockers = append(d.Blockers, interfaceHolders(d)...)
 
 	if refs, err := FindDevices(); err == nil {
 		d.MTPDevices = refs
@@ -352,4 +365,38 @@ func summarise(d *Diagnostics) (string, []string) {
 			"Launch DBI on the Switch, press X, and choose \"Run MTP responder\".",
 			"If the Switch is docked, try connecting it directly to the Mac instead.",
 		}
+}
+
+// interfaceHolders reports the processes holding a USB *interface* on an
+// attached Nintendo device. Only interface-level clients can stop us claiming
+// it; device-level clients (browsers enumerating WebUSB, peripheral utilities)
+// are harmless and deliberately excluded, because naming them sends users
+// chasing conflicts that do not exist.
+func interfaceHolders(d *Diagnostics) []USBClient {
+	seen := make(map[int]bool)
+	for _, b := range d.Blockers {
+		seen[b.PID] = true
+	}
+
+	var out []USBClient
+	for _, dev := range d.Devices {
+		if !dev.IsNintendo {
+			continue
+		}
+		for _, o := range mtp.FindUSBOccupants(int(dev.VendorID), int(dev.ProductID)) {
+			if !o.Blocking || seen[o.PID] || o.PID == d.SelfPID {
+				continue
+			}
+			seen[o.PID] = true
+
+			c := USBClient{PID: o.PID, Name: o.Name, Blocker: true}
+			if advice, ok := knownBlockers[strings.ToLower(o.Name)]; ok {
+				c.Known, c.Advice = true, advice
+			} else {
+				c.Advice = "\"" + o.Name + "\" is holding the Switch's USB interface. Quit it, then reconnect the Switch."
+			}
+			out = append(out, c)
+		}
+	}
+	return out
 }

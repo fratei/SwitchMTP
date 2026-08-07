@@ -148,6 +148,43 @@ func (d *Device) claim() error {
 	return err
 }
 
+// claimWithRetry claims the MTP interface, recovering from the exclusive-access
+// failure that dominates macOS.
+//
+// MODIFIED (SwitchMTP): upstream called claim() once and discarded its error,
+// carrying on with an unclaimed interface. The real failure then surfaced much
+// later as a bewildering LIBUSB_ERROR_NOT_FOUND from the first bulk transfer.
+//
+// macOS binds still-image (PTP class) interfaces to its own ptpcamerad daemon
+// the instant they enumerate, so the first claim of a Switch running DBI
+// almost always fails with LIBUSB_ERROR_ACCESS. Re-enumerating the port makes
+// ptpcamerad let go and opens a window in which we can take the interface
+// ourselves. The window is narrow and launchd restarts the daemon immediately,
+// so this is inherently a race -- but one we win reliably within a few
+// attempts. It needs no privileges, unlike killing the daemon, which the App
+// Sandbox forbids in any case.
+func (d *Device) claimWithRetry() error {
+	err := d.claim()
+	for attempt := 0; err != nil && attempt < claimRetries; attempt++ {
+		if resetErr := d.h.Reset(); resetErr != nil {
+			// The reset invalidated our handle: the caller has to
+			// re-enumerate, so there is nothing more to try here.
+			return err
+		}
+		// Claim immediately, with no delay: measured on a Switch running
+		// DBI, ptpcamerad re-acquires the interface within ~120ms of
+		// re-enumeration, so any pause here loses the race every time.
+		err = d.claim()
+	}
+	return err
+}
+
+const (
+	// claimRetries bounds how many times we re-enumerate the port trying to
+	// take the interface back from macOS's ptpcamerad.
+	claimRetries = 4
+)
+
 // Open opens an MTP device.
 func (d *Device) Open() error {
 	if d.Timeout == 0 {
@@ -167,7 +204,11 @@ func (d *Device) Open() error {
 		return err
 	}
 
-	d.claim()
+	if err := d.claimWithRetry(); err != nil {
+		d.h.Close()
+		d.h = nil
+		return fmt.Errorf("claiming MTP interface: %w", err)
+	}
 
 	if d.ifaceDescr.InterfaceStringIndex == 0 {
 		// Some devices have no interface field, so we'll hardcode ones
@@ -685,8 +726,17 @@ func (d *Device) Configure() error {
 		if err := d.Open(); err != nil {
 			return fmt.Errorf("opening after reset: %v", err)
 		}
-		if err := d.OpenSession(); err != nil {
-			occupyingInfo := getUSBOccupyingPIDs()
+		err = d.OpenSession()
+		if err == RCError(RC_SessionAlreadyOpened) {
+			// MODIFIED (SwitchMTP): upstream only recovered from a stale
+			// session on the first attempt. A responder that survived our
+			// reset (DBI does) still has the old session open, so the retry
+			// needs the same treatment or the device looks permanently busy.
+			d.CloseSession()
+			err = d.OpenSession()
+		}
+		if err != nil {
+			occupyingInfo := d.getUSBOccupyingPIDs()
 			return fmt.Errorf("OpenSession after reset: %v%s", err, occupyingInfo)
 		}
 	}

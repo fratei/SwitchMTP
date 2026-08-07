@@ -218,3 +218,14 @@ func (d *Device) GetPartialObject(handle uint32, w io.Writer, offset uint32, siz
 	req.Param = []uint32{handle, offset, size}
 	return d.RunTransaction(&req, &rep, w, nil, 0, EmptyProgressFunc)
 }
+
+// SessionOpen reports whether an MTP session is currently established.
+//
+// ADDED (SwitchMTP): Configure() opens a session as part of bringing the
+// device up, but upstream exposed no way to ask whether it had done so. Higher
+// layers were left either assuming a session exists or calling OpenSession
+// defensively -- and the second of those fails outright, because OpenSession
+// rejects a device that already has one.
+func (d *Device) SessionOpen() bool {
+	return d.session != nil
+}

@@ -13,60 +13,97 @@ package mtp
 typedef struct {
 	int pid;
 	char process_name[256];
+	// blocking is 1 when the client holds an *interface*, which is what
+	// actually prevents us claiming it. Device-level clients (browsers doing
+	// WebUSB enumeration, peripheral utilities scanning) are harmless and
+	// must not be reported as the cause of a failure.
+	int blocking;
 } USBClientInfo;
 
-// findUSBOccupyingClients iterates the IOService plane recursively (mirroring
-// what ioreg does) and looks for entries whose class is
-// AppleUSBHostDeviceUserClient or AppleUSBHostInterfaceUserClient.
-// For each matching entry it reads the "IOUserClientCreator" property.
-// Writes up to maxResults entries into results and sets *outWritten to the
-// number actually written. Returns the total number of matches found
-// (which may exceed maxResults).
-static int findUSBOccupyingClients(USBClientInfo* results, int maxResults, int* outWritten) {
+// findClientsForDevice reports the processes holding user clients on ONE USB
+// device, identified by its vendor and product IDs.
+//
+// MODIFIED (SwitchMTP): upstream walked the whole IOService plane and returned
+// every USB user client on the machine. On a normal desktop that means web
+// browsers, keyboards and stream decks -- none of which have anything to do
+// with the device we failed to open. Worse, the genuine culprit (ptpcamerad)
+// was pushed out of the fixed-size result buffer by that noise, so the one
+// process the user needed to know about was the one they never saw.
+//
+// We now locate the matching IOUSBHostDevice first and search only its
+// subtree, which is exactly the set of clients that can block us.
+static int findClientsForDevice(int vendorID, int productID,
+                                USBClientInfo* results, int maxResults, int* outWritten) {
 	int total = 0;
 	int written = 0;
+	*outWritten = 0;
 
-	io_iterator_t iter;
-	// Recursively iterate the IOService plane – this is what ioreg does internally.
-	kern_return_t kr = IORegistryCreateIterator(
-		0, kIOServicePlane, kIORegistryIterateRecursively, &iter);
-	if (kr != KERN_SUCCESS) {
-		*outWritten = 0;
+	CFMutableDictionaryRef matching = IOServiceMatching("IOUSBHostDevice");
+	if (!matching) return 0;
+
+	io_iterator_t devIter;
+	if (IOServiceGetMatchingServices(kIOMainPortDefault, matching, &devIter) != KERN_SUCCESS) {
 		return 0;
 	}
 
-	io_object_t entry;
-	while ((entry = IOIteratorNext(iter)) != IO_OBJECT_NULL) {
-		io_name_t className;
-		IOObjectGetClass(entry, className);
+	io_object_t device;
+	while ((device = IOIteratorNext(devIter)) != IO_OBJECT_NULL) {
+		int vid = 0, pid = 0;
+		CFTypeRef vidRef = IORegistryEntryCreateCFProperty(device, CFSTR("idVendor"), kCFAllocatorDefault, 0);
+		CFTypeRef pidRef = IORegistryEntryCreateCFProperty(device, CFSTR("idProduct"), kCFAllocatorDefault, 0);
+		if (vidRef && CFGetTypeID(vidRef) == CFNumberGetTypeID()) CFNumberGetValue((CFNumberRef)vidRef, kCFNumberIntType, &vid);
+		if (pidRef && CFGetTypeID(pidRef) == CFNumberGetTypeID()) CFNumberGetValue((CFNumberRef)pidRef, kCFNumberIntType, &pid);
+		if (vidRef) CFRelease(vidRef);
+		if (pidRef) CFRelease(pidRef);
 
-		if (strcmp(className, "AppleUSBHostDeviceUserClient") == 0 ||
-		    strcmp(className, "AppleUSBHostInterfaceUserClient") == 0) {
+		if (vid != vendorID || pid != productID) {
+			IOObjectRelease(device);
+			continue;
+		}
 
-			CFTypeRef prop = IORegistryEntryCreateCFProperty(
-				entry, CFSTR("IOUserClientCreator"), kCFAllocatorDefault, 0);
-			if (prop && CFGetTypeID(prop) == CFStringGetTypeID()) {
-				char buf[512];
-				if (CFStringGetCString((CFStringRef)prop, buf, sizeof(buf), kCFStringEncodingUTF8)) {
-					// The property value looks like: "pid 623, SomeProcess"
-					int pid = 0;
-					char name[256] = {0};
-					if (sscanf(buf, "pid %d, %255s", &pid, name) == 2) {
-						total++;
-						if (written < maxResults) {
-							results[written].pid = pid;
-							strncpy(results[written].process_name, name, 255);
-							results[written].process_name[255] = '\0';
-							written++;
+		// Walk this device's subtree: its interfaces and their user clients.
+		io_iterator_t childIter;
+		if (IORegistryEntryCreateIterator(device, kIOServicePlane,
+		        kIORegistryIterateRecursively, &childIter) == KERN_SUCCESS) {
+			io_object_t entry;
+			while ((entry = IOIteratorNext(childIter)) != IO_OBJECT_NULL) {
+				io_name_t className;
+				IOObjectGetClass(entry, className);
+				if (strstr(className, "UserClient") != NULL) {
+					int blocking = (strstr(className, "Interface") != NULL) ? 1 : 0;
+					CFTypeRef prop = IORegistryEntryCreateCFProperty(
+						entry, CFSTR("IOUserClientCreator"), kCFAllocatorDefault, 0);
+					if (prop && CFGetTypeID(prop) == CFStringGetTypeID()) {
+						char buf[512];
+						if (CFStringGetCString((CFStringRef)prop, buf, sizeof(buf), kCFStringEncodingUTF8)) {
+							// Property value looks like: "pid 623, SomeProcess"
+							int cpid = 0;
+							char name[256] = {0};
+							// %[^\n] rather than %s: process names contain
+							// spaces ("Microsoft Edge"), and truncating at the
+							// first one produces misleading diagnostics.
+							if (sscanf(buf, "pid %d, %255[^\n]", &cpid, name) == 2) {
+								total++;
+								if (written < maxResults) {
+									results[written].pid = cpid;
+									strncpy(results[written].process_name, name, 255);
+									results[written].process_name[255] = '\0';
+									results[written].blocking = blocking;
+									written++;
+								}
+							}
 						}
 					}
+					if (prop) CFRelease(prop);
 				}
+				IOObjectRelease(entry);
 			}
-			if (prop) CFRelease(prop);
+			IOObjectRelease(childIter);
 		}
-		IOObjectRelease(entry);
+		IOObjectRelease(device);
 	}
-	IOObjectRelease(iter);
+	IOObjectRelease(devIter);
+
 	*outWritten = written;
 	return total;
 }
@@ -79,42 +116,85 @@ import (
 	"strings"
 )
 
-// getUSBOccupyingPIDs queries the IORegistry via IOKit to find processes that
-// are holding USB host interface/device user clients. It excludes our own
-// processes and returns a formatted string like " (PID: 623, 829)".
-func getUSBOccupyingPIDs() string {
+// USBOccupant is a process holding a user client on the device we wanted.
+type USBOccupant struct {
+	PID  int
+	Name string
+	// Blocking reports whether this process holds the USB *interface*, which
+	// is what stops us claiming it. Processes holding only a device-level
+	// client coexist with us happily and are recorded but not blamed.
+	Blocking bool
+}
+
+// SystemPTPDaemon is macOS's own PTP/camera daemon. It binds every still-image
+// class interface the moment it enumerates, which includes DBI's MTP responder,
+// and it holds that interface exclusively. It is the single most common reason
+// a Switch fails to open on macOS, so it is called out by name.
+const SystemPTPDaemon = "ptpcamerad"
+
+// FindUSBOccupants reports the processes holding user clients on the USB device
+// with the given vendor and product IDs, excluding our own processes.
+func FindUSBOccupants(vendorID, productID int) []USBOccupant {
 	const maxResults = 64
 	var results [maxResults]C.USBClientInfo
 
 	var written C.int
-	total := int(C.findUSBOccupyingClients(&results[0], C.int(maxResults), &written))
-
+	total := int(C.findClientsForDevice(C.int(vendorID), C.int(productID),
+		&results[0], C.int(maxResults), &written))
 	if total > int(written) {
-		log.Printf("USB diag: found %d matches but buffer only holds %d, PID list may be incomplete", total, written)
+		log.Printf("USB diag: %d clients found but only %d reported", total, written)
 	}
 
 	seen := make(map[int]bool)
-	var pids []string
-
+	var out []USBOccupant
 	for i := 0; i < int(written); i++ {
 		pid := int(results[i].pid)
-		procName := C.GoString(&results[i].process_name[0])
-		if isOwnProcess(procName) {
+		name := C.GoString(&results[i].process_name[0])
+		if isOwnProcess(name) || seen[pid] {
 			continue
 		}
-		if !seen[pid] {
-			seen[pid] = true
-			pids = append(pids, fmt.Sprintf("%d", pid))
-		}
+		seen[pid] = true
+		out = append(out, USBOccupant{PID: pid, Name: name, Blocking: results[i].blocking != 0})
 	}
+	return out
+}
 
-	if len(pids) == 0 {
+// getUSBOccupyingPIDs formats the occupants of the device currently being
+// opened, for appending to an error message.
+//
+// MODIFIED (SwitchMTP): scoped to the device we are actually opening. Upstream
+// listed every USB user client on the machine, which in practice meant naming
+// browsers and keyboards while omitting the real culprit.
+func (d *Device) getUSBOccupyingPIDs() string {
+	desc, err := d.dev.GetDeviceDescriptor()
+	if err != nil {
+		return ""
+	}
+	occupants := FindUSBOccupants(int(desc.IdVendor), int(desc.IdProduct))
+	if len(occupants) == 0 {
 		return ""
 	}
 
-	pidStr := strings.Join(pids, ", ")
-	log.Printf("USB diag: device may be occupied by other processes, PID: %s", pidStr)
-	return fmt.Sprintf(" (PID: %s)", pidStr)
+	var parts []string
+	daemonHeld := false
+	for _, o := range occupants {
+		if !o.Blocking {
+			continue
+		}
+		parts = append(parts, fmt.Sprintf("%s (pid %d)", o.Name, o.PID))
+		if o.Name == SystemPTPDaemon {
+			daemonHeld = true
+		}
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	msg := " -- interface held by " + strings.Join(parts, ", ")
+	if daemonHeld {
+		msg += "; macOS's PTP daemon claims still-image interfaces automatically"
+	}
+	log.Printf("USB diag:%s", msg)
+	return msg
 }
 
 // isOwnProcess reports whether a USB client belongs to us. Reporting ourselves

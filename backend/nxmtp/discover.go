@@ -75,9 +75,16 @@ func profileFor(vendorID, productID uint16, manufacturer, model string) (DeviceP
 	}
 	switch productID {
 	case ProductSwitchMTP, ProductSwitch2MTP:
-		// Both DBI and Horizon OS answer on this product ID. DBI identifies
-		// itself in the MTP DeviceInfo, which we only see once connected, so
-		// the refinement happens later in refineProfile.
+		// Both DBI and Horizon OS answer on this product ID.
+		//
+		// Hardware testing showed DBI reports Manufacturer "Nintendo" and
+		// Model "Switch" in its *MTP* DeviceInfo -- indistinguishable from
+		// stock Horizon OS. It identifies itself only in the USB descriptors
+		// (product string "DBI", interface string "DBI MTP"), which is why we
+		// classify from those here rather than waiting for DeviceInfo.
+		if looksLikeDBI(manufacturer, model) {
+			return ProfileSwitchDBI, true, ""
+		}
 		return ProfileSwitchHOS, true, ""
 	case ProductHomebrewUSB:
 		// 0x3000 is shared by every libnx homebrew USB mode, so we cannot say
@@ -91,15 +98,27 @@ func profileFor(vendorID, productID uint16, manufacturer, model string) (DeviceP
 	}
 }
 
-// refineProfile upgrades a Switch profile to switchDBI once we can see the MTP
-// DeviceInfo. DBI reports itself in the Manufacturer/Model strings, whereas
-// stock Horizon OS reports Nintendo.
+// looksLikeDBI reports whether USB identity strings came from DBI's MTP
+// responder. DBI advertises itself in the USB product string ("DBI") and the
+// interface string ("DBI MTP"); this is the only place it names itself, so it
+// is the only reliable discriminator against stock Horizon OS.
+func looksLikeDBI(fields ...string) bool {
+	hay := strings.ToLower(strings.Join(fields, " "))
+	return strings.Contains(hay, "dbi") || strings.Contains(hay, "duckbill")
+}
+
+// refineProfile is a second chance at DBI detection for responders whose USB
+// strings were unreadable. It only ever upgrades: a device already identified
+// as DBI from its USB descriptors is never demoted, because DBI's MTP
+// DeviceInfo deliberately mimics stock Horizon OS ("Nintendo"/"Switch").
 func refineProfile(p DeviceProfile, info *mtp.DeviceInfo) DeviceProfile {
-	if p != ProfileSwitchHOS && p != ProfileSwitchDBI {
+	if p == ProfileSwitchDBI {
 		return p
 	}
-	hay := strings.ToLower(info.Manufacturer + " " + info.Model + " " + info.DeviceVersion + " " + info.MTPExtension)
-	if strings.Contains(hay, "dbi") || strings.Contains(hay, "duckbill") {
+	if p != ProfileSwitchHOS {
+		return p
+	}
+	if looksLikeDBI(info.Manufacturer, info.Model, info.DeviceVersion, info.MTPExtension) {
 		return ProfileSwitchDBI
 	}
 	return p

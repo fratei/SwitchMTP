@@ -59,3 +59,77 @@ Attach:
   ```
 
 Also state DBI version, applet vs title mode, Switch model/firmware if known, and whether the USB cable was known-good for data.
+
+---
+
+## Verified results — Nintendo Switch + DBI
+
+Captured against a real console: **HOS 22.5.0**, DBI MTP responder, macOS 26.6 (arm64).
+
+### Device identity
+
+| Property | Value |
+|---|---|
+| USB VID:PID | `0x057E:0x201D` |
+| USB product string | `DBI` |
+| USB interface string | `DBI MTP` |
+| USB interface class | 6 (still image / PTP), 3 endpoints |
+| MTP Manufacturer / Model | `Nintendo` / `Switch` |
+| MTP DeviceVersion | `22.5.0` |
+| MTP extensions | `microsoft.com: 1.0; android.com: 1.0;` |
+
+> **DBI is only identifiable from the USB descriptors.** Its MTP `DeviceInfo` reports
+> `Nintendo`/`Switch`, which is indistinguishable from stock Horizon OS. SwitchMTP
+> classifies the profile from the USB product and interface strings for this reason.
+
+### Operations actually supported
+
+`0x1001-0x1005, 0x1007-0x1009, 0x100b-0x100d, 0x1014-0x1016, 0x1019, 0x101b,
+0x95c1-0x95c5, 0x9801-0x9805, 0x9808`
+
+Resolving the open questions from the implementation plan:
+
+| Operation | Code | Supported | Consequence |
+|---|---|---|---|
+| `GetObjectPropList` | `0x9805` | **Advertised, but rejects our parameters** (`ParameterNotSupported`) | Listing degrades to `GetObjectHandles` + `GetObjectInfo` automatically |
+| `GetObjectPropValue` | `0x9803` | Yes | True size available for files >4 GB |
+| `SetObjectPropValue` | `0x9804` | Yes | Rename works |
+| `GetPartialObject` | `0x101b` | Yes | Resumable / ranged reads |
+| Android `GetPartialObject64` | `0x95c1` | Yes | >4 GB reads |
+| `MoveObject` | `0x1019` | Yes | Native move |
+| `CopyObject` | `0x101a` | **No** | Copy falls back to download + upload |
+| `GetNumObjects` | `0x1006` | **No** | Never called |
+| `GetThumb` | `0x100a` | **No** | No thumbnails |
+| `ResetDevice` | `0x1010` | **No** | Recovery uses USB-level reset instead |
+
+### Storages enumerated
+
+All nine, correctly classified: `SD Card` (65537), `Internal (User)` (65538),
+`Internal (System)` (65539), `Install to SD Card` (65541), `Install to Internal` (65542),
+`Saves` (65543), `Album` (65544), and the user-defined `DBILogs` (65792).
+
+### Operations exercised
+
+| Test | Result |
+|---|---|
+| Detect + identify | Pass — profile `switchDBI`, "Nintendo Switch (DBI)" |
+| Enumerate storages | Pass — 9/9 with correct capability flags |
+| Browse SD card root | Pass (via the `GetObjectInfo` fallback path) |
+| Download 29 B file | Pass — content verified |
+| Download 2.34 MB file | Pass — 25 MB/s |
+| Upload 2.86 MB file | Pass — 2.8 MB/s, live progress |
+| **Round-trip integrity** | **Pass — SHA-256 identical after upload then download** |
+| `mkdir` | Pass |
+| Rename | Pass |
+| Delete file / delete directory | Pass |
+| `doctor` with device connected | Pass — correctly names `ptpcamerad` |
+| GUI app, sandboxed | Pass — claims the interface from `ptpcamerad` |
+
+### The macOS interface conflict
+
+`ptpcamerad` held the interface on **every** connection attempt. The recovery
+(re-enumerate the port, then re-claim immediately) succeeded **5/5**.
+
+Timing matters: an early implementation paused 120 ms after the reset before re-claiming
+and lost the race *every* time, because `launchd` restarts `ptpcamerad` within roughly
+that window. The claim must be issued with no delay.

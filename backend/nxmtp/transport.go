@@ -27,6 +27,10 @@ import (
 type Transport interface {
 	// Session lifecycle.
 	OpenSession() error
+	// EnsureSession opens a session only if one is not already established,
+	// so callers can be certain of a usable session without having to know
+	// whether a lower layer opened one for them.
+	EnsureSession() error
 	CloseSession() error
 	Close() error
 	Done()
@@ -79,7 +83,14 @@ type deviceTransport struct {
 // NewTransport wraps an opened mtp.Device.
 func NewTransport(dev *mtp.Device) Transport { return &deviceTransport{dev: dev} }
 
-func (t *deviceTransport) OpenSession() error  { return t.dev.OpenSession() }
+func (t *deviceTransport) OpenSession() error { return t.dev.OpenSession() }
+
+func (t *deviceTransport) EnsureSession() error {
+	if t.dev.SessionOpen() {
+		return nil
+	}
+	return t.dev.OpenSession()
+}
 func (t *deviceTransport) CloseSession() error { return t.dev.CloseSession() }
 func (t *deviceTransport) Close() error        { return t.dev.Close() }
 func (t *deviceTransport) Done()               { t.dev.Done() }

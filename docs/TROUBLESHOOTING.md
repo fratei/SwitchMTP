@@ -4,46 +4,56 @@
 
 ## Device not detected
 
-This is the most common issue on macOS. A frequent root cause is another process that has
-already claimed the Switch's USB interface, making it unavailable to SwitchMTP.
+On macOS the usual cause is another process holding the Switch's USB interface.
+**SwitchMTP recovers from the common case automatically** — the notes below explain
+what it is doing and what to try when the automatic recovery is not enough.
 
-### Why macOS claims MTP devices automatically
+### Why macOS claims the Switch automatically
 
-When a PTP/MTP device connects, macOS automatically attaches one or more system processes
-to it before any user application can:
+DBI's MTP responder presents a USB **still-image class** interface (class 6), the same
+class digital cameras use. macOS binds every such interface to its own PTP daemon,
+`/usr/libexec/ptpcamerad`, the moment it enumerates — before any application can ask for
+it. The daemon holds the interface *exclusively*, so `libusb_claim_interface` fails with
+`LIBUSB_ERROR_ACCESS`.
 
-| Process | How to identify | What it does |
-|---|---|---|
-| **Image Capture Extension** / **PTPCamera** (`com.apple.ImageCaptureExtension2`) | `lsof` or Activity Monitor | Auto-claims USB class-6 (PTP/MTP) interfaces. Part of the Image Capture framework. |
-| **Android File Transfer Agent** (`com.macroplant.AndroidFileTransfer.Agent` or similar) | Activity Monitor | Background daemon that watches for MTP devices and auto-launches Android File Transfer. |
+This is not a misconfiguration and it is not something you did wrong: on a stock Mac,
+`ptpcamerad` is holding your Switch essentially every time you plug it in.
 
-When any of these holds the interface, SwitchMTP's call to `libusb_claim_interface`
-fails. **Switch → Copy Diagnostics** and `switchmtp-cli doctor` report occupying
-processes when the backend can identify them.
+| Process | What it does |
+|---|---|
+| **`ptpcamerad`** | macOS's PTP/camera daemon. Auto-claims class-6 interfaces. `launchd` restarts it on demand, so killing it does not keep it away. **Handled automatically.** |
+| **Image Capture Extension** / **PTPCamera** | Older equivalents of the above on earlier macOS versions. |
+| **Android File Transfer Agent** | Third-party daemon that watches for MTP devices. Quit it and remove it from Login Items. |
+| **Other MTP clients** (OpenMTP, gphoto2, another copy of SwitchMTP) | Only one program can hold an MTP device at a time. |
 
-### How to fix it
+### How SwitchMTP handles it
 
-**Quit Image Capture Extension and related processes:**
+When a claim fails with `LIBUSB_ERROR_ACCESS`, SwitchMTP re-enumerates the USB port.
+That makes `ptpcamerad` release the interface, and SwitchMTP claims it in the same
+instant — before `launchd` can restart the daemon and let it grab the interface again.
+It retries a few times if it loses the race.
 
-```sh
-pkill -f "Image Capture Extension"
-pkill -f "PTPCamera"
-```
+Two things worth knowing:
 
-**Quit Android File Transfer Agent (if installed):**
+- **It needs no privileges.** SwitchMTP never kills `ptpcamerad`, never asks for an
+  administrator password, and works from inside the App Sandbox.
+- **`ptpcamerad` will still be listed** as a process on the device even when everything
+  is working, because it re-attaches at the device level. `switchmtp-cli doctor` only
+  reports processes holding the *interface*, which is what actually blocks a claim.
 
-```sh
-pkill -f "Android File Transfer Agent"
-```
+### If it still fails
 
-Then unplug and replug the Switch, restart DBI's MTP responder, and try again.
+1. **Quit other MTP software** — Android File Transfer, OpenMTP, and any other copy of
+   SwitchMTP (including one left running in the background).
+2. **Quit Image Capture and Photos**, and dismiss any "import photos?" prompt.
+3. **Unplug and reconnect the Switch**, then restart DBI's MTP responder
+   (main menu → **X** → *Run MTP responder*).
+4. **Run the diagnostics**: `switchmtp-cli doctor`, or **Switch → Copy Diagnostics** in
+   the app. It names the process holding the interface and what to do about it.
+5. **Try a different USB-C cable.** Many cables carry power only. This is the second most
+   common cause of "not detected" after interface conflicts.
 
-You can also open **Activity Monitor**, search for the process names above, and force-quit
-them from there.
 
-> **Note:** Even after killing these processes, macOS may restart them automatically on
-> the next USB event. A full reboot is the most reliable way to start with a clean USB
-> stack. Community experience with DBI + macOS is that connection is intermittent — if one
 > attempt fails, replug the cable, switch USB-C port sides or ports, and try again.
 
 ### Run the built-in doctor

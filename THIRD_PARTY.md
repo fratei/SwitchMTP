@@ -84,7 +84,13 @@ style). The text is verbatim New BSD (3-clause). This has been verified by readi
 
 | File | Change notice |
 |------|---------------|
-| `third_party/go-mtpfs/mtp/usb_diag_darwin.go` | Adds macOS USB occupier-PID diagnostics and an `isOwnProcess()` exclusion for SwitchMTP command names (`SwitchMTP`, `switchmtp-cli`, `switchmtp-doctor`) while retaining the upstream-compatible `SwiftMTP` exclusion. |
+| `third_party/go-mtpfs/mtp/usb_diag_darwin.go` | Adds macOS USB occupier diagnostics: an `isOwnProcess()` exclusion for SwitchMTP command names (retaining the upstream-compatible `SwiftMTP` exclusion); rewrites the IOKit lookup to search only the subtree of the device being opened, rather than the whole IOService plane, and to distinguish interface-level clients (which block us) from device-level ones (which do not); exports `FindUSBOccupants`. |
+| `third_party/go-mtpfs/mtp/usb_diag_other.go` | Mirrors the new exported API on non-macOS platforms as no-ops. |
+| `third_party/go-mtpfs/mtp/mtp.go` | `Open()` no longer discards the error from `claim()`; adds `claimWithRetry()`, which recovers from macOS's `ptpcamerad` holding the interface by re-enumerating the port and immediately re-claiming. Handles `SessionAlreadyOpened` on the post-reset path as well as the first attempt. |
+| `third_party/go-mtpfs/mtp/ops.go` | Adds `SessionOpen()`, so callers can tell whether `Configure()` already opened a session instead of calling `OpenSession()` a second time (which fails). |
+
+Every change is marked in-place with a `MODIFIED (SwitchMTP)` or `ADDED (SwitchMTP)`
+comment explaining what was changed and why.
 
 The fork already incorporates the other fixes we depend on (UTF-16 surrogate-pair
 handling and `SendObject` speed tuning).
