@@ -18,6 +18,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- **CI now builds and smoke-tests the Linux CLI on arm64 as well as amd64.** The arm64 leg
+  is not speculative: it is the architecture the tool has had the most hardware validation
+  on, having been built from a clean clone and driven against a real console on Ubuntu
+  24.04 arm64, and it was the one architecture CI did not cover. Both binaries are
+  published as artifacts.
+
 - **Documented that `switchmtp` and your file manager cannot share the console.** On Linux
   the desktop's own MTP support already browses, reads and writes the Switch with no setup,
   which is worth knowing before installing anything. The two cannot be used in the same

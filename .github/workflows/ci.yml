@@ -40,7 +40,19 @@ jobs:
     # principle. backend/fake means the whole suite runs with no hardware, so a
     # macOS-only assumption creeping back into nxmtp fails here in under a
     # minute instead of surfacing during a port.
-    runs-on: ubuntu-latest
+    # The arm64 leg is not speculative: the CLI was built and run against a real
+    # Switch on Ubuntu 24.04 arm64, so this is the architecture that has had the
+    # most hardware validation and it was the one CI did not cover.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runs-on: ubuntu-latest
+          - arch: arm64
+            runs-on: ubuntu-24.04-arm
+
+    runs-on: ${{ matrix.runs-on }}
     timeout-minutes: 15
 
     steps:
@@ -86,22 +98,22 @@ jobs:
           version="$(git describe --tags --always --dirty 2>/dev/null || echo dev)"
           CGO_ENABLED=1 go build -trimpath \
             -ldflags "-s -w -X main.version=${version}" \
-            -o ../build/switchmtp-linux-amd64 ./cmd/switchmtp
+            -o "../build/switchmtp-linux-${{ matrix.arch }}" ./cmd/switchmtp
 
       # Running the binary is a cheap end-to-end check that the cgo link
       # actually worked. doctor is the only command that is meaningful with no
       # device attached, which is exactly the runner's situation.
       - name: Smoke-test the Linux CLI
         run: |
-          ./build/switchmtp-linux-amd64 version
-          ./build/switchmtp-linux-amd64 --json doctor > /tmp/doctor.json
+          "./build/switchmtp-linux-${{ matrix.arch }}" version
+          "./build/switchmtp-linux-${{ matrix.arch }}" --json doctor > /tmp/doctor.json
           python3 -c "import json,sys; d=json.load(open('/tmp/doctor.json')); assert d['platform']=='linux', d['platform']; print('doctor reported:', d['summary'])"
 
       - name: Upload the Linux CLI
         uses: actions/upload-artifact@v4
         with:
-          name: switchmtp-linux-amd64
-          path: build/switchmtp-linux-amd64
+          name: switchmtp-linux-${{ matrix.arch }}
+          path: build/switchmtp-linux-${{ matrix.arch }}
           if-no-files-found: error
 
   build:
