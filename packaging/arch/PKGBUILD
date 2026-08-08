@@ -1,0 +1,87 @@
+# Maintainer: fratei <https://github.com/fratei>
+#
+# SwitchMTP command line tool for Arch, Manjaro, EndeavourOS and SteamOS.
+#
+# This is a -git package because SwitchMTP has no tagged releases yet. When it
+# does, this becomes a `switchmtp` package with `source` pinned to the tag and
+# the pkgver() function below deleted.
+#
+# Only the CLI is packaged. The SwitchMTP GUI is macOS-only, and that is a
+# deliberate decision rather than an omission: GNOME and KDE already mount the
+# Switch and let you browse, read and write it in your own file manager, so a
+# Linux GUI would largely duplicate Nautilus and Dolphin. What this tool adds is
+# the part they do not do — a serial install queue, install targets that are
+# labelled rather than looking like ordinary folders, and files refused by name
+# instead of an opaque libmtp error.
+#
+# The udev rule is why a native package is the right delivery format here: a
+# Flatpak cannot install one, and without it /dev/bus/usb is root-only and the
+# desktop's own MTP handlers claim the console before this tool can.
+
+pkgname=switchmtp-git
+_pkgname=switchmtp
+pkgver=0.r0.0000000
+pkgrel=1
+pkgdesc="Command line MTP client for a Nintendo Switch running DBI"
+arch=('x86_64' 'aarch64')
+url="https://github.com/fratei/SwitchMTP"
+license=('GPL2')
+depends=('libusb')
+makedepends=('go' 'git')
+provides=("${_pkgname}")
+conflicts=("${_pkgname}")
+source=("${_pkgname}::git+https://github.com/fratei/SwitchMTP.git")
+sha256sums=('SKIP')
+
+pkgver() {
+  cd "${srcdir}/${_pkgname}"
+  # No tags upstream yet, so the usual `git describe` form has nothing to
+  # anchor to. Commit count plus short hash is the standard fallback and still
+  # sorts correctly for pacman.
+  printf "0.r%s.%s" "$(git rev-list --count HEAD)" "$(git rev-parse --short HEAD)"
+}
+
+build() {
+  cd "${srcdir}/${_pkgname}/backend"
+
+  # cgo is required: the USB layer binds libusb. Set explicitly rather than
+  # relied upon, because a build environment may have turned it off and the
+  # resulting failure is a confusing link error rather than a clear one.
+  export CGO_ENABLED=1
+  export GOFLAGS="-modcacherw"
+  export GOPATH="${srcdir}/gopath"
+
+  # `switchmtp version` reports whatever is linked into main.version. Matching
+  # what scripts/build-deb.sh does keeps the two packages reporting the same
+  # thing; with no tags upstream, `--always` yields the short commit.
+  local ver
+  ver="$(git -C "${srcdir}/${_pkgname}" describe --tags --always --dirty)"
+
+  go build \
+    -ldflags "-s -w -X main.version=${ver}" \
+    -o "${srcdir}/switchmtp" \
+    ./cmd/switchmtp
+}
+
+check() {
+  cd "${srcdir}/${_pkgname}/backend"
+  export GOPATH="${srcdir}/gopath"
+  # The suite runs against a software device emulator, so it needs no console
+  # attached and is safe inside a build chroot.
+  go test ./...
+}
+
+package() {
+  install -Dm755 "${srcdir}/switchmtp" "${pkgdir}/usr/bin/switchmtp"
+
+  # The vendor directory, not /etc/udev/rules.d, which is reserved for rules the
+  # administrator wrote. udev sorts by filename across both, so this still runs
+  # after 69-libmtp.rules and still has the last word on ID_MTP_DEVICE.
+  install -Dm644 "${srcdir}/${_pkgname}/packaging/linux/69-switchmtp.rules" \
+    "${pkgdir}/usr/lib/udev/rules.d/69-switchmtp.rules"
+
+  install -Dm644 "${srcdir}/${_pkgname}/packaging/linux/README.md" \
+    "${pkgdir}/usr/share/doc/${_pkgname}/README.md"
+  install -Dm644 "${srcdir}/${_pkgname}/LICENSE" \
+    "${pkgdir}/usr/share/licenses/${_pkgname}/LICENSE"
+}

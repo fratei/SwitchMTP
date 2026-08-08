@@ -1,7 +1,8 @@
 # SwitchMTP
 
 A native macOS app for browsing, managing, and transferring files between a Mac and a
-**Nintendo Switch running DBI's MTP responder**. It lets you manage your own SD card
+**Nintendo Switch running DBI's MTP responder**, plus a cross-platform command-line tool
+that also runs on Linux. It lets you manage your own SD card
 files, back up and restore save data, copy screenshots and videos to your Mac, send
 NSP/NSZ/XCI/XCZ files to DBI's install targets, and dump your inserted game card — all
 over a standard USB-C cable.
@@ -15,7 +16,8 @@ standard MTP mechanism.
 
 ## Requirements
 
-- **macOS 12 (Monterey) or later**
+- **macOS 12 (Monterey) or later** for the app. The `switchmtp` command-line tool also
+  runs on Linux — see [Command line](#command-line)
 - A Nintendo Switch (original / Mariko / Lite / OLED) with **[DBI](https://github.com/rashevskyv/dbi)
   installed**
 - A **USB-C data cable** — charge-only cables do not carry USB data and will not work
@@ -168,10 +170,31 @@ cases a script cares about: `3` no device, `4` cancelled, `5` device busy, `2` b
 Only one program can hold the USB device at a time, so close the app before using the
 tool and vice versa.
 
-**On Linux**, `/dev/bus/usb` is root-only by default and the desktop's own MTP handlers
-(gvfs, kio-mtp) will claim the console before SwitchMTP can. Both are fixed by one udev
-rule — see [`packaging/linux/README.md`](packaging/linux/README.md), or run
-`switchmtp doctor`, which checks for the rule and prints it if it is missing.
+### On Linux
+
+Install the Debian package, which carries the binary and the udev rule:
+
+```sh
+scripts/build-deb.sh && sudo apt install ./build/switchmtp_*.deb
+```
+
+The rule matters: `/dev/bus/usb` is root-only by default, and your desktop's own MTP
+handlers (gvfs, kio-mtp) claim the console before SwitchMTP can. One rule fixes both. If
+you install the binary some other way, see [`packaging/linux/README.md`](packaging/linux/README.md)
+or run `switchmtp doctor`, which checks for the rule and prints it if it is missing.
+
+**Be aware that your desktop can already do most of this.** Unlike macOS, which has no MTP
+support whatsoever, GNOME and KDE mount the Switch automatically and let you browse, read
+and write it in your file manager with no setup at all — including, as far as we can tell,
+the install storages. What `switchmtp` adds on Linux is narrower than on macOS: a serial
+install queue (copying several NSPs at once in a file manager is exactly the concurrency
+DBI does not want), install targets that are labelled rather than looking like ordinary
+folders, and files refused by name instead of an opaque `libmtp error`.
+
+A caveat that follows from that: **the two cannot be used interchangeably in one session.**
+Once `switchmtp` touches the console, an existing gvfs mount goes stale and every write
+through it fails until you unmount and remount. Nautilus for browsing, `switchmtp install`
+for installing, is the combination that works.
 
 ---
 

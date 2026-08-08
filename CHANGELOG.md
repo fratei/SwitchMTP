@@ -18,6 +18,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- **An AUR `PKGBUILD`, covering Arch, Manjaro and SteamOS.** Published as `switchmtp-git`
+  rather than `switchmtp`, because the project has no tagged releases yet and pinning a
+  PKGBUILD to a tag that does not exist produces a package nobody can build; the file
+  documents what to change when the first tag lands. Installs the same binary and udev
+  rule as the `.deb`. Its build recipe was run against a real console rather than assumed.
+
 - **A Debian package, so Linux installation is one command.** `scripts/build-deb.sh`
   produces a `.deb` carrying the `switchmtp` binary and the udev rule. A package is the
   right shape for this on Linux for a specific reason: it can install the udev rule, and a
