@@ -8,6 +8,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- **The diagnostic log could not tell two files apart.** It recorded the name of the file
+  being sent through a helper that clipped it to 50 characters for display, and clipped the
+  end — which is exactly where a Switch title carries its title id and version. A game and
+  its own update therefore appeared in the log under one identical, truncated name, in the
+  one artefact used to work out what went wrong after a failed transfer. The log now records
+  the full name. The transfer bar is unaffected: it already shortened long names by cutting
+  the middle, which keeps both ends readable, so removing the clip improves what is shown
+  there too.
+
 - **A long install queue could not be scrolled.** The queue list was a plain stack with no
   height limit, so queueing dozens of titles grew the transfer bar until it ran off the
   bottom of the window, taking the rows at the end with it and leaving no way to reach
