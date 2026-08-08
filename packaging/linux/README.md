@@ -61,6 +61,40 @@ altogether by stopping `gvfs` claiming the console in the first place — which 
 the main reason to install it even on a machine where USB permissions already
 work.
 
+## Installing
+
+### Debian, Ubuntu and derivatives
+
+```sh
+scripts/build-deb.sh
+sudo apt install ./build/switchmtp_*.deb
+```
+
+This is the recommended route, for a reason worth stating: **a package can install
+the udev rule, and a Flatpak or AppImage cannot.** That rule is the difference
+between the tool working and the desktop claiming the console first, so any
+format that cannot ship it leaves every user with a manual `sudo` step.
+
+The package installs `switchmtp` to `/usr/bin`, the rule to
+`/usr/lib/udev/rules.d/` — the vendor directory, leaving `/etc/udev/rules.d/`
+free for your own overrides — and reloads udev, so the rule applies without
+replugging. Removing the package reverses both, handing MTP back to your desktop
+immediately.
+
+The build must run on a Debian-derived system: the Go build is cgo against
+libusb, so it cannot be cross-compiled from macOS without a cross toolchain.
+
+### Anywhere else
+
+Build the binary directly and install the rule by hand:
+
+```sh
+cd backend && go build -o /tmp/switchmtp ./cmd/switchmtp
+sudo install -m 0755 /tmp/switchmtp /usr/local/bin/switchmtp
+sudo cp packaging/linux/69-switchmtp.rules /etc/udev/rules.d/
+sudo udevadm control --reload-rules && sudo udevadm trigger
+```
+
 ## `69-switchmtp.rules`
 
 A udev rule granting the logged-in user access to a Nintendo Switch, and

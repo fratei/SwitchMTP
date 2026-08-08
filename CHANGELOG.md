@@ -18,6 +18,15 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
+- **A Debian package, so Linux installation is one command.** `scripts/build-deb.sh`
+  produces a `.deb` carrying the `switchmtp` binary and the udev rule. A package is the
+  right shape for this on Linux for a specific reason: it can install the udev rule, and a
+  Flatpak or an AppImage cannot — that rule is the difference between the tool working and
+  the desktop claiming the console first. Installing reloads udev so the rule applies
+  without replugging, and removing it hands MTP back to the desktop immediately. Built and
+  installed on Ubuntu 24.04 arm64 against a real console, including verifying that removal
+  restores the desktop's own MTP support.
+
 - **CI now builds and smoke-tests the Linux CLI on arm64 as well as amd64.** The arm64 leg
   is not speculative: it is the architecture the tool has had the most hardware validation
   on, having been built from a clean clone and driven against a real console on Ubuntu
