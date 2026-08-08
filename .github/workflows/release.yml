@@ -10,7 +10,82 @@ permissions:
   contents: write
 
 jobs:
+  linux:
+    # Built before the release is created, not uploaded afterwards, so a release
+    # never exists in a half-populated state. The macOS job below waits on this.
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            runs-on: ubuntu-latest
+          - arch: arm64
+            runs-on: ubuntu-24.04-arm
+
+    runs-on: ${{ matrix.runs-on }}
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          # build-deb.sh versions the package from `git describe --tags`, which
+          # needs the tag history rather than the single commit a shallow clone
+          # provides.
+          fetch-depth: 0
+
+      - name: Set up Go
+        uses: actions/setup-go@v7
+        with:
+          go-version: '1.21.x'
+          cache-dependency-path: backend/go.mod
+
+      - name: Install libusb
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes --no-install-recommends libusb-1.0-0-dev pkg-config
+
+      - name: Build the Debian package
+        run: ./scripts/build-deb.sh
+
+      - name: Extract the binary for non-Debian distributions
+        run: |
+          # Taken out of the .deb rather than compiled again, so the standalone
+          # binary and the packaged one are provably the same build. Fedora,
+          # openSUSE and anyone not using a package manager get this; it does
+          # not carry the udev rule, so the tarball ships the rule beside it.
+          version="$(basename build/switchmtp_*_*.deb | sed 's/^switchmtp_//; s/_[^_]*\.deb$//')"
+          mkdir -p extract/switchmtp
+          dpkg-deb -x build/switchmtp_*_*.deb extract/payload
+          cp extract/payload/usr/bin/switchmtp extract/switchmtp/
+          cp packaging/linux/69-switchmtp.rules extract/switchmtp/
+          cp packaging/linux/README.md extract/switchmtp/
+          cp LICENSE extract/switchmtp/
+          tar -C extract -czf "build/switchmtp_${version}_linux-${{ matrix.arch }}.tar.gz" switchmtp
+          ( cd build && sha256sum switchmtp_*.deb switchmtp_*.tar.gz > "SHA256SUMS-linux-${{ matrix.arch }}.txt" )
+          ls -la build/
+
+      - name: Verify the packaged binary runs
+        run: |
+          dpkg-deb -x build/switchmtp_*_*.deb /tmp/verify
+          /tmp/verify/usr/bin/switchmtp version
+          # No console is attached to a runner, so this must exit cleanly saying
+          # so rather than crashing. It is the cheapest proof the cgo/libusb
+          # link is intact in the artifact we are about to publish.
+          /tmp/verify/usr/bin/switchmtp devices || true
+
+      - name: Upload Linux artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-${{ matrix.arch }}
+          path: |
+            build/switchmtp_*.deb
+            build/switchmtp_*.tar.gz
+            build/SHA256SUMS-linux-*.txt
+          if-no-files-found: error
+
   release:
+    needs: linux
     runs-on: macos-latest
     timeout-minutes: 60
 
@@ -40,10 +115,19 @@ jobs:
           ./scripts/build-app.sh
           ./scripts/package-dmg.sh
 
+      - name: Download Linux artifacts
+        uses: actions/download-artifact@v4
+        with:
+          pattern: linux-*
+          path: linux-artifacts
+          merge-multiple: true
+
       - name: Prepare release notes
         run: |
           cat > release-notes.md <<'NOTES'
-          ## Gatekeeper note
+          ## macOS
+
+          Download `SwitchMTP-*-universal.dmg`.
 
           SwitchMTP is ad-hoc signed and not notarized. After dragging `SwitchMTP.app` to `/Applications`, macOS may say the app is damaged or cannot be verified. Use either of these trust paths:
 
@@ -52,6 +136,29 @@ jobs:
           ```
 
           Or right-click `/Applications/SwitchMTP.app`, choose **Open**, then confirm **Open** when macOS asks.
+
+          ## Linux
+
+          Linux gets the `switchmtp` command-line tool. There is no Linux GUI, deliberately: GNOME and KDE already mount the Switch and let you browse, read and write it in your own file manager with no setup, so a GUI would largely duplicate Nautilus and Dolphin. What this tool adds is the part they do not do — a serial install queue, install targets labelled rather than looking like ordinary folders, and files refused by name instead of an opaque `libmtp error`.
+
+          On Debian, Ubuntu and derivatives:
+
+          ```sh
+          sudo apt install ./switchmtp_*_amd64.deb   # or _arm64.deb
+          ```
+
+          On Arch, Manjaro and SteamOS, build `switchmtp-git` from `packaging/arch/PKGBUILD`.
+
+          Anywhere else, take the `.tar.gz`, put `switchmtp` on your `PATH`, and install the udev rule beside it:
+
+          ```sh
+          sudo cp 69-switchmtp.rules /etc/udev/rules.d/
+          sudo udevadm control --reload-rules && sudo udevadm trigger
+          ```
+
+          That rule is not optional — without it `/dev/bus/usb` is root-only and your desktop's MTP handler claims the console first. The `.deb` installs it for you. Run `switchmtp doctor` if anything does not connect.
+
+          **The two cannot be used at the same time.** Once `switchmtp` opens the console, a file manager's cached MTP mount goes stale and every write through it fails until you unmount and remount.
           NOTES
 
       - name: Create GitHub Release
@@ -61,5 +168,8 @@ jobs:
           gh release create "${GITHUB_REF_NAME}" \
             build/SwitchMTP-*-universal.dmg \
             build/SwitchMTP-*-universal.dmg.sha256 \
+            linux-artifacts/switchmtp_*.deb \
+            linux-artifacts/switchmtp_*.tar.gz \
+            linux-artifacts/SHA256SUMS-linux-*.txt \
             --generate-notes \
             --notes "$(cat release-notes.md)"

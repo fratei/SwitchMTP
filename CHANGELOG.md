@@ -8,6 +8,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- **Debian package versions could outrank real releases.** `build-deb.sh` decided whether a
+  version string needed a `0.0.0+` prefix by checking whether it started with a digit — but
+  a commit hash such as `9518481` does, so it was used verbatim, and dpkg ranks `9518481`
+  above `1.0.0`. An untagged development build would therefore block upgrading to an actual
+  release, and because it depended on the hash it happened for roughly two builds in three.
+  The decision is now made on whether git found a tag at all. Builds past a tag are
+  versioned `1.2.3+4.gabc1234`, which dpkg sorts above `1.2.3` and below `1.2.4`.
+
 - **`switchmtp rm sdcard:/game.nsp --yes` no longer fails with `"--yes" is not a device
   path`.** Go's flag package stops parsing at the first argument that is not a flag, so
   any global flag typed after the subcommand was handed to the command as though it were a
@@ -17,6 +25,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
   path, so files whose names begin with a dash remain reachable.
 
 ### Added
+
+- **Releases now carry Linux artifacts.** Tagging builds the `.deb` for amd64 and arm64
+  alongside the macOS DMG, plus a plain `.tar.gz` for distributions with neither package
+  format. The Linux jobs run *before* the release is created rather than uploading to it
+  afterwards, so a release is never visible in a half-populated state. The tarball's binary
+  is extracted from the `.deb` rather than compiled a second time, making the two provably
+  identical builds rather than merely equivalent ones.
 
 - **An AUR `PKGBUILD`, covering Arch, Manjaro and SteamOS.** Published as `switchmtp-git`
   rather than `switchmtp`, because the project has no tagged releases yet and pinning a

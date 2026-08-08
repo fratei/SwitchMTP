@@ -57,12 +57,33 @@ if [[ -z "${arch}" ]]; then
     arch="$(dpkg --print-architecture)"
 fi
 
-# Debian versions may not contain a leading "v", and must start with a digit.
-raw_version="$(git describe --tags --always --dirty 2>/dev/null || echo 0.0.0)"
-version="${raw_version#v}"
-if [[ ! "${version}" =~ ^[0-9] ]]; then
-    version="0.0.0+${version}"
+# Debian version strings must start with a digit, and dpkg compares them
+# numerically. Deciding on "does it start with a digit" — which an earlier
+# version of this script did — is wrong in a way that only bites later: a commit
+# hash like 9518481 starts with a digit, so it was used verbatim, and
+# `dpkg --compare-versions 9518481 gt 1.0.0` is true. That dev build would
+# outrank every real release and apt would refuse to upgrade over it. Worse, it
+# depended on the hash, so it happened for roughly two builds in three.
+#
+# Decide on whether git actually found a tag instead.
+raw_version="$(git describe --tags --always --dirty 2>/dev/null || echo unknown)"
+
+if git describe --tags --exact-match >/dev/null 2>&1; then
+    # On a release tag: v1.2.3 -> 1.2.3
+    version="${raw_version#v}"
+elif git describe --tags >/dev/null 2>&1; then
+    # Past a tag: v1.2.3-4-gabc1234 -> 1.2.3+4.gabc1234, which dpkg sorts above
+    # 1.2.3 and below 1.2.4, exactly where a build from that commit belongs.
+    version="$(printf '%s' "${raw_version#v}" | sed 's/-\([0-9][0-9]*\)-g/+\1.g/')"
+else
+    # No tags in the repository at all: always a 0.0.0+ prerelease, whatever the
+    # hash happens to begin with.
+    version="0.0.0+${raw_version#v}"
 fi
+
+# "-dirty" is legal in a Debian version but reads as a Debian revision
+# separator; "+dirty" keeps it part of the upstream version where it belongs.
+version="${version/-dirty/+dirty}"
 
 stage="$(mktemp -d)"
 trap 'rm -rf "${stage}"' EXIT
