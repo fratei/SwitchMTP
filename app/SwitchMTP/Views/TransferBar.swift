@@ -234,16 +234,72 @@ struct TransferBar: View {
             }
 
             if isQueueExpanded {
-                VStack(alignment: .leading, spacing: 2) {
-                    ForEach(manager.installQueue) { item in
-                        InstallQueueRow(item: item) {
-                            manager.removeFromInstallQueue(item.id)
-                        }
-                    }
-                }
-                .padding(.leading, 14)
+                queueList
+                    .padding(.leading, 14)
             }
         }
+    }
+
+    /// How many rows are shown before the list starts scrolling.
+    ///
+    /// Below this the list is laid out at its natural height, so a queue of
+    /// three titles does not sit in a mostly empty scroll area. Above it the
+    /// height is pinned and the list scrolls, which is what stops a large queue
+    /// from growing the bar past the bottom of the window and taking the rows
+    /// with it.
+    private static let rowsBeforeScrolling = 8
+
+    /// The pinned height used once the queue is longer than that.
+    ///
+    /// Rows are not a uniform height — a failed row carries up to two extra
+    /// lines of reason, and a sent row carries one — so this cannot be derived
+    /// from a row count. It is a deliberate cap on how much of the window the
+    /// bar may take.
+    private static let maxQueueHeight: CGFloat = 190
+
+    @ViewBuilder
+    private var queueList: some View {
+        if manager.installQueue.count > Self.rowsBeforeScrolling {
+            ScrollViewReader { proxy in
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 2) {
+                        queueRows
+                    }
+                }
+                .frame(height: Self.maxQueueHeight)
+                // Follow the queue as it advances. Without this a long queue
+                // leaves the item actually being sent somewhere off-screen, and
+                // the user has to hunt for it after every file. Keyed on the
+                // active item's identity so it moves once per file rather than
+                // fighting a manual scroll on every progress tick.
+                .onChange(of: activeItemID) { id in
+                    guard let id else { return }
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        proxy.scrollTo(id, anchor: .center)
+                    }
+                }
+            }
+        } else {
+            VStack(alignment: .leading, spacing: 2) {
+                queueRows
+            }
+        }
+    }
+
+    @ViewBuilder
+    private var queueRows: some View {
+        ForEach(manager.installQueue) { item in
+            InstallQueueRow(item: item) {
+                manager.removeFromInstallQueue(item.id)
+            }
+            .equatable()
+            .id(item.id)
+        }
+    }
+
+    /// The identity of the item currently being sent, if any.
+    private var activeItemID: InstallQueueItem.ID? {
+        manager.installQueue.first { $0.state == .active }?.id
     }
 
     private var queueSummary: String {
@@ -263,9 +319,21 @@ struct TransferBar: View {
     }
 }
 
-private struct InstallQueueRow: View {
+private struct InstallQueueRow: View, Equatable {
     let item: InstallQueueItem
     let onRemove: () -> Void
+
+    /// Compared on the item alone.
+    ///
+    /// The row also carries a closure, and a closure is not equatable, so
+    /// without this SwiftUI has to assume every row changed whenever the bar
+    /// re-renders — which is ten times a second during a transfer, for every
+    /// row in the queue, each one rebuilding a localised tooltip it will most
+    /// likely never show. The closure only captures the manager and the item's
+    /// id, both of which are stable for a given item, so ignoring it is safe.
+    static func == (lhs: InstallQueueRow, rhs: InstallQueueRow) -> Bool {
+        lhs.item == rhs.item
+    }
 
     private var symbol: String {
         switch item.state {

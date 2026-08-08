@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- **A long install queue could not be scrolled.** The queue list was a plain stack with no
+  height limit, so queueing dozens of titles grew the transfer bar until it ran off the
+  bottom of the window, taking the rows at the end with it and leaving no way to reach
+  them. Past eight items the list is now pinned to a fixed height and scrolls, and it
+  follows the queue as it advances so the title actually being sent stays in view. Shorter
+  queues are still laid out at their natural height rather than sitting in a mostly empty
+  scroll area.
+
+- **A long install queue made the app burn CPU during transfers.** Every queue row was
+  rebuilt ten times a second — once per progress update, for every row — because the row
+  carried a closure, and a closure cannot be compared, so SwiftUI had to assume the row had
+  changed. Each rebuild recreated a localised tooltip that in most cases was never shown;
+  tooltip construction alone accounted for roughly half of each row's render cost. Rows are
+  now compared on their contents, so a row is only rebuilt when it actually changes, and
+  only the visible portion of a long queue is built at all.
+
 - **A wedged install showed a frozen percentage and no error.** A 3.24 GB title reached 37%
   at a healthy 20 MB/s, then the console stopped draining the USB endpoint. Nothing failed:
   the host stayed blocked inside a libusb write that never returned, so no error was raised

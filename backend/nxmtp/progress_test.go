@@ -112,11 +112,15 @@ func TestProgressMatchesSwiftModel(t *testing.T) {
 	}
 
 	// Emit a payload including every optional field so nothing is omitted.
+	// Anything left at its zero value here is silently skipped by omitempty and
+	// therefore never checked, so new fields must be added to this literal.
 	full := Progress{
 		Note:        "note",
 		Indefinite:  true,
 		CurrentFile: 1,
 		Status:      StatusInstalling,
+		Stalled:     true,
+		StalledFor:  90.5,
 	}
 	raw, err := json.Marshal(full)
 	if err != nil {
@@ -129,7 +133,7 @@ func TestProgressMatchesSwiftModel(t *testing.T) {
 
 	// Types the Swift side may use for a fractional JSON number. Int64 is the
 	// trap: JSONDecoder throws rather than truncating.
-	fractional := map[string]bool{"elapsedTime": true, "speed": true, "filesSentProgress": true}
+	fractional := map[string]bool{"elapsedTime": true, "speed": true, "filesSentProgress": true, "stalledFor": true}
 
 	for key := range decoded {
 		swiftType, ok := swiftTypes[key]
