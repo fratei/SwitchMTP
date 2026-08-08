@@ -51,8 +51,16 @@ struct TransferBar: View {
 
     /// True when the backend has gone quiet for long enough to be worth saying
     /// so. Installing is expected to be quiet, so it is exempt.
+    ///
+    /// Two independent signals feed this, because they catch different
+    /// failures. The backend's own flag watches whether *bytes* are moving, so
+    /// it catches a console that dribbles out one packet every eighty seconds —
+    /// which looks like progress here, since a payload does arrive. This view's
+    /// timer watches whether *payloads* are arriving, so it still speaks up if
+    /// the backend itself stops reporting.
     private var isStalled: Bool {
         guard manager.isTransferActive, phase != .installing else { return false }
+        if stats?.isStalled == true { return true }
         guard let since = secondsSinceProgress else {
             return isPreparing
         }
@@ -127,7 +135,9 @@ struct TransferBar: View {
                     Spacer(minLength: 0)
                 }
 
-                if let note = stats?.note {
+                // Suppressed while stalled: the stall label below says the same
+                // thing, localised and with a live counter.
+                if let note = stats?.note, !(stats?.isStalled ?? false) {
                     Text(note)
                         .font(.system(size: 11))
                         .foregroundStyle(.secondary)
@@ -167,10 +177,17 @@ struct TransferBar: View {
     }
 
     private var stalledMessage: String {
-        let seconds = Int(secondsSinceProgress ?? 0)
         if isPreparing {
             return String(localized: "No progress reported yet. The console may still be preparing — DBI shows the real state on screen.")
         }
+        // The backend knows the byte counter has stopped, which is a stronger
+        // statement than "we have not heard anything lately" and deserves the
+        // more specific advice that comes with it.
+        if let stats, stats.isStalled {
+            let seconds = Int(max(stats.stalledFor, secondsSinceProgress ?? 0))
+            return String(localized: "No data accepted for \(seconds)s. Check the console — DBI may be showing an error or waiting for input. Large compressed titles can exhaust memory in applet mode; launching DBI over a running game avoids that.")
+        }
+        let seconds = Int(secondsSinceProgress ?? 0)
         return String(localized: "No progress for \(seconds)s. The console may be busy; DBI shows the real state on screen.")
     }
 

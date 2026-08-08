@@ -18,6 +18,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -150,6 +151,7 @@ func TestProgressMatchesSwiftModel(t *testing.T) {
 func TestBeginFileClearsInstallingStatus(t *testing.T) {
 	var last Progress
 	tr := newProgressTracker(func(p Progress) { last = p })
+	defer tr.stop()
 
 	tr.setStatus(StatusInstalling, "installing the first title")
 	if last.Status != StatusInstalling {
@@ -174,6 +176,7 @@ func TestHeartbeatEmitsWhileWaiting(t *testing.T) {
 		count++
 		last = p
 	})
+	defer tr.stop()
 	tr.setStatus(StatusInstalling, "committing")
 	before := count
 
@@ -191,5 +194,254 @@ func TestHeartbeatEmitsWhileWaiting(t *testing.T) {
 	}
 	if last.ElapsedTime < 0 {
 		t.Fatalf("elapsed time must keep advancing, got %v", time.Duration(last.ElapsedTime))
+	}
+}
+
+// withClock swaps the package clock for a controllable one so a stall can be
+// tested without spending a real minute on it.
+func withClock(t *testing.T, start time.Time) func(time.Duration) {
+	t.Helper()
+	cur := start
+	real := now
+	now = func() time.Time { return cur }
+	t.Cleanup(func() { now = real })
+	return func(d time.Duration) { cur = cur.Add(d) }
+}
+
+// TestStallReportedWhenCounterFreezes is the regression test for a 3.24 GB
+// install that sat at 37% for thirteen minutes showing no error at all. The
+// console had stopped draining the bulk endpoint, so the host was blocked
+// inside libusb and no callback ever fired again -- from the UI's point of
+// view a dead transfer was indistinguishable from a slow one.
+func TestStallReportedWhenCounterFreezes(t *testing.T) {
+	advanceClock := withClock(t, time.Now())
+
+	var last Progress
+	tr := newProgressTracker(func(p Progress) { last = p })
+	defer tr.stop()
+
+	tr.setTotals(1, 0, 100<<20, false)
+	tr.beginFile("Cuphead.nsz", "/Cuphead.nsz", 100<<20)
+	tr.advance(40 << 20)
+
+	if last.Stalled {
+		t.Fatalf("a transfer that just moved must not be stalled")
+	}
+
+	advanceClock(stallAfter + time.Second)
+	tr.heartbeat()
+
+	if !last.Stalled {
+		t.Fatalf("counter still for %v must be reported as stalled", stallAfter)
+	}
+	if last.Note != StallNote {
+		t.Fatalf("a stall must explain itself, got %q", last.Note)
+	}
+	if last.StalledFor < stallAfter.Seconds() {
+		t.Fatalf("StalledFor = %v, want at least %v", last.StalledFor, stallAfter.Seconds())
+	}
+
+	// Recovery must clear it, otherwise the warning is a one-way door.
+	advanceClock(200 * time.Millisecond)
+	tr.advance(60 << 20)
+	if last.Stalled {
+		t.Fatalf("a recovered transfer must stop reporting a stall")
+	}
+}
+
+// TestTrickleCountsAsStalled covers the failure actually observed on hardware,
+// which is nastier than a clean freeze: the console kept accepting exactly one
+// 16 KiB packet every 80 seconds. Any "has the byte count changed?" check sees
+// movement and stays quiet, while the transfer is about 100 days from done.
+func TestTrickleCountsAsStalled(t *testing.T) {
+	advanceClock := withClock(t, time.Now())
+
+	var last Progress
+	tr := newProgressTracker(func(p Progress) { last = p })
+	defer tr.stop()
+
+	tr.setTotals(1, 0, 3<<30, false)
+	tr.beginFile("Cuphead.nsz", "/Cuphead.nsz", 3<<30)
+
+	sent := int64(1 << 30)
+	tr.advance(sent)
+
+	// Five rounds of the observed signature: 16 KiB, 80 seconds apart.
+	for i := 0; i < 5; i++ {
+		advanceClock(80 * time.Second)
+		sent += 16 << 10
+		tr.advance(sent)
+	}
+
+	if !last.Stalled {
+		t.Fatalf("16 KiB per 80s is not progress; want stalled, got %+v", last.ActiveFileSize)
+	}
+}
+
+// TestHealthyTransferNeverStalls guards the false positive. Crying stall on a
+// working transfer would teach people to ignore the warning, which costs more
+// than never having shown it.
+func TestHealthyTransferNeverStalls(t *testing.T) {
+	advanceClock := withClock(t, time.Now())
+
+	var last Progress
+	tr := newProgressTracker(func(p Progress) { last = p })
+	defer tr.stop()
+
+	tr.setTotals(1, 0, 1<<30, false)
+	tr.beginFile("game.nsp", "/game.nsp", 1<<30)
+
+	// 20 MB/s in 100ms slices, for well over the stall threshold.
+	sent := int64(0)
+	for i := 0; i < 10*int(stallAfter.Seconds()); i++ {
+		advanceClock(100 * time.Millisecond)
+		sent += 2 << 20
+		tr.advance(sent)
+		if last.Stalled {
+			t.Fatalf("healthy transfer flagged as stalled after %d slices", i)
+		}
+	}
+	if last.StalledFor != 0 {
+		t.Fatalf("healthy transfer must not report idle time, got %v", last.StalledFor)
+	}
+}
+
+// TestSlowButViableTransferNeverStalls pins the floor from the other side: a
+// genuinely slow SD card is not a stalled console.
+func TestSlowButViableTransferNeverStalls(t *testing.T) {
+	advanceClock := withClock(t, time.Now())
+
+	var last Progress
+	tr := newProgressTracker(func(p Progress) { last = p })
+	defer tr.stop()
+
+	tr.setTotals(1, 0, 1<<30, false)
+	tr.beginFile("game.nsp", "/game.nsp", 1<<30)
+
+	// 1 MB/s -- far below healthy MTP, still comfortably above the floor.
+	sent := int64(0)
+	for i := 0; i < 2*int(stallAfter.Seconds()); i++ {
+		advanceClock(time.Second)
+		sent += 1 << 20
+		tr.advance(sent)
+		if last.Stalled {
+			t.Fatalf("1 MB/s flagged as stalled after %ds", i)
+		}
+	}
+}
+
+// TestInstallingIsNotAStall matters because the install phase has no byte
+// counter to move: DBI is committing and the host is right to be idle. Calling
+// that a stall would fire on every single successful install.
+func TestInstallingIsNotAStall(t *testing.T) {
+	advanceClock := withClock(t, time.Now())
+
+	var last Progress
+	tr := newProgressTracker(func(p Progress) { last = p })
+	defer tr.stop()
+
+	tr.beginFile("game.nsp", "/game.nsp", 100)
+	tr.advance(100)
+	tr.setStatus(StatusInstalling, "installing")
+
+	advanceClock(10 * stallAfter)
+	tr.heartbeat()
+
+	if last.Stalled {
+		t.Fatalf("the installing phase must never be reported as stalled")
+	}
+	if last.Note != "installing" {
+		t.Fatalf("the install note must survive, got %q", last.Note)
+	}
+}
+
+// TestWatchdogEmitsDuringHardFreeze is the test that matters most, because it
+// covers the case where nothing in the normal path can help: the console stops
+// draining the bulk endpoint, the MTP engine blocks inside libusb, and so
+// advance() is never called again. No emit is triggered by anything, and the UI
+// keeps showing the last percentage it happened to see -- 37%, for thirteen
+// minutes, with no error logged anywhere.
+//
+// This runs on the real clock with a shortened interval, so it exercises the
+// watchdog goroutine and its locking for real rather than simulating it.
+func TestWatchdogEmitsDuringHardFreeze(t *testing.T) {
+	oldInterval, oldStall := watchInterval, stallAfter
+	watchInterval, stallAfter = 10*time.Millisecond, 30*time.Millisecond
+	t.Cleanup(func() { watchInterval, stallAfter = oldInterval, oldStall })
+
+	var mu sync.Mutex
+	var count int
+	var stalled bool
+	var note string
+
+	tr := newProgressTracker(func(p Progress) {
+		mu.Lock()
+		defer mu.Unlock()
+		count++
+		if p.Stalled {
+			stalled = true
+			note = p.Note
+		}
+	})
+	defer tr.stop()
+
+	tr.setTotals(1, 0, 1<<30, false)
+	tr.beginFile("Cuphead.nsz", "/Cuphead.nsz", 1<<30)
+	tr.advance(1 << 20)
+
+	mu.Lock()
+	before := count
+	mu.Unlock()
+
+	// Now simulate the freeze by simply doing nothing at all.
+	time.Sleep(300 * time.Millisecond)
+
+	mu.Lock()
+	after, sawStall, sawNote := count, stalled, note
+	mu.Unlock()
+
+	if after <= before {
+		t.Fatalf("watchdog produced no progress events during a freeze (%d -> %d); "+
+			"the UI would sit on a stale percentage forever", before, after)
+	}
+	if !sawStall {
+		t.Fatalf("watchdog emitted %d events but never set Stalled", after-before)
+	}
+	if sawNote != StallNote {
+		t.Fatalf("stall must carry actionable advice, got %q", sawNote)
+	}
+}
+
+// TestStopHaltsTheWatchdog guards against leaking a goroutine per transfer.
+func TestStopHaltsTheWatchdog(t *testing.T) {
+	oldInterval := watchInterval
+	watchInterval = 5 * time.Millisecond
+	t.Cleanup(func() { watchInterval = oldInterval })
+
+	var mu sync.Mutex
+	var count int
+	tr := newProgressTracker(func(Progress) {
+		mu.Lock()
+		count++
+		mu.Unlock()
+	})
+	tr.beginFile("game.nsp", "/game.nsp", 1<<20)
+
+	time.Sleep(50 * time.Millisecond)
+	tr.stop()
+	tr.stop() // must be safe twice; callers use defer and may also stop early
+
+	time.Sleep(20 * time.Millisecond)
+	mu.Lock()
+	settled := count
+	mu.Unlock()
+
+	time.Sleep(80 * time.Millisecond)
+	mu.Lock()
+	final := count
+	mu.Unlock()
+
+	if final != settled {
+		t.Fatalf("watchdog kept emitting after stop (%d -> %d)", settled, final)
 	}
 }

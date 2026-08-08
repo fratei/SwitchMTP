@@ -34,6 +34,8 @@ struct TransferProgressData: Decodable {
     let note: String?                    // human-readable phase detail
     let indefinite: Bool?                // total size not known in advance
     let currentFile: Int64?              // 1-based index of the active file
+    let stalled: Bool?                   // console has stopped accepting data
+    let stalledFor: Double?              // seconds the byte counter has been still
 
     enum CodingKeys: String, CodingKey {
         case fullPath
@@ -50,6 +52,8 @@ struct TransferProgressData: Decodable {
         case note
         case indefinite
         case currentFile
+        case stalled
+        case stalledFor
     }
 }
 
@@ -98,6 +102,20 @@ class TransferStatistics {
     var note: String? {
         guard let note = progressData.note, !note.isEmpty else { return nil }
         return note
+    }
+
+    /// Whether the console has stopped accepting data.
+    ///
+    /// This is the difference between "slow" and "not coming back". Without it
+    /// a wedged install shows a frozen percentage and no error, because from
+    /// the host's side nothing has gone wrong — the writes simply never return.
+    var isStalled: Bool {
+        progressData.stalled ?? false
+    }
+
+    /// How long the byte counter has stood still, in seconds.
+    var stalledFor: TimeInterval {
+        progressData.stalledFor ?? 0
     }
 
     /// Elapsed time in seconds

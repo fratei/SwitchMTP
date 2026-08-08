@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- **A wedged install showed a frozen percentage and no error.** A 3.24 GB title reached 37%
+  at a healthy 20 MB/s, then the console stopped draining the USB endpoint. Nothing failed:
+  the host stayed blocked inside a libusb write that never returned, so no error was raised
+  and no progress callback ever fired again. The app sat on the last percentage it had seen
+  for hours, and the log recorded no error of any kind.
+
+  Two things were missing, and the second is the one that actually mattered. A watchdog now
+  keeps emitting progress while the byte counter stands still, so a total freeze is visible
+  instead of silent. More importantly, movement is now judged by *rate* rather than by
+  whether the number changed at all: the console in question was still accepting exactly
+  one 16 KiB packet every 80 seconds, which satisfies any "has it moved?" check while being
+  about 102 days from finishing. Below 64 KiB/s — some 300 times slower than a healthy
+  transfer — the transfer is reported as stalled, with advice to check the console, since
+  the host cannot tell an error dialog from a full SD card from applet mode running out of
+  memory. Nothing is cancelled automatically; a stall is surfaced, not acted on.
+
 - **Debian package versions could outrank real releases.** `build-deb.sh` decided whether a
   version string needed a `0.0.0+` prefix by checking whether it started with a digit — but
   a commit hash such as `9518481` does, so it was used verbatim, and dpkg ranks `9518481`

@@ -111,6 +111,7 @@ func (c *Client) Download(req DownloadRequest, onPreprocess func(PreprocessResul
 	}
 
 	tracker := newProgressTracker(onProgress)
+	defer tracker.stop()
 	tracker.setTotals(int64(len(items)), int64(dirs), totalBytes, sizeUnknown)
 	if st.Virtual {
 		tracker.setStatus(StatusTransferring, "This storage generates files on demand; the size may not be known in advance.")

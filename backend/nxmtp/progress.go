@@ -29,6 +29,48 @@ const (
 	StatusFailed        TransferStatus = "failed"
 )
 
+// These are variables rather than constants so tests can exercise the watchdog
+// without spending a real minute per case.
+var (
+	// stallAfter is how long the active file's byte counter may stand still
+	// before a transfer is reported as stalled.
+	//
+	// It is deliberately generous. DBI legitimately pauses mid-transfer while
+	// it commits to a slow SD card, and calling that a stall would train people
+	// to ignore the warning. What it must catch is the case where the console
+	// stops draining altogether -- which is indistinguishable from a healthy
+	// transfer from the host's side, because the bytes simply stop being
+	// accepted and libusb blocks.
+	stallAfter = 60 * time.Second
+
+	// watchInterval is how often the watchdog looks for a standing still
+	// counter. It only emits when the counter has not moved, so a healthy
+	// transfer never pays for it.
+	watchInterval = 5 * time.Second
+)
+
+// minTransferRate is the floor, in bytes per second, below which the counter is
+// treated as not really moving.
+//
+// A pure freeze is not the only failure mode, and it is not the worst one: a
+// wedged console can dribble out one 16 KiB packet per 80 seconds, which resets
+// any "did the number change?" check while being roughly 100 days away from
+// finishing a 3 GB title. Bulk MTP to a Switch runs at 15-25 MB/s, so 64 KiB/s
+// sits far enough below any healthy transfer to be safe and far enough above a
+// trickle to catch it.
+const minTransferRate = 64 * 1024
+
+// StallNote is shown when the console stops accepting data mid-file.
+//
+// It says "check the console" rather than naming a cause because the host
+// cannot tell the difference between DBI showing an error dialog, running out
+// of space, and running out of memory in applet mode. All three look identical
+// over USB: the device simply stops reading.
+const StallNote = "The Switch has stopped accepting data. Check the console — DBI may be " +
+	"showing an error or waiting for input. Large compressed titles can also exhaust " +
+	"memory in applet mode; launching DBI by holding R while starting a game avoids that. " +
+	"Cancel the transfer if the console does not recover."
+
 // FileSizeProgress describes progress through a byte count.
 type FileSizeProgress struct {
 	Total    int64   `json:"total"`
@@ -67,6 +109,14 @@ type Progress struct {
 	Note        string `json:"note,omitempty"`
 	Indefinite  bool   `json:"indefinite,omitempty"`
 	CurrentFile int64  `json:"currentFile,omitempty"`
+
+	// Stalled reports that the active file's byte counter has stood still long
+	// enough that the console is probably not coming back on its own.
+	Stalled bool `json:"stalled,omitempty"`
+	// StalledFor is how many seconds the counter has been still. It is reported
+	// whenever the counter is not moving, not only once Stalled is set, so a UI
+	// can show "no data for 20s" before committing to the word "stalled".
+	StalledFor float64 `json:"stalledFor,omitempty"`
 }
 
 // ProgressFunc receives progress updates during a transfer.
@@ -103,15 +153,62 @@ type progressTracker struct {
 	// indefinite marks a transfer whose total size is not known in advance,
 	// which happens when reading DBI's virtual storages.
 	indefinite bool
+
+	// lastAdvance is when the active file's byte counter last moved at a rate
+	// that could plausibly finish, and lastAdvanceBytes is the counter's value
+	// at that moment.
+	lastAdvance      time.Time
+	lastAdvanceBytes int64
+
+	watchStop chan struct{}
+	stopOnce  sync.Once
 }
 
 func newProgressTracker(cb ProgressFunc) *progressTracker {
-	return &progressTracker{
-		cb:       cb,
-		start:    now(),
-		interval: 100 * time.Millisecond,
-		status:   StatusTransferring,
+	p := &progressTracker{
+		cb:          cb,
+		start:       now(),
+		interval:    100 * time.Millisecond,
+		status:      StatusTransferring,
+		lastAdvance: now(),
+		watchStop:   make(chan struct{}),
 	}
+	if cb != nil {
+		go p.watch()
+	}
+	return p
+}
+
+// watch re-emits progress while the byte counter stands still.
+//
+// Without it a wedged console produces no callbacks at all: the MTP engine is
+// blocked inside a libusb write, so nothing calls advance(), so nothing calls
+// emit(), and the UI shows the last percentage it saw indefinitely. That is
+// precisely how a dead transfer came to look like a working one sitting at 37%.
+func (p *progressTracker) watch() {
+	ticker := time.NewTicker(watchInterval)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-p.watchStop:
+			return
+		case <-ticker.C:
+			p.mu.Lock()
+			idle := now().Sub(p.lastAdvance)
+			moving := p.status == StatusTransferring
+			p.mu.Unlock()
+			// Only speak up when the counter is actually still. A healthy
+			// transfer already emits every 100ms and needs no help.
+			if moving && idle >= watchInterval {
+				p.heartbeat()
+			}
+		}
+	}
+}
+
+// stop halts the watchdog. Safe to call more than once.
+func (p *progressTracker) stop() {
+	p.stopOnce.Do(func() { close(p.watchStop) })
 }
 
 func (p *progressTracker) setTotals(files, dirs, bytes int64, indefinite bool) {
@@ -127,6 +224,7 @@ func (p *progressTracker) beginFile(name, path string, size int64) {
 	// A previous file in the same batch may have left the tracker in the
 	// "installing" state. Bytes are moving again, so say so.
 	p.status, p.note = StatusTransferring, ""
+	p.lastAdvance, p.lastAdvanceBytes = now(), 0
 	p.mu.Unlock()
 	p.emit(true)
 }
@@ -150,6 +248,16 @@ func (p *progressTracker) advance(cumulative int64) {
 	}
 	p.activeSent = cumulative
 	p.bulkSent += delta
+	if delta > 0 {
+		// Only reset the marker when the counter is moving fast enough to
+		// finish. Treating any movement as progress is what lets a trickling
+		// device masquerade as a working one.
+		elapsed := now().Sub(p.lastAdvance).Seconds()
+		if elapsed <= 0 || float64(cumulative-p.lastAdvanceBytes) >= elapsed*minTransferRate {
+			p.lastAdvance = now()
+			p.lastAdvanceBytes = cumulative
+		}
+	}
 	p.mu.Unlock()
 	p.emit(false)
 }
@@ -206,6 +314,22 @@ func (p *progressTracker) emit(force bool) {
 		bulkTotal = p.bulkSent
 	}
 
+	// The console is only expected to be draining the endpoint while bytes are
+	// meant to be flowing. An install that has moved on to committing has no
+	// counter to stand still, so it must not be called stalled.
+	idle := t.Sub(p.lastAdvance)
+	stalled := p.status == StatusTransferring && idle >= stallAfter
+	note := p.note
+	if stalled && note == "" {
+		note = StallNote
+	}
+	// Keep the wire quiet during healthy transfers: a sub-second idle time on
+	// every one of ten emits per second is noise, not information.
+	stalledFor := 0.0
+	if p.status == StatusTransferring && idle >= watchInterval {
+		stalledFor = idle.Seconds()
+	}
+
 	prog := Progress{
 		FullPath:          p.activePath,
 		Name:              p.activeName,
@@ -218,9 +342,11 @@ func (p *progressTracker) emit(force bool) {
 		ActiveFileSize:    newFileSizeProgress(p.activeSent, p.activeTotal),
 		BulkFileSize:      newFileSizeProgress(p.bulkSent, bulkTotal),
 		Status:            p.status,
-		Note:              p.note,
+		Note:              note,
 		Indefinite:        p.indefinite,
 		CurrentFile:       p.filesSent + 1,
+		Stalled:           stalled,
+		StalledFor:        stalledFor,
 	}
 	cb := p.cb
 	p.mu.Unlock()

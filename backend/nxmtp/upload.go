@@ -85,6 +85,7 @@ func (c *Client) Upload(req UploadRequest, onPreprocess func(PreprocessResult), 
 	}
 
 	tracker := newProgressTracker(onProgress)
+	defer tracker.stop()
 	tracker.setTotals(int64(len(items)), int64(dirs), totalBytes, false)
 
 	summary := &TransferSummary{
@@ -147,6 +148,7 @@ func (c *Client) uploadInstall(st *Storage, items []uploadItem, totalBytes int64
 	}
 
 	tracker := newProgressTracker(onProgress)
+	defer tracker.stop()
 	tracker.setTotals(int64(len(accepted)), 0, acceptedBytes, false)
 
 	summary := &TransferSummary{TotalFiles: int64(len(accepted)), Skipped: skipped}
