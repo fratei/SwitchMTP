@@ -217,14 +217,16 @@ class TransferStatistics {
         return formatFileSize(sent)
     }
     
-    /// Current filename with truncation handling
+    /// The name of the file being transferred, in full.
+    ///
+    /// This is deliberately not truncated. The view that shows it truncates in
+    /// the middle, which keeps both ends readable, and these names carry the
+    /// title id and version at the *end* — `[01002E7016C46800][v1900544]` — so
+    /// clipping the tail throws away the only part that distinguishes a base
+    /// game from its own update. The debug log reads this too, and two files
+    /// that cannot be told apart in a log are worse than a long line.
     var currentFileName: String {
         if let name = progressData.name, !name.isEmpty {
-            // Truncate long filenames to 50 characters
-            if name.count > 50 {
-                let index = name.index(name.startIndex, offsetBy: 47)
-                return String(name[..<index]) + "..."
-            }
             return name
         }
         return "—"
