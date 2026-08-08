@@ -14,6 +14,7 @@ package main
 
 import (
 	"encoding/json"
+	"flag"
 	"io"
 	"os"
 	"path/filepath"
@@ -246,6 +247,65 @@ func TestRmRefusesToMixStorages(t *testing.T) {
 
 	if _, code := captureRun(t, "--yes", "rm", "sdcard:/a.txt", "nand:/b.txt"); code != exitUsage {
 		t.Errorf("exit %d, want %d", code, exitUsage)
+	}
+}
+
+// Global flags must work after the subcommand as well as before it.
+//
+// Go's flag package stops at the first positional argument, so before this was
+// handled `switchmtp rm sdcard:/doomed.txt --yes` treated "--yes" as a second
+// path to delete and failed with `"--yes" is not a device path`. That is the
+// order most people type, and it was hit immediately the first time the CLI was
+// driven against real hardware.
+func TestGlobalFlagsAreAcceptedAfterTheSubcommand(t *testing.T) {
+	for _, form := range [][]string{
+		{"--quiet", "--yes", "rm", "sdcard:/doomed.txt"},
+		{"rm", "sdcard:/doomed.txt", "--yes", "--quiet"},
+		{"--yes", "rm", "--quiet", "sdcard:/doomed.txt"},
+	} {
+		t.Run(strings.Join(form, " "), func(t *testing.T) {
+			_ = useFakeDevice(t, fake.Options{})
+
+			dir := t.TempDir()
+			src := filepath.Join(dir, "doomed.txt")
+			if err := os.WriteFile(src, []byte("delete me"), 0o644); err != nil {
+				t.Fatalf("WriteFile: %v", err)
+			}
+			if _, code := captureRun(t, "--quiet", "put", src, "sdcard:/"); code != exitOK {
+				t.Fatal("put failed")
+			}
+
+			if out, code := captureRun(t, form...); code != exitOK {
+				t.Fatalf("exit %d, want %d — global flags must be accepted in any position:\n%s", code, exitOK, out)
+			}
+
+			out, _ := captureRun(t, "ls", "sdcard:/")
+			if strings.Contains(out, "doomed.txt") {
+				t.Errorf("file survived deletion:\n%s", out)
+			}
+		})
+	}
+}
+
+// A "--" separator means everything after it is a path, so files whose names
+// begin with a dash stay reachable rather than being read as flags.
+func TestDoubleDashStopsFlagParsing(t *testing.T) {
+	_ = useFakeDevice(t, fake.Options{})
+
+	fs := flag.NewFlagSet("test", flag.ContinueOnError)
+	fs.SetOutput(io.Discard)
+	yes := fs.Bool("yes", false, "")
+
+	got, err := parseInterspersed(fs, []string{"rm", "--yes", "--", "--yes"})
+	if err != nil {
+		t.Fatalf("parseInterspersed: %v", err)
+	}
+	if !*yes {
+		t.Error("--yes before the separator should still have been parsed as a flag")
+	}
+	want := []string{"rm", "--yes"}
+	if len(got) != len(want) || got[0] != want[0] || got[1] != want[1] {
+		t.Errorf("got %q, want %q — text after \"--\" must stay a positional argument", got, want)
 	}
 }
 

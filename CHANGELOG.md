@@ -6,7 +6,26 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **`switchmtp rm sdcard:/game.nsp --yes` no longer fails with `"--yes" is not a device
+  path`.** Go's flag package stops parsing at the first argument that is not a flag, so
+  any global flag typed after the subcommand was handed to the command as though it were a
+  file name — and `--yes` after the path is how most people would type it. This was the
+  first thing to go wrong when the tool was driven against a real console. Flags are now
+  accepted anywhere on the line, and a `--` separator still means everything after it is a
+  path, so files whose names begin with a dash remain reachable.
+
 ### Added
+
+- **Documented that `switchmtp` and your file manager cannot share the console.** On Linux
+  the desktop's own MTP support already browses, reads and writes the Switch with no setup,
+  which is worth knowing before installing anything. The two cannot be used in the same
+  session though: once `switchmtp` has touched the device, GNOME's cached `gvfs` mount goes
+  stale and every write through the file manager fails almost immediately with `libmtp
+  error: Could not send object info`. Nothing is lost and a remount fixes it, but it was
+  surprising enough to deserve writing down, along with the note that installing the udev
+  rule avoids it entirely. Verified against Ubuntu 24.04 with a Switch running DBI.
 
 - **Tests for the Linux process scanner, which had none that meant anything.** The scanner
   that finds gvfs or kio-mtp holding the device reads `/proc`, so on a CI runner with no

@@ -1,9 +1,10 @@
 # Linux packaging
 
 This directory holds the Linux-side assets for SwitchMTP. There is no Linux GUI
-yet — the [cross-platform port](../../docs/) is in progress — but the Go backend
-and the `switchmtp` command line tool both run on Linux today. What is here is
-the piece that has to be right before either of them can work: USB access.
+and, on current evidence, there should not be one — see "How this fits alongside
+your desktop" below. The Go backend and the `switchmtp` command line tool both
+run on Linux today, and the CLI is the Linux product. What is here is the piece
+that has to be right before it can work: USB access.
 
 The quickest way to find out whether a machine is set up correctly is to build
 the tool and ask it:
@@ -15,6 +16,50 @@ cd ../../backend && go build -o /tmp/switchmtp ./cmd/switchmtp && /tmp/switchmtp
 `doctor` checks for the rule below, notices when an equivalent one has already
 been installed by another Switch tool, lists any process holding the USB device,
 and prints what to do about whatever it finds.
+
+## How this fits alongside your desktop
+
+**Unlike on macOS, your desktop can already do most of this.** Verified against
+Ubuntu 24.04 with a Switch running DBI: GNOME's `gvfs` auto-mounts the console,
+lists all eight storages including the two install targets, and reads and writes
+files with no setup at all. If you only want to copy files to the SD card, use
+your file manager — you do not need this tool.
+
+`switchmtp` is worth installing for the things `gvfs` does not do:
+
+- **Installing games**, one after another, from a queue (`switchmtp install a.nsp b.nsp`).
+  Copying several titles at once through a file manager asks DBI to do something
+  it does not want to do.
+- **Telling you what a storage is for.** `gvfs` shows DBI's install targets as
+  ordinary folders; drop the wrong file in and you get `libmtp error: Could not
+  send object`. `switchmtp` labels them drop-only and names the four extensions
+  they accept.
+- **Long transfers**, where reliability and progress reporting matter.
+
+### ⚠️ `switchmtp` and your file manager cannot share the device
+
+They do not fight over it in the way you might expect — `gvfsd-mtp` keeps the USB
+node open the whole time and `switchmtp` still works, because on Linux contention
+happens when a program claims the USB *interface*, not when it opens the device.
+
+What actually breaks is `gvfs`'s cached session. **Once `switchmtp` has touched
+the console, the existing mount goes stale**, and every subsequent write through
+the file manager fails almost instantly with:
+
+```
+libmtp error:  Could not send object info.
+```
+
+This is not corruption and nothing is lost. Remount to recover:
+
+```sh
+gio mount -u mtp://<host>/ && gio mount mtp://<host>/
+```
+
+or unplug and replug the cable. Installing the udev rule below avoids the problem
+altogether by stopping `gvfs` claiming the console in the first place — which is
+the main reason to install it even on a machine where USB permissions already
+work.
 
 ## `69-switchmtp.rules`
 

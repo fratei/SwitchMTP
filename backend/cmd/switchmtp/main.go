@@ -60,9 +60,46 @@ func main() {
 	os.Exit(run(os.Args[1:]))
 }
 
+// parseInterspersed parses global flags wherever they appear on the command
+// line, and returns the arguments that are not flags.
+//
+// Go's flag package stops parsing at the first non-flag argument, so it would
+// read `switchmtp rm sdcard:/game.nsp --yes` as a request to delete two paths,
+// one of them called "--yes". That is the natural way to type the command and
+// the resulting error ("--yes" is not a device path) blames the user for the
+// parser's limitation. Parsing after each positional argument accepts both
+// orderings.
+//
+// Everything after a literal "--" is returned verbatim, so files whose names
+// begin with a dash stay reachable.
+func parseInterspersed(fs *flag.FlagSet, args []string) ([]string, error) {
+	var literal []string
+	for i, arg := range args {
+		if arg == "--" {
+			args, literal = args[:i], args[i+1:]
+			break
+		}
+	}
+
+	if err := fs.Parse(args); err != nil {
+		return nil, err
+	}
+
+	var positional []string
+	for {
+		rest := fs.Args()
+		if len(rest) == 0 {
+			return append(positional, literal...), nil
+		}
+		positional = append(positional, rest[0])
+		if err := fs.Parse(rest[1:]); err != nil {
+			return nil, err
+		}
+	}
+}
+
 func run(args []string) int {
 	var opts options
-
 	fs := flag.NewFlagSet("switchmtp", flag.ContinueOnError)
 	fs.SetOutput(os.Stderr)
 	fs.StringVar(&opts.deviceID, "device", "", "device id to use (see `switchmtp devices`); defaults to the only usable device")
@@ -72,7 +109,8 @@ func run(args []string) int {
 	fs.BoolVar(&opts.quiet, "quiet", false, "suppress progress output")
 	fs.Usage = func() { usage(os.Stderr) }
 
-	if err := fs.Parse(args); err != nil {
+	positional, err := parseInterspersed(fs, args)
+	if err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			usage(os.Stdout)
 			return exitOK
@@ -80,7 +118,7 @@ func run(args []string) int {
 		return exitUsage
 	}
 
-	rest := fs.Args()
+	rest := positional
 	if len(rest) == 0 {
 		usage(os.Stderr)
 		return exitUsage
@@ -90,7 +128,6 @@ func run(args []string) int {
 
 	cmd, cmdArgs := rest[0], rest[1:]
 
-	var err error
 	switch cmd {
 	case "help", "-h", "--help":
 		usage(os.Stdout)
