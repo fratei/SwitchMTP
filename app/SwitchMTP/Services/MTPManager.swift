@@ -30,7 +30,45 @@ final class MTPManager: ObservableObject {
     @Published var silentTransferStats: TransferStatistics? = nil
     @Published var errorMessage: String? = nil
     @Published var availableDevices: [MTPDeviceInfo] = []
-    @Published private(set) var isTransferActive: Bool = false
+    @Published private(set) var isTransferActive: Bool = false {
+        didSet {
+            guard isTransferActive != oldValue else { return }
+            if isTransferActive {
+                beginPowerAssertion()
+            } else {
+                endPowerAssertion()
+            }
+        }
+    }
+
+    /// Held for as long as a transfer is in flight, so the Mac does not idle-sleep
+    /// part way through one.
+    ///
+    /// Installing a queue of games runs for hours, and unlike a download there is
+    /// nothing else keeping the machine awake -- the user has walked away by
+    /// design. Sleeping mid-transfer does not merely pause it: the console is left
+    /// holding a half-written title. Finder takes the same assertion to copy a
+    /// file, which is a far smaller promise than this app makes.
+    private var transferActivity: NSObjectProtocol?
+
+    private func beginPowerAssertion() {
+        guard transferActivity == nil else { return }
+        // .idleSystemSleepDisabled only: the display is free to sleep, which is
+        // what an unattended transfer should allow. Suppressing sudden termination
+        // matters because the process is holding an open USB session that the
+        // console is mid-way through reading.
+        transferActivity = ProcessInfo.processInfo.beginActivity(
+            options: [.idleSystemSleepDisabled, .suddenTerminationDisabled],
+            reason: "Transferring files to the Nintendo Switch")
+        DebugLog.write("power assertion taken for transfer")
+    }
+
+    private func endPowerAssertion() {
+        guard let activity = transferActivity else { return }
+        ProcessInfo.processInfo.endActivity(activity)
+        transferActivity = nil
+        DebugLog.write("power assertion released")
+    }
     @Published var isShowingNameConflictAlert: Bool = false
 
     /// Files waiting to be sent to an install storage, plus the one in flight.
@@ -47,6 +85,9 @@ final class MTPManager: ObservableObject {
     /// Throttles progress logging: the callback fires far too often to log every
     /// one, but a transfer that stalls needs a timeline showing where it stopped.
     private var lastProgressLogAt: Date? = nil
+    /// Whether the last progress update was a stalled one, so the log can record
+    /// the transition rather than the state.
+    private var wasStalled = false
 
     /// The queue entry currently being uploaded, if the running transfer is one.
     var activeInstallItemID: UUID? = nil
@@ -399,6 +440,22 @@ final class MTPManager: ObservableObject {
         let stats = TransferStatistics(progressData: progressData)
 
         let now = Date()
+        // Record the backend's stall verdict as a transition rather than a field on
+        // every progress line. The line below is rate-limited to one every two
+        // seconds, so a per-line flag would bury the moment it changed under
+        // hundreds of identical lines -- and the moment it changed is the whole
+        // point. Without this the log shows a byte counter creeping and gives no
+        // way to tell whether the app noticed, which is the first question asked
+        // of any log attached to a bug report.
+        if stats.isStalled != wasStalled {
+            wasStalled = stats.isStalled
+            let sent = progressData.bulkFileSize?.sent ?? -1
+            if stats.isStalled {
+                DebugLog.write("STALL DETECTED after \(Int(stats.stalledFor))s idle at \(sent) bytes, file=\(stats.currentFileName)")
+            } else {
+                DebugLog.write("stall cleared, transfer resumed at \(sent) bytes")
+            }
+        }
         if lastProgressLogAt.map({ now.timeIntervalSince($0) >= 2 }) ?? true {
             lastProgressLogAt = now
             let sent = progressData.bulkFileSize?.sent ?? -1
@@ -765,6 +822,7 @@ final class MTPManager: ObservableObject {
             return
         }
         transferKind = nil
+        wasStalled = false
         if kind == .uploading, let key = uploadDestinationCacheKey {
             listingCache[key] = nil
             uploadDestinationCacheKey = nil

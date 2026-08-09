@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- **The Mac could fall asleep part way through a transfer.** Installing a queue of games
+  runs for hours with the user deliberately away, and nothing was keeping the machine
+  awake: the app took no power assertion at all, so it depended on some other process
+  happening to hold one. Sleeping mid-transfer does not just pause it, it leaves the
+  console holding a half-written title. The app now holds an assertion for exactly as long
+  as a transfer is in flight, the same thing Finder does to copy a file. The display is
+  still allowed to sleep, which is what an unattended transfer should permit.
+
+- **The log did not record whether the app noticed a stalled transfer.** Stall detection
+  reached the interface but never the log, so a log attached to a bug report showed a byte
+  counter creeping forward and gave no way to answer the first question anyone would ask.
+  Entering and leaving a stall are now both recorded, with how long the transfer had been
+  idle and where it had got to. They are written as transitions rather than as a field on
+  every progress line, so the moment it changed is not buried under hundreds of identical
+  lines.
+
 - **The diagnostic log could not tell two files apart.** It recorded the name of the file
   being sent through a helper that clipped it to 50 characters for display, and clipped the
   end — which is exactly where a Switch title carries its title id and version. A game and
