@@ -122,6 +122,39 @@ interrupted; it has to time out first, which can take up to two minutes. If the 
 appears busy after that, unplug the cable — SwitchMTP detects the disconnection and
 recovers.
 
+### The stall that does not look like one
+
+The most common way a transfer dies is not a clean stop, and it is worth describing because
+the progress bar keeps moving throughout, which makes it look like the transfer is merely
+slow.
+
+Measured twice on real hardware, deep into long install queues. Throughput decays over
+about thirty seconds — roughly 15 MB, then 4.5 MB, then 1.4 MB, then 360 KB, then 163 KB
+per chunk — and settles into a metronome: **exactly 16,384 bytes every 80 seconds**, held
+for as long as it is left running (over two hours in one case, before the app was quit).
+
+Both numbers have an explanation, and together they show why this cannot be fixed with a
+shorter timeout:
+
+- **16,384 bytes** is one transfer buffer. The console is accepting exactly one buffer per
+  cycle.
+- **80 seconds** is comfortably under the 120-second USB timeout SwitchMTP uses for the
+  Switch. So every transfer *succeeds*, no error is ever raised, and nothing times out. At
+  that rate a remaining 8 GB would need over a year.
+
+The long timeout is deliberate — DBI can legitimately take a minute before the first packet
+when it is generating a virtual NSP or writing to a slow SD card — so lowering it would
+break transfers that are merely slow to start. SwitchMTP instead watches the **rate**: if
+throughput stays under 64 KiB/s for a minute, the transfer bar says so explicitly, and both
+edges are written to the debug log.
+
+**What to do:** cancel, then quit and relaunch DBI on the console. In both recorded cases
+the console was at fault, not the file — the exact file that stalled transferred to
+completion in a later session, and files four times larger transferred fine in the same
+session it failed. Nothing needs to be deleted or re-downloaded.
+
+**What does not help:** waiting. It has never recovered on its own.
+
 ---
 
 ## The bar reaches 100% and then sits at "Installing on the console…"
