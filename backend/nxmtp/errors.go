@@ -146,7 +146,13 @@ func IsDisconnected(err error) bool {
 		return true
 	}
 	s := strings.ToLower(err.Error())
-	for _, needle := range []string{"no such device", "no_device", "device not found", "not_found", "device has been disconnected"} {
+	// "device is not open" is the MTP engine reporting that the USB handle
+	// underneath it has been closed, which is what a Switch that went away
+	// mid-transfer leaves behind. It is not phrased as a disconnect and was
+	// therefore classified as unknown, so the dead session stayed in the
+	// registry and every retry was handed the same corpse -- an app that had
+	// lost the console could never get it back without being relaunched.
+	for _, needle := range []string{"no such device", "no_device", "device not found", "not_found", "device has been disconnected", "device is not open"} {
 		if strings.Contains(s, needle) {
 			return true
 		}

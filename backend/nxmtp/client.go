@@ -146,6 +146,19 @@ func Open(deviceID string) (*Client, error) {
 	return c, nil
 }
 
+// Validate confirms the session is still usable, refreshing the storage list as
+// a side effect.
+//
+// Details() answers from cached device info, so an Initialize served by a client
+// whose USB handle has since closed reports a healthy connection and only fails
+// on the first operation that touches the wire. Probing here means an explicit
+// connect tells the truth.
+func (c *Client) Validate() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.refreshStorages()
+}
+
 // Details returns the device identity and capabilities.
 func (c *Client) Details() *DeviceDetails {
 	c.mu.Lock()

@@ -48,7 +48,16 @@ func (r *registry) open(deviceID string) (*nxmtp.Client, error) {
 	defer r.mu.Unlock()
 
 	if c, ok := r.clients[deviceID]; ok {
-		return c, nil
+		// A cached client is only worth returning if its session still works.
+		// Initialize is an explicit "connect me" request, and answering it from
+		// a client whose USB handle has closed reports success from cached
+		// device info while every real operation afterwards fails. One probe
+		// here is cheap next to a connect the user has to ask for twice.
+		if err := c.Validate(); err == nil {
+			return c, nil
+		}
+		delete(r.clients, deviceID)
+		_ = c.Close()
 	}
 	c, err := nxmtp.Open(deviceID)
 	if err != nil {

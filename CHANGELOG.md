@@ -8,6 +8,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- **The app could not reconnect to the console until it was relaunched.** Left overnight
+  after a transfer, the app retried the connection every ten to twenty-five minutes and
+  failed every time, while the Switch sat there plugged in and perfectly healthy. Two
+  faults combined. The MTP engine reports a closed USB handle as `device is not open`,
+  which reads as neither a disconnect nor a failure the app knew how to classify, so the
+  dead session was never evicted and every retry was handed the same dead object. And
+  because the connection step answers from cached device information without touching the
+  wire, it reported success against that dead object, so the failure only surfaced a moment
+  later when the storage list was fetched. Dead sessions are now recognised and discarded,
+  and connecting verifies the device actually answers before claiming to have connected.
+
+- **A finished transfer could be reported as stalled.** Stopping the stall watchdog asked
+  it to exit but did not wait for it, so it could deliver one last progress event after the
+  transfer had already reported completion — and if that event was the one flagged as
+  stalled, the interface was told a transfer that had just succeeded was stuck.
+
 - **The Mac could fall asleep part way through a transfer.** Installing a queue of games
   runs for hours with the user deliberately away, and nothing was keeping the machine
   awake: the app took no power assertion at all, so it depended on some other process

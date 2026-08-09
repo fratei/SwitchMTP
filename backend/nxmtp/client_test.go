@@ -13,6 +13,7 @@
 package nxmtp_test
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -477,4 +478,57 @@ func nameList(files []nxmtp.FileInfo) []string {
 		out = append(out, f.Name)
 	}
 	return out
+}
+
+// TestClosedHandleClassifiedAsDisconnect pins the wording the MTP engine uses
+// when its USB handle has been closed underneath it.
+//
+// This is what a Switch that goes away mid-transfer actually leaves behind, and
+// it does not contain the word "disconnected". Reading it as merely unknown left
+// the dead session cached, so every reconnect was handed the same corpse and the
+// app could not reach the console again until it was relaunched.
+func TestClosedHandleClassifiedAsDisconnect(t *testing.T) {
+	// Verbatim from mtp.RunTransaction, via GetStorageIDs.
+	err := errors.New("mtp: cannot run operation GetStorageIDs, device is not open")
+	if !nxmtp.IsDisconnected(err) {
+		t.Errorf("IsDisconnected(%q) = false, want true", err)
+	}
+}
+
+// TestHealthyErrorsAreNotDisconnects guards the needle above from being so broad
+// that ordinary failures start evicting a working session.
+func TestHealthyErrorsAreNotDisconnects(t *testing.T) {
+	for _, msg := range []string{
+		"mtp: GetObjectHandles failed: store is full",
+		"could not open the file for reading",
+		"permission denied",
+		"the device is busy",
+	} {
+		if nxmtp.IsDisconnected(errors.New(msg)) {
+			t.Errorf("IsDisconnected(%q) = true, want false", msg)
+		}
+	}
+}
+
+// TestValidateDetectsDeadSession covers the gap Details() leaves open.
+//
+// Details() answers from cached device info and never touches the wire, so it
+// keeps reporting a healthy device long after the handle has closed. That is why
+// an overnight reconnect loop logged "initializing" as a success and then failed
+// fetching storages a moment later. Validate has to disagree with Details here.
+func TestValidateDetectsDeadSession(t *testing.T) {
+	c, dev := newClient(t, fake.Options{})
+
+	if err := c.Validate(); err != nil {
+		t.Fatalf("Validate on a healthy session: %v", err)
+	}
+
+	dev.SetDisconnected(true)
+
+	if c.Details() == nil {
+		t.Fatal("Details returned nil; the cached-info premise of this test is wrong")
+	}
+	if err := c.Validate(); err == nil {
+		t.Error("Validate = nil on a dead session, want an error")
+	}
 }
