@@ -449,3 +449,52 @@ func TestStopHaltsTheWatchdog(t *testing.T) {
 		t.Fatalf("watchdog kept emitting after stop (%d -> %d)", settled, final)
 	}
 }
+
+// TestStopWaitsForTheWatchdog pins that no progress event can be delivered after
+// stop() has returned.
+//
+// Closing the stop channel only asks the goroutine to leave; it may be inside
+// emit() at that moment. Without a join, a heartbeat -- possibly one flagged
+// Stalled -- can land after the transfer has already reported completion, so the
+// UI is told a finished transfer is stuck. It also made the watchdog test race
+// against its own cleanup, which is how this surfaced.
+func TestStopWaitsForTheWatchdog(t *testing.T) {
+	oldInterval, oldStall := watchInterval, stallAfter
+	watchInterval, stallAfter = time.Millisecond, 2*time.Millisecond
+	t.Cleanup(func() { watchInterval, stallAfter = oldInterval, oldStall })
+
+	var mu sync.Mutex
+	var stopped bool
+	var lateEmit bool
+
+	tr := newProgressTracker(func(p Progress) {
+		mu.Lock()
+		defer mu.Unlock()
+		if stopped {
+			lateEmit = true
+		}
+	})
+
+	tr.setTotals(1, 0, 1<<30, false)
+	tr.beginFile("Cuphead.nsz", "/Cuphead.nsz", 1<<30)
+	tr.advance(1 << 20)
+
+	// Let the watchdog get going so stop() has something to wait for.
+	time.Sleep(20 * time.Millisecond)
+
+	tr.stop()
+
+	mu.Lock()
+	stopped = true
+	mu.Unlock()
+
+	// If stop() returned while the goroutine was still alive, it gets a chance
+	// to emit here.
+	time.Sleep(20 * time.Millisecond)
+
+	mu.Lock()
+	defer mu.Unlock()
+	if lateEmit {
+		t.Error("a progress event was delivered after stop() returned")
+	}
+}

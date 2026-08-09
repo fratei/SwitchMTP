@@ -161,6 +161,7 @@ type progressTracker struct {
 	lastAdvanceBytes int64
 
 	watchStop chan struct{}
+	watchDone chan struct{}
 	stopOnce  sync.Once
 }
 
@@ -172,9 +173,14 @@ func newProgressTracker(cb ProgressFunc) *progressTracker {
 		status:      StatusTransferring,
 		lastAdvance: now(),
 		watchStop:   make(chan struct{}),
+		watchDone:   make(chan struct{}),
 	}
 	if cb != nil {
 		go p.watch()
+	} else {
+		// Nothing will ever run watch, so nothing will ever close watchDone.
+		// stop() must not block waiting for a goroutine that does not exist.
+		close(p.watchDone)
 	}
 	return p
 }
@@ -186,6 +192,7 @@ func newProgressTracker(cb ProgressFunc) *progressTracker {
 // emit(), and the UI shows the last percentage it saw indefinitely. That is
 // precisely how a dead transfer came to look like a working one sitting at 37%.
 func (p *progressTracker) watch() {
+	defer close(p.watchDone)
 	ticker := time.NewTicker(watchInterval)
 	defer ticker.Stop()
 	for {
@@ -206,9 +213,17 @@ func (p *progressTracker) watch() {
 	}
 }
 
-// stop halts the watchdog. Safe to call more than once.
+// stop halts the watchdog and waits for it to finish. Safe to call more than once.
+//
+// The wait matters: closing the channel only asks the goroutine to leave, and it
+// may be inside emit() at that moment. Returning early lets a heartbeat -- quite
+// possibly one flagged Stalled -- be delivered after the transfer has already
+// reported completion, which is a confusing thing for the UI to receive. All
+// callers are `defer tracker.stop()` in the transfer functions, never the
+// progress callback itself, so waiting here cannot re-enter.
 func (p *progressTracker) stop() {
 	p.stopOnce.Do(func() { close(p.watchStop) })
+	<-p.watchDone
 }
 
 func (p *progressTracker) setTotals(files, dirs, bytes int64, indefinite bool) {
