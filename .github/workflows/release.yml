@@ -93,6 +93,23 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v7
 
+      - name: Check the tag matches the app version
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          # The Linux packages take their version from the tag, but the DMG takes
+          # its name from CFBundleShortVersionString, which comes from
+          # project.yml. Nothing tied the two together, so forgetting the bump
+          # would publish SwitchMTP-1.0.0-universal.dmg beside
+          # switchmtp_1.1.0_amd64.deb in a release called v1.1.0 -- wrong in a
+          # way nobody notices until a user reports the version they installed.
+          tag="${GITHUB_REF_NAME#v}"
+          app="$(grep -m1 'MARKETING_VERSION:' app/project.yml | sed 's/.*"\(.*\)".*/\1/')"
+          if [[ "${tag}" != "${app}" ]]; then
+            echo "::error::Tag ${GITHUB_REF_NAME} does not match MARKETING_VERSION ${app} in app/project.yml."
+            exit 1
+          fi
+          echo "Tag ${GITHUB_REF_NAME} matches app version ${app}."
+
       - name: Set up Go
         uses: actions/setup-go@v7
         with:

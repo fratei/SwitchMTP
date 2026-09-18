@@ -4,98 +4,7 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
-## [Unreleased]
-
-### Fixed
-
-- **The app could not reconnect to the console until it was relaunched.** Left overnight
-  after a transfer, the app retried the connection every ten to twenty-five minutes and
-  failed every time, while the Switch sat there plugged in and perfectly healthy. Two
-  faults combined. The MTP engine reports a closed USB handle as `device is not open`,
-  which reads as neither a disconnect nor a failure the app knew how to classify, so the
-  dead session was never evicted and every retry was handed the same dead object. And
-  because the connection step answers from cached device information without touching the
-  wire, it reported success against that dead object, so the failure only surfaced a moment
-  later when the storage list was fetched. Dead sessions are now recognised and discarded,
-  and connecting verifies the device actually answers before claiming to have connected.
-
-- **A finished transfer could be reported as stalled.** Stopping the stall watchdog asked
-  it to exit but did not wait for it, so it could deliver one last progress event after the
-  transfer had already reported completion — and if that event was the one flagged as
-  stalled, the interface was told a transfer that had just succeeded was stuck.
-
-- **The Mac could fall asleep part way through a transfer.** Installing a queue of games
-  runs for hours with the user deliberately away, and nothing was keeping the machine
-  awake: the app took no power assertion at all, so it depended on some other process
-  happening to hold one. Sleeping mid-transfer does not just pause it, it leaves the
-  console holding a half-written title. The app now holds an assertion for exactly as long
-  as a transfer is in flight, the same thing Finder does to copy a file. The display is
-  still allowed to sleep, which is what an unattended transfer should permit.
-
-- **The log did not record whether the app noticed a stalled transfer.** Stall detection
-  reached the interface but never the log, so a log attached to a bug report showed a byte
-  counter creeping forward and gave no way to answer the first question anyone would ask.
-  Entering and leaving a stall are now both recorded, with how long the transfer had been
-  idle and where it had got to. They are written as transitions rather than as a field on
-  every progress line, so the moment it changed is not buried under hundreds of identical
-  lines.
-
-- **The diagnostic log could not tell two files apart.** It recorded the name of the file
-  being sent through a helper that clipped it to 50 characters for display, and clipped the
-  end — which is exactly where a Switch title carries its title id and version. A game and
-  its own update therefore appeared in the log under one identical, truncated name, in the
-  one artefact used to work out what went wrong after a failed transfer. The log now records
-  the full name. The transfer bar is unaffected: it already shortened long names by cutting
-  the middle, which keeps both ends readable, so removing the clip improves what is shown
-  there too.
-
-- **A long install queue could not be scrolled.** The queue list was a plain stack with no
-  height limit, so queueing dozens of titles grew the transfer bar until it ran off the
-  bottom of the window, taking the rows at the end with it and leaving no way to reach
-  them. Past eight items the list is now pinned to a fixed height and scrolls, and it
-  follows the queue as it advances so the title actually being sent stays in view. Shorter
-  queues are still laid out at their natural height rather than sitting in a mostly empty
-  scroll area.
-
-- **A long install queue made the app burn CPU during transfers.** Every queue row was
-  rebuilt ten times a second — once per progress update, for every row — because the row
-  carried a closure, and a closure cannot be compared, so SwiftUI had to assume the row had
-  changed. Each rebuild recreated a localised tooltip that in most cases was never shown;
-  tooltip construction alone accounted for roughly half of each row's render cost. Rows are
-  now compared on their contents, so a row is only rebuilt when it actually changes, and
-  only the visible portion of a long queue is built at all.
-
-- **A wedged install showed a frozen percentage and no error.** A 3.24 GB title reached 37%
-  at a healthy 20 MB/s, then the console stopped draining the USB endpoint. Nothing failed:
-  the host stayed blocked inside a libusb write that never returned, so no error was raised
-  and no progress callback ever fired again. The app sat on the last percentage it had seen
-  for hours, and the log recorded no error of any kind.
-
-  Two things were missing, and the second is the one that actually mattered. A watchdog now
-  keeps emitting progress while the byte counter stands still, so a total freeze is visible
-  instead of silent. More importantly, movement is now judged by *rate* rather than by
-  whether the number changed at all: the console in question was still accepting exactly
-  one 16 KiB packet every 80 seconds, which satisfies any "has it moved?" check while being
-  about 102 days from finishing. Below 64 KiB/s — some 300 times slower than a healthy
-  transfer — the transfer is reported as stalled, with advice to check the console, since
-  the host cannot tell an error dialog from a full SD card from applet mode running out of
-  memory. Nothing is cancelled automatically; a stall is surfaced, not acted on.
-
-- **Debian package versions could outrank real releases.** `build-deb.sh` decided whether a
-  version string needed a `0.0.0+` prefix by checking whether it started with a digit — but
-  a commit hash such as `9518481` does, so it was used verbatim, and dpkg ranks `9518481`
-  above `1.0.0`. An untagged development build would therefore block upgrading to an actual
-  release, and because it depended on the hash it happened for roughly two builds in three.
-  The decision is now made on whether git found a tag at all. Builds past a tag are
-  versioned `1.2.3+4.gabc1234`, which dpkg sorts above `1.2.3` and below `1.2.4`.
-
-- **`switchmtp rm sdcard:/game.nsp --yes` no longer fails with `"--yes" is not a device
-  path`.** Go's flag package stops parsing at the first argument that is not a flag, so
-  any global flag typed after the subcommand was handed to the command as though it were a
-  file name — and `--yes` after the path is how most people would type it. This was the
-  first thing to go wrong when the tool was driven against a real console. Flags are now
-  accepted anywhere on the line, and a `--` separator still means everything after it is a
-  path, so files whose names begin with a dash remain reachable.
+## [1.1.0] - 2026-09-18
 
 ### Added
 
@@ -219,6 +128,35 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
   needed — including for the transfer failure that prompted adding it. The bug report form
   now points at the setting instead of the command.
 
+
+- **An install queue.** Drop several NSP/NSZ/XCI/XCZ files — in one go or while an install
+  is already running — and they are installed one after another, each starting
+  automatically when the previous one finishes. The queue is visible, reorderable by
+  removal, and individually cancellable.
+- **The transfer UI is no longer a modal sheet.** It is now a bar at the bottom of the
+  window, so the rest of the app — including the install drop targets — stays usable
+  during a transfer. Queueing another install while one is running was previously
+  impossible for exactly this reason.
+- The app now reports the **install phase** distinctly from the transfer phase. DBI
+  installs the title only after the last byte arrives and sends no completion event, so a
+  transfer that reached 100% used to look wedged for minutes. The bar now says the console
+  is installing, and keeps a live elapsed counter while it waits.
+- A **stall notice** appears if no progress has been reported for 15 seconds, alongside a
+  Cancel button that is always available.
+- **Help ▸ Report an Issue…** opens a GitHub bug report with the app version and macOS
+  version already filled in, and offers to copy a diagnostics report to the clipboard
+  first.
+- Structured issue forms for bug reports, feature requests and compatibility reports, so
+  the details that actually determine whether a bug can be fixed — DBI's mode, the
+  diagnostics report, reproduction steps — are asked for rather than hoped for.
+- Automated issue triage (`scripts/triage`): a rule-based engine, with no model calls and
+  no required secrets, that runs daily and on every issue event. It routes and labels
+  reports, says precisely what is missing from an incomplete one, answers reports that
+  match a documented behaviour, flags likely duplicates, and hands complete, reproducible
+  reports to the Copilot coding agent when a token is configured.
+- `CONTRIBUTING.md`, `SECURITY.md`, `docs/REPORTING_ISSUES.md` and a pull request
+  template.
+
 ### Changed
 
 - **The bug report form takes the log and screenshots as file uploads** rather than asking
@@ -228,7 +166,141 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
   field type. `docs/REPORTING_ISSUES.md` and `docs/TROUBLESHOOTING.md` were still teaching
   the old `defaults write` route and now describe the Settings toggle.
 
+
+- Uploads and the install queue now record their activity to the diagnostic log. The upload
+  path had no logging at all — only downloads did — so a failed install left nothing behind
+  to look at. Progress, the phase reported by the console, queue hand-offs and both classes
+  of dropped callback are now traceable.
+
+- **The interface is fully localised again.** 116 SwitchMTP-specific strings — the entire
+  Switch menu, the install queue, storage capability errors, DBI setup guidance and the
+  issue reporter — had only ever existed in English; every translated string in the catalog
+  came from the upstream fork. They are now translated into Spanish, Japanese, Russian,
+  Simplified Chinese and Traditional Chinese, and `scripts/apply-translations.py` fails if
+  any key is left untranslated.
+- Free-space labels in the sidebar are built from a single format string instead of gluing
+  `"free of"` between two numbers, which could not be ordered correctly in every language.
+- Removed the dead Apple Intelligence and AI-provider error messages inherited from the
+  upstream fork. SwitchMTP has no AI features, so none of those errors could ever be
+  produced; they were only inflating the translation surface.
+
+- **Transfers were stuck on "Preparing transfer…" and never showed progress.** The Go
+  backend reports `elapsedTime` as fractional seconds, but the Swift model declared it as
+  `Int64`. `JSONDecoder` refuses to coerce `0.4231234` into an integer and rejects the
+  *whole* payload, so every single progress update was discarded and the transfer
+  statistics stayed empty for the entire transfer — even while DBI on the console visibly
+  showed bytes arriving. Verified against a real console: 0 of 15 captured progress
+  payloads decoded before this fix, 15 of 15 after.
+- Progress decoding failures are now logged instead of being silently swallowed, so a
+  future schema drift is visible rather than invisible.
+- **Transfer speed was reported roughly a million times too high.** The backend emits
+  bytes per second; the app labelled that figure "MB/s" without converting it.
+- The file counter read "0 of 1 files" for the whole of a single-file transfer. It now
+  counts the file being sent rather than the files already finished.
+- An install that failed while waiting for the console to become ready left the transfer
+  state marked as still running. It is now correctly reported as failed.
+- A failed or cancelled file in a multi-file batch could leave the next file in the batch
+  reporting the previous file's status.
+- Installs are once again serialised against the console's readiness. The backend only
+  waited for the Switch to answer again *between* files of one batch, so sending titles
+  one at a time — which is what the queue does — skipped the wait entirely and could hand
+  DBI a new title while it was still committing the previous one.
+- A console unplugged mid-install no longer wedges the queue. The USB scan that detects
+  the unplug resets the transfer state before the transfer's own callback arrives, so the
+  running item could stay marked active forever with no way to clear it; every disconnect
+  route now releases the queue, and reconnecting resumes anything still waiting.
+
 ### Fixed
+
+- **The app could not reconnect to the console until it was relaunched.** Left overnight
+  after a transfer, the app retried the connection every ten to twenty-five minutes and
+  failed every time, while the Switch sat there plugged in and perfectly healthy. Two
+  faults combined. The MTP engine reports a closed USB handle as `device is not open`,
+  which reads as neither a disconnect nor a failure the app knew how to classify, so the
+  dead session was never evicted and every retry was handed the same dead object. And
+  because the connection step answers from cached device information without touching the
+  wire, it reported success against that dead object, so the failure only surfaced a moment
+  later when the storage list was fetched. Dead sessions are now recognised and discarded,
+  and connecting verifies the device actually answers before claiming to have connected.
+
+- **A finished transfer could be reported as stalled.** Stopping the stall watchdog asked
+  it to exit but did not wait for it, so it could deliver one last progress event after the
+  transfer had already reported completion — and if that event was the one flagged as
+  stalled, the interface was told a transfer that had just succeeded was stuck.
+
+- **The Mac could fall asleep part way through a transfer.** Installing a queue of games
+  runs for hours with the user deliberately away, and nothing was keeping the machine
+  awake: the app took no power assertion at all, so it depended on some other process
+  happening to hold one. Sleeping mid-transfer does not just pause it, it leaves the
+  console holding a half-written title. The app now holds an assertion for exactly as long
+  as a transfer is in flight, the same thing Finder does to copy a file. The display is
+  still allowed to sleep, which is what an unattended transfer should permit.
+
+- **The log did not record whether the app noticed a stalled transfer.** Stall detection
+  reached the interface but never the log, so a log attached to a bug report showed a byte
+  counter creeping forward and gave no way to answer the first question anyone would ask.
+  Entering and leaving a stall are now both recorded, with how long the transfer had been
+  idle and where it had got to. They are written as transitions rather than as a field on
+  every progress line, so the moment it changed is not buried under hundreds of identical
+  lines.
+
+- **The diagnostic log could not tell two files apart.** It recorded the name of the file
+  being sent through a helper that clipped it to 50 characters for display, and clipped the
+  end — which is exactly where a Switch title carries its title id and version. A game and
+  its own update therefore appeared in the log under one identical, truncated name, in the
+  one artefact used to work out what went wrong after a failed transfer. The log now records
+  the full name. The transfer bar is unaffected: it already shortened long names by cutting
+  the middle, which keeps both ends readable, so removing the clip improves what is shown
+  there too.
+
+- **A long install queue could not be scrolled.** The queue list was a plain stack with no
+  height limit, so queueing dozens of titles grew the transfer bar until it ran off the
+  bottom of the window, taking the rows at the end with it and leaving no way to reach
+  them. Past eight items the list is now pinned to a fixed height and scrolls, and it
+  follows the queue as it advances so the title actually being sent stays in view. Shorter
+  queues are still laid out at their natural height rather than sitting in a mostly empty
+  scroll area.
+
+- **A long install queue made the app burn CPU during transfers.** Every queue row was
+  rebuilt ten times a second — once per progress update, for every row — because the row
+  carried a closure, and a closure cannot be compared, so SwiftUI had to assume the row had
+  changed. Each rebuild recreated a localised tooltip that in most cases was never shown;
+  tooltip construction alone accounted for roughly half of each row's render cost. Rows are
+  now compared on their contents, so a row is only rebuilt when it actually changes, and
+  only the visible portion of a long queue is built at all.
+
+- **A wedged install showed a frozen percentage and no error.** A 3.24 GB title reached 37%
+  at a healthy 20 MB/s, then the console stopped draining the USB endpoint. Nothing failed:
+  the host stayed blocked inside a libusb write that never returned, so no error was raised
+  and no progress callback ever fired again. The app sat on the last percentage it had seen
+  for hours, and the log recorded no error of any kind.
+
+  Two things were missing, and the second is the one that actually mattered. A watchdog now
+  keeps emitting progress while the byte counter stands still, so a total freeze is visible
+  instead of silent. More importantly, movement is now judged by *rate* rather than by
+  whether the number changed at all: the console in question was still accepting exactly
+  one 16 KiB packet every 80 seconds, which satisfies any "has it moved?" check while being
+  about 102 days from finishing. Below 64 KiB/s — some 300 times slower than a healthy
+  transfer — the transfer is reported as stalled, with advice to check the console, since
+  the host cannot tell an error dialog from a full SD card from applet mode running out of
+  memory. Nothing is cancelled automatically; a stall is surfaced, not acted on.
+
+- **Debian package versions could outrank real releases.** `build-deb.sh` decided whether a
+  version string needed a `0.0.0+` prefix by checking whether it started with a digit — but
+  a commit hash such as `9518481` does, so it was used verbatim, and dpkg ranks `9518481`
+  above `1.0.0`. An untagged development build would therefore block upgrading to an actual
+  release, and because it depended on the hash it happened for roughly two builds in three.
+  The decision is now made on whether git found a tag at all. Builds past a tag are
+  versioned `1.2.3+4.gabc1234`, which dpkg sorts above `1.2.3` and below `1.2.4`.
+
+- **`switchmtp rm sdcard:/game.nsp --yes` no longer fails with `"--yes" is not a device
+  path`.** Go's flag package stops parsing at the first argument that is not a flag, so
+  any global flag typed after the subcommand was handed to the command as though it were a
+  file name — and `--yes` after the path is how most people would type it. This was the
+  first thing to go wrong when the tool was driven against a real console. Flags are now
+  accepted anywhere on the line, and a `--` separator still means everything after it is a
+  path, so files whose names begin with a dash remain reachable.
+
 
 - **A crash when no USB devices are present at all.** The vendored libusb wrapper frees its
   device list by taking the address of the list's first element, which panics outright when
@@ -316,81 +388,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
   menu now reads an `Equatable` snapshot published from the view that does observe it.
   Help ▸ Report an Issue was affected by the same nil manager and silently omitted
   diagnostics from bug reports.
-
-### Changed
-
-- Uploads and the install queue now record their activity to the diagnostic log. The upload
-  path had no logging at all — only downloads did — so a failed install left nothing behind
-  to look at. Progress, the phase reported by the console, queue hand-offs and both classes
-  of dropped callback are now traceable.
-
-- **The interface is fully localised again.** 116 SwitchMTP-specific strings — the entire
-  Switch menu, the install queue, storage capability errors, DBI setup guidance and the
-  issue reporter — had only ever existed in English; every translated string in the catalog
-  came from the upstream fork. They are now translated into Spanish, Japanese, Russian,
-  Simplified Chinese and Traditional Chinese, and `scripts/apply-translations.py` fails if
-  any key is left untranslated.
-- Free-space labels in the sidebar are built from a single format string instead of gluing
-  `"free of"` between two numbers, which could not be ordered correctly in every language.
-- Removed the dead Apple Intelligence and AI-provider error messages inherited from the
-  upstream fork. SwitchMTP has no AI features, so none of those errors could ever be
-  produced; they were only inflating the translation surface.
-
-- **Transfers were stuck on "Preparing transfer…" and never showed progress.** The Go
-  backend reports `elapsedTime` as fractional seconds, but the Swift model declared it as
-  `Int64`. `JSONDecoder` refuses to coerce `0.4231234` into an integer and rejects the
-  *whole* payload, so every single progress update was discarded and the transfer
-  statistics stayed empty for the entire transfer — even while DBI on the console visibly
-  showed bytes arriving. Verified against a real console: 0 of 15 captured progress
-  payloads decoded before this fix, 15 of 15 after.
-- Progress decoding failures are now logged instead of being silently swallowed, so a
-  future schema drift is visible rather than invisible.
-- **Transfer speed was reported roughly a million times too high.** The backend emits
-  bytes per second; the app labelled that figure "MB/s" without converting it.
-- The file counter read "0 of 1 files" for the whole of a single-file transfer. It now
-  counts the file being sent rather than the files already finished.
-- An install that failed while waiting for the console to become ready left the transfer
-  state marked as still running. It is now correctly reported as failed.
-- A failed or cancelled file in a multi-file batch could leave the next file in the batch
-  reporting the previous file's status.
-- Installs are once again serialised against the console's readiness. The backend only
-  waited for the Switch to answer again *between* files of one batch, so sending titles
-  one at a time — which is what the queue does — skipped the wait entirely and could hand
-  DBI a new title while it was still committing the previous one.
-- A console unplugged mid-install no longer wedges the queue. The USB scan that detects
-  the unplug resets the transfer state before the transfer's own callback arrives, so the
-  running item could stay marked active forever with no way to clear it; every disconnect
-  route now releases the queue, and reconnecting resumes anything still waiting.
-
-### Added
-
-- **An install queue.** Drop several NSP/NSZ/XCI/XCZ files — in one go or while an install
-  is already running — and they are installed one after another, each starting
-  automatically when the previous one finishes. The queue is visible, reorderable by
-  removal, and individually cancellable.
-- **The transfer UI is no longer a modal sheet.** It is now a bar at the bottom of the
-  window, so the rest of the app — including the install drop targets — stays usable
-  during a transfer. Queueing another install while one is running was previously
-  impossible for exactly this reason.
-- The app now reports the **install phase** distinctly from the transfer phase. DBI
-  installs the title only after the last byte arrives and sends no completion event, so a
-  transfer that reached 100% used to look wedged for minutes. The bar now says the console
-  is installing, and keeps a live elapsed counter while it waits.
-- A **stall notice** appears if no progress has been reported for 15 seconds, alongside a
-  Cancel button that is always available.
-- **Help ▸ Report an Issue…** opens a GitHub bug report with the app version and macOS
-  version already filled in, and offers to copy a diagnostics report to the clipboard
-  first.
-- Structured issue forms for bug reports, feature requests and compatibility reports, so
-  the details that actually determine whether a bug can be fixed — DBI's mode, the
-  diagnostics report, reproduction steps — are asked for rather than hoped for.
-- Automated issue triage (`scripts/triage`): a rule-based engine, with no model calls and
-  no required secrets, that runs daily and on every issue event. It routes and labels
-  reports, says precisely what is missing from an incomplete one, answers reports that
-  match a documented behaviour, flags likely duplicates, and hands complete, reproducible
-  reports to the Copilot coding agent when a token is configured.
-- `CONTRIBUTING.md`, `SECURITY.md`, `docs/REPORTING_ISSUES.md` and a pull request
-  template.
 
 ## [1.0.1] - 2026-08-07
 
