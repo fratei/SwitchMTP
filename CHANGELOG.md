@@ -4,6 +4,19 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Fixed
+
+- **The macOS DMG checksum file is verifiable again.** `SwitchMTP-*.dmg.sha256` recorded the
+  absolute path the DMG happened to be built at, so on a release runner it read
+  `/Users/runner/work/SwitchMTP/...`. Anyone who downloaded the DMG and its sidecar and ran
+  `shasum -a 256 -c` got `No such file or directory` and a `FAILED` line rather than a
+  verification — the one thing the file exists to do. The checksum now records the bare
+  filename, matching what the Linux `SHA256SUMS-linux-*.txt` files already did. The v1.1.0
+  sidecar has been corrected in place; the DMG itself was never affected and its hash is
+  unchanged.
+
 ## [1.1.0] - 2026-09-18
 
 ### Added

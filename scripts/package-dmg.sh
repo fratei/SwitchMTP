@@ -38,7 +38,9 @@ hdiutil create \
   "${DMG}"
 
 info "Writing checksum"
-shasum -a 256 "${DMG}" > "${DMG}.sha256"
+# Record the bare filename, not the build path, so the sidecar stays usable
+# with `shasum -a 256 -c` from whatever directory the DMG is downloaded into.
+( cd "${BUILD_ROOT}" && shasum -a 256 "$(basename "${DMG}")" > "$(basename "${DMG}").sha256" )
 cat "${DMG}.sha256"
 
 attached=0
