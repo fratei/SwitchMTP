@@ -8,6 +8,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Fixed
 
+- Uploading a directory tree to writable storage preserves empty directories, including a selected empty root.
+
 - **The macOS DMG checksum file is verifiable again.** `SwitchMTP-*.dmg.sha256` recorded the
   absolute path the DMG happened to be built at, so on a release runner it read
   `/Users/runner/work/SwitchMTP/...`. Anyone who downloaded the DMG and its sidecar and ran
