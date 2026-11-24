@@ -75,7 +75,7 @@ func (c *Client) Upload(req UploadRequest, onPreprocess func(PreprocessResult), 
 	if onPreprocess != nil {
 		onPreprocess(PreprocessResult{
 			TotalFiles:       int64(len(items)),
-			TotalDirectories: int64(dirs),
+			TotalDirectories: int64(len(dirs)),
 			TotalSize:        totalBytes,
 		})
 	}
@@ -86,13 +86,24 @@ func (c *Client) Upload(req UploadRequest, onPreprocess func(PreprocessResult), 
 
 	tracker := newProgressTracker(onProgress)
 	defer tracker.stop()
-	tracker.setTotals(int64(len(items)), int64(dirs), totalBytes, false)
+	tracker.setTotals(int64(len(items)), int64(len(dirs)), totalBytes, false)
 
 	summary := &TransferSummary{
 		TotalFiles:       int64(len(items)),
-		TotalDirectories: int64(dirs),
+		TotalDirectories: int64(len(dirs)),
 	}
 
+	// A directory with no regular-file descendants never reaches uploadOne.
+	for _, dir := range dirs {
+		if err := c.checkCancelled(); err != nil {
+			tracker.setStatus(StatusCancelled, "")
+			return nil, err
+		}
+		if _, err := c.ensureDirectory(req.StorageID, dir); err != nil {
+			tracker.setStatus(StatusFailed, "")
+			return nil, err
+		}
+	}
 	for _, it := range items {
 		if err := c.checkCancelled(); err != nil {
 			tracker.setStatus(StatusCancelled, "")
@@ -263,16 +274,16 @@ func annotateInstallError(err error, st *Storage) error {
 	return e
 }
 
-// planUpload expands local sources into a flat file list.
-func planUpload(req UploadRequest) ([]uploadItem, int, error) {
+// planUpload lists files and their destination directories in parent-first order.
+func planUpload(req UploadRequest) ([]uploadItem, []string, error) {
 	dest := NormalizePath(req.Destination)
 	var items []uploadItem
-	dirs := 0
+	var dirs []string
 
 	for _, src := range req.Sources {
 		info, err := os.Stat(src)
 		if err != nil {
-			return nil, 0, wrapErr(KindLocalIO, "upload", err)
+			return nil, nil, wrapErr(KindLocalIO, "upload", err)
 		}
 
 		if !info.IsDir() {
@@ -286,7 +297,6 @@ func planUpload(req UploadRequest) ([]uploadItem, int, error) {
 		}
 
 		root := JoinPath(dest, info.Name())
-		dirs++
 		err = filepath.Walk(src, func(p string, fi os.FileInfo, err error) error {
 			if err != nil {
 				return err
@@ -295,12 +305,9 @@ func planUpload(req UploadRequest) ([]uploadItem, int, error) {
 			if err != nil {
 				return err
 			}
-			if rel == "." {
-				return nil
-			}
 			devicePath := JoinPath(root, filepath.ToSlash(rel))
 			if fi.IsDir() {
-				dirs++
+				dirs = append(dirs, devicePath)
 				return nil
 			}
 			if !fi.Mode().IsRegular() {
@@ -316,7 +323,7 @@ func planUpload(req UploadRequest) ([]uploadItem, int, error) {
 			return nil
 		})
 		if err != nil {
-			return nil, 0, wrapErr(KindLocalIO, "upload", err)
+			return nil, nil, wrapErr(KindLocalIO, "upload", err)
 		}
 	}
 	return items, dirs, nil
@@ -425,6 +432,9 @@ func (c *Client) ensureDirectory(storageID uint32, dir string) (uint32, error) {
 	name := deviceSafeName(pathBase(dir))
 
 	if node, err := c.findChild(storageID, parent, name); err == nil {
+		if !node.isFolder {
+			return 0, errf(KindInvalidInput, "upload", "%q is not a directory", dir)
+		}
 		c.cache.put(storageID, dir, node)
 		return node.handle, nil
 	}

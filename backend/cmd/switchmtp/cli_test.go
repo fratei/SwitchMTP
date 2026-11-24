@@ -210,6 +210,73 @@ func TestPutThenLsThenGetRoundTrips(t *testing.T) {
 	}
 }
 
+func TestPutPreservesEmptyDirectories(t *testing.T) {
+	useFakeDevice(t, fake.Options{})
+	local, back := t.TempDir(), t.TempDir()
+	empty := filepath.Join(local, "empty")
+	tree := filepath.Join(local, "tree")
+	for _, dir := range []string{empty, filepath.Join(tree, "branch", "leaf")} {
+		if err := os.MkdirAll(dir, 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := os.WriteFile(filepath.Join(tree, "sibling.txt"), []byte("data"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if out, code := captureRun(t, "--quiet", "put", empty, tree, "sdcard:/copies"); code != exitOK {
+		t.Fatalf("put exit %d:\n%s", code, out)
+	}
+	out, code := captureRun(t, "--quiet", "--json", "put", empty, "sdcard:/copies")
+	var summary nxmtp.TransferSummary
+	if code != exitOK || json.Unmarshal([]byte(out), &summary) != nil ||
+		summary.TotalDirectories != 1 || summary.TotalFiles != 0 || summary.TotalBytes != 0 {
+		t.Fatalf("repeat upload of one empty directory: exit %d, summary %s", code, out)
+	}
+	for _, name := range []string{"empty", "tree"} {
+		if out, code := captureRun(t, "--quiet", "get", "sdcard:/copies/"+name, back); code != exitOK {
+			t.Errorf("get %s exit %d:\n%s", name, code, out)
+		}
+	}
+	for _, leaf := range []string{filepath.Join(back, "empty"), filepath.Join(back, "tree", "branch", "leaf")} {
+		entries, err := os.ReadDir(leaf)
+		if err != nil || len(entries) != 0 {
+			t.Errorf("expected an empty directory at %s, got %v (%v)", leaf, entries, err)
+		}
+	}
+	if got, err := os.ReadFile(filepath.Join(back, "tree", "sibling.txt")); err != nil || string(got) != "data" {
+		t.Errorf("sibling file: got %q, error %v", got, err)
+	}
+}
+
+func TestEmptyUploadRefusesFilenameCollision(t *testing.T) {
+	useFakeDevice(t, fake.Options{})
+	local := t.TempDir()
+	file := filepath.Join(local, "saves_1")
+	if err := os.WriteFile(file, []byte("existing"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	if out, code := captureRun(t, "--quiet", "put", file, "sdcard:/"); code != exitOK {
+		t.Fatalf("upload existing file: exit %d:\n%s", code, out)
+	}
+
+	// FAT cannot represent the question mark, so both names map to saves_1.
+	dir := filepath.Join(local, "saves?1")
+	if err := os.Mkdir(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if _, code := captureRun(t, "--quiet", "put", dir, "sdcard:/"); code == exitOK {
+		t.Fatal("upload reported success for a directory occupied by a file")
+	}
+	back := t.TempDir()
+	if out, code := captureRun(t, "--quiet", "get", "sdcard:/saves_1", back); code != exitOK {
+		t.Fatalf("download original file: exit %d:\n%s", code, out)
+	}
+	if data, err := os.ReadFile(filepath.Join(back, "saves_1")); err != nil || string(data) != "existing" {
+		t.Errorf("original file: got %q, error %v", data, err)
+	}
+}
+
 func TestRmDeletesWhenConfirmationIsWaived(t *testing.T) {
 	_ = useFakeDevice(t, fake.Options{})
 
